@@ -33,6 +33,7 @@ struct HabitDetailView: View {
                         .padding(.vertical, 4)
                 }
                 .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("habit.addEntry")
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20))
             }
@@ -96,6 +97,7 @@ struct HabitDetailView: View {
                         Toggle(isOn: habitTimeSinceBinding) {
                             Label("Show time since for this habit", systemImage: "timer")
                         }
+                        .accessibilityIdentifier("habit.timeSinceToggle")
                         .disabled(!showsTimeSince)
                     }
 
@@ -113,6 +115,7 @@ struct HabitDetailView: View {
                 } label: {
                     Label("Habit actions", systemImage: "ellipsis.circle")
                 }
+                .accessibilityIdentifier("habit.actions")
             }
         }
         .sheet(isPresented: $showingLog) {

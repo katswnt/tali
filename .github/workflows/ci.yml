@@ -30,6 +30,28 @@ jobs:
       - name: Run Swift tests
         run: swift test --scratch-path .build-spm
 
+  ui:
+    name: iOS UI smoke tests
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Boot test simulator
+        run: |
+          xcrun simctl boot "iPhone 16 Pro"
+          xcrun simctl bootstatus "iPhone 16 Pro" -b
+
+      - name: Run critical UI journeys
+        env:
+          TALI_UI_DESTINATION: platform=iOS Simulator,name=iPhone 16 Pro
+        run: ./scripts/ui-smoke.sh
+
   worker:
     name: Worker checks
     runs-on: ubuntu-latest

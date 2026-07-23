@@ -30,12 +30,15 @@ struct LogHabitView: View {
                             Text(habit.name).tag(Optional(habit.id))
                         }
                     }
+                    .accessibilityIdentifier("entry.habit")
                     DatePicker("When", selection: $occurredAt, in: ...Date.now)
+                        .accessibilityIdentifier("entry.when")
                 }
 
                 Section("Note") {
                     TextField("Optional", text: $note, axis: .vertical)
                         .lineLimit(2...5)
+                        .accessibilityIdentifier("entry.note")
                 }
 
                 if let errorMessage {
@@ -56,6 +59,7 @@ struct LogHabitView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Log") { save() }
                         .disabled(selectedHabit == nil)
+                        .accessibilityIdentifier("entry.confirm")
                 }
             }
         }

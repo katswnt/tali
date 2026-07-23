@@ -82,7 +82,7 @@ enum SyncCredentials {
     }
 
     static var isConfigured: Bool {
-        !endpoint.isEmpty && !token().isEmpty
+        !TaliTestEnvironment.isUITesting && !endpoint.isEmpty && !token().isEmpty
     }
 
     private static let defaults = UserDefaults(suiteName: PersistenceController.appGroupIdentifier) ?? .standard

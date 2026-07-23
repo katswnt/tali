@@ -92,6 +92,7 @@ struct ActivityHeatmapView: View {
         }
         .padding(18)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
+        .accessibilityIdentifier("activity.heatmap")
         .onChange(of: selectedHabitID) {
             selectedDate = nil
         }

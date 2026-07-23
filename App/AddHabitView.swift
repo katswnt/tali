@@ -20,6 +20,7 @@ struct AddHabitView: View {
                 Section {
                     TextField("Habit name", text: $name)
                         .textInputAutocapitalization(.sentences)
+                        .accessibilityIdentifier("habit.add.name")
                 } header: {
                     Text("Habit")
                 } footer: {
@@ -29,6 +30,7 @@ struct AddHabitView: View {
                 Section {
                     TextField("pt, exercises", text: $aliases, axis: .vertical)
                         .textInputAutocapitalization(.never)
+                        .accessibilityIdentifier("habit.add.aliases")
                 } header: {
                     Text("Aliases")
                 } footer: {
@@ -53,6 +55,7 @@ struct AddHabitView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") { save() }
                         .disabled(!canSave)
+                        .accessibilityIdentifier("habit.add.confirm")
                 }
             }
         }

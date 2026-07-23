@@ -1,0 +1,93 @@
+import XCTest
+
+final class TaliUITests: XCTestCase {
+    private var app: XCUIApplication!
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication()
+        app.launchArguments = ["-tali-ui-test"]
+        app.launch()
+        XCTAssertTrue(app.navigationBars["Tali"].waitForExistence(timeout: 8))
+    }
+
+    override func tearDownWithError() throws {
+        if (testRun?.failureCount ?? 0) > 0 {
+            let screenshot = XCTAttachment(screenshot: app.screenshot())
+            screenshot.name = "Tali failure"
+            screenshot.lifetime = .keepAlways
+            add(screenshot)
+
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "Accessibility hierarchy"
+            hierarchy.lifetime = .keepAlways
+            add(hierarchy)
+        }
+        app.terminate()
+    }
+
+    func testEmptyStateExplainsProductWithoutSuggestedHabits() {
+        XCTAssertTrue(app.staticTexts["Track something"].exists)
+        XCTAssertTrue(app.staticTexts["Add a habit, then log it whenever it happens."].exists)
+        XCTAssertTrue(app.staticTexts["Activity"].exists)
+        XCTAssertTrue(app.staticTexts["Activity will appear here."].exists)
+        XCTAssertFalse(app.buttons["Log an entry"].isEnabled)
+    }
+
+    func testCriticalLocalJourney() {
+        addHabit(named: "Yoga", aliases: "stretch")
+
+        XCTAssertTrue(app.staticTexts["No entries yet"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["Log an entry"].isEnabled)
+        app.buttons["Log an entry"].tap()
+
+        XCTAssertTrue(app.navigationBars["Add Entry"].waitForExistence(timeout: 3))
+        let note = app.textFields["entry.note"]
+        note.tap()
+        note.typeText("Hips felt better")
+        app.buttons["entry.confirm"].tap()
+
+        XCTAssertTrue(app.staticTexts["MOST RECENT"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Yoga"].exists)
+
+        app.buttons["dashboard.habit.yoga"].tap()
+        XCTAssertTrue(app.navigationBars["Yoga"].waitForExistence(timeout: 3))
+        let heatmap = app.descendants(matching: .any)
+            .matching(identifier: "activity.heatmap")
+            .firstMatch
+        XCTAssertTrue(heatmap.exists)
+        XCTAssertTrue(app.staticTexts["History"].exists)
+        XCTAssertTrue(app.staticTexts["Hips felt better"].exists)
+
+        app.buttons["habit.actions"].tap()
+        let timeSinceToggle = app.descendants(matching: .any)
+            .matching(identifier: "habit.timeSinceToggle")
+            .firstMatch
+        XCTAssertTrue(timeSinceToggle.waitForExistence(timeout: 2))
+        timeSinceToggle.tap()
+        XCTAssertFalse(app.staticTexts["TIME SINCE"].exists)
+    }
+
+    func testExportChoicesAreDiscoverable() {
+        app.buttons["dashboard.more"].tap()
+        XCTAssertTrue(app.buttons["All data as CSV"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons["Complete archive as JSON"].exists)
+    }
+
+    private func addHabit(named name: String, aliases: String) {
+        app.buttons["dashboard.empty.addHabit"].tap()
+        XCTAssertTrue(app.navigationBars["New Habit"].waitForExistence(timeout: 3))
+
+        let nameField = app.textFields["habit.add.name"]
+        nameField.tap()
+        nameField.typeText(name)
+
+        let aliasesField = app.textFields["habit.add.aliases"]
+        aliasesField.tap()
+        aliasesField.typeText(aliases)
+
+        app.buttons["habit.add.confirm"].tap()
+        XCTAssertTrue(app.navigationBars["Tali"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["dashboard.habit.yoga"].exists)
+    }
+}

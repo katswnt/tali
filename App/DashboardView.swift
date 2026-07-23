@@ -115,6 +115,7 @@ struct DashboardView: View {
                     } label: {
                         Label("More options", systemImage: "ellipsis.circle")
                     }
+                    .accessibilityIdentifier("dashboard.more")
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -129,6 +130,7 @@ struct DashboardView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .accessibilityLabel("Log an entry")
+                    .accessibilityIdentifier("dashboard.log")
                     .disabled(activeHabits.isEmpty)
                 }
             }
@@ -191,6 +193,7 @@ struct DashboardView: View {
                 showingAddHabit = true
             }
             .buttonStyle(.borderedProminent)
+            .accessibilityIdentifier("dashboard.empty.addHabit")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
@@ -304,6 +307,7 @@ struct DashboardView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("dashboard.habit.\(habit.normalizedName)")
 
                         if habit.id != activeHabits.last?.id {
                             Divider().padding(.leading, 52)

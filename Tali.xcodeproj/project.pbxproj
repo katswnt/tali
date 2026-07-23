@@ -21,6 +21,7 @@
 		5AB9B3D476741C6BF055DEFD /* TaliDataExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C358FF8DB21F2455567D8AC /* TaliDataExport.swift */; };
 		668E72F19F4DE3EA21A9DF7A /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1CCBEE7FE2FA86E15502A67 /* DashboardView.swift */; };
 		7541E3380669AE23890A9A7F /* SyncCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF69488649B33F527EA9EC55 /* SyncCoordinator.swift */; };
+		80909465D6643CBA149E6363 /* TaliUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0DA34D825736A3C37342829 /* TaliUITests.swift */; };
 		853F125D7A4BF5367BD04EDB /* HabitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF389CE303C4B24EA6FF3EFE /* HabitModels.swift */; };
 		8B86219F2AEB44C44BB21546 /* HabitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9C44AA5B09E0157193784C5 /* HabitCore.framework */; };
 		9D2E21A707E712C4F7BE1070 /* HabitFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45064815F2459CB6ABF71D25 /* HabitFormatting.swift */; };
@@ -62,6 +63,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 504F4985A79588BE0EA79AF4;
 			remoteInfo = HabitCore;
+		};
+		A1592D12ED6CD41DFFAF1821 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 956AC14695FDB5E61DCD24B4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1F9354404CDBDB28A284F6A8;
+			remoteInfo = Tali;
 		};
 		C55FF85A095E102F3FDE223F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -107,11 +115,13 @@
 		8142FB09CBF41BA6788C29FE /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
 		86568B0105A341BE12D6B964 /* TaliMessages.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TaliMessages.entitlements; sourceTree = "<group>"; };
 		907BD4CC87A8FDE65C2FF263 /* AddHabitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddHabitView.swift; sourceTree = "<group>"; };
+		91EDE5847BB091F916735760 /* TaliUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TaliUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		981DBF96779A0BA8FCD31928 /* HabitAppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitAppIntents.swift; sourceTree = "<group>"; };
 		9CD05AE51D2D8DB1F54533E2 /* MessagesRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesRootView.swift; sourceTree = "<group>"; };
 		A1CCBEE7FE2FA86E15502A67 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		A578888AC7CCBD211F75E5DA /* TaliApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliApp.swift; sourceTree = "<group>"; };
 		A9C44AA5B09E0157193784C5 /* HabitCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HabitCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B0DA34D825736A3C37342829 /* TaliUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliUITests.swift; sourceTree = "<group>"; };
 		B3764AC58563C6E76068F113 /* HabitCommandParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitCommandParserTests.swift; sourceTree = "<group>"; };
 		B9EBE6A0D868F67593CA0FD9 /* HabitEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitEngine.swift; sourceTree = "<group>"; };
 		C08766122A87EFBD9A78569B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -184,6 +194,7 @@
 				FE5AB8818EB8F10A9453DA00 /* MessagesExtension */,
 				19B2186C26EA85D51DDFFE9D /* Shared */,
 				273F2BB0525CABDA01835D6B /* Tests */,
+				C4B05651906299F10310D28E /* UITests */,
 				60B4494E1DF2129234560C87 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -220,8 +231,17 @@
 				D09BF900AD99F02F4B05F7D9 /* Tali.app */,
 				6104DF09743E127AECBA3589 /* TaliMessages.appex */,
 				C2CDAECA6DFBA76D3B47EF9C /* TaliTests.xctest */,
+				91EDE5847BB091F916735760 /* TaliUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C4B05651906299F10310D28E /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				B0DA34D825736A3C37342829 /* TaliUITests.swift */,
+			);
+			path = UITests;
 			sourceTree = "<group>";
 		};
 		FE5AB8818EB8F10A9453DA00 /* MessagesExtension */ = {
@@ -259,6 +279,24 @@
 			productName = Tali;
 			productReference = D09BF900AD99F02F4B05F7D9 /* Tali.app */;
 			productType = "com.apple.product-type.application";
+		};
+		40E4A077AF0CA5AA6962649C /* TaliUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9271A603ADA184BCFD7784A4 /* Build configuration list for PBXNativeTarget "TaliUITests" */;
+			buildPhases = (
+				4C64FFD98A2ABEB35153BD3A /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				581ED11C23E9293F10F7F886 /* PBXTargetDependency */,
+			);
+			name = TaliUITests;
+			packageProductDependencies = (
+			);
+			productName = TaliUITests;
+			productReference = 91EDE5847BB091F916735760 /* TaliUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		504F4985A79588BE0EA79AF4 /* HabitCore */ = {
 			isa = PBXNativeTarget;
@@ -328,6 +366,11 @@
 						DevelopmentTeam = 7JZ2WK3L6X;
 						ProvisioningStyle = Automatic;
 					};
+					40E4A077AF0CA5AA6962649C = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+						TestTargetID = 1F9354404CDBDB28A284F6A8;
+					};
 					504F4985A79588BE0EA79AF4 = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
@@ -360,6 +403,7 @@
 				1F9354404CDBDB28A284F6A8 /* Tali */,
 				7A3F37910683A5A1411D4668 /* TaliMessages */,
 				9AF0B59E2B245492C116239D /* TaliTests */,
+				40E4A077AF0CA5AA6962649C /* TaliUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -392,6 +436,14 @@
 			files = (
 				DE0BFD8E0A1372717846971A /* HabitCommandParserTests.swift in Sources */,
 				1855D67A2D20D59BB9C09848 /* HabitEngineTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4C64FFD98A2ABEB35153BD3A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				80909465D6643CBA149E6363 /* TaliUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -438,6 +490,11 @@
 			isa = PBXTargetDependency;
 			target = 504F4985A79588BE0EA79AF4 /* HabitCore */;
 			targetProxy = 7C19E7E87DFB5B6945C9DC22 /* PBXContainerItemProxy */;
+		};
+		581ED11C23E9293F10F7F886 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1F9354404CDBDB28A284F6A8 /* Tali */;
+			targetProxy = A1592D12ED6CD41DFFAF1821 /* PBXContainerItemProxy */;
 		};
 		77A5D6E9F98EEAA858A8D8D7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -571,6 +628,23 @@
 			};
 			name = Release;
 		};
+		5E95A0FEE1B27558A6AE2B12 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kathrynswint.TaliUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Tali;
+			};
+			name = Release;
+		};
 		67DF0020AD8EF7A3CBFBA826 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -586,6 +660,23 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
+		};
+		86F8CFFC226A052BF8039C91 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kathrynswint.TaliUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Tali;
+			};
+			name = Debug;
 		};
 		909647DCA4A9ED46A6E17C6E /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -778,6 +869,15 @@
 			buildConfigurations = (
 				A44872F85F2E406494A7139E /* Debug */,
 				5280C2761427564431C64606 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9271A603ADA184BCFD7784A4 /* Build configuration list for PBXNativeTarget "TaliUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				86F8CFFC226A052BF8039C91 /* Debug */,
+				5E95A0FEE1B27558A6AE2B12 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

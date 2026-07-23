@@ -49,8 +49,9 @@ private struct StoreBootstrapView: View {
         errorMessage = nil
         do {
             let openedContainer = try PersistenceController.makeContainer(
-                inMemory: TaliDemoData.isEnabled
+                inMemory: TaliDemoData.isEnabled || TaliTestEnvironment.isUITesting
             )
+            TaliTestEnvironment.prepare()
             if TaliDemoData.isEnabled {
                 try TaliDemoData.seed(openedContainer)
             }
@@ -59,6 +60,34 @@ private struct StoreBootstrapView: View {
             errorMessage = error.localizedDescription
         }
         isOpening = false
+    }
+}
+
+enum TaliTestEnvironment {
+    static var isUITesting: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-tali-ui-test")
+        #else
+        false
+        #endif
+    }
+
+    @MainActor
+    static func prepare() {
+        guard isUITesting else { return }
+        let keys = [
+            TimeSinceVisibility.globalPreferenceKey,
+            TimeSinceVisibility.hiddenHabitIDsPreferenceKey,
+            SyncCredentials.endpointKey,
+        ]
+        for defaults in [
+            UserDefaults.standard,
+            UserDefaults(suiteName: PersistenceController.appGroupIdentifier),
+        ].compactMap({ $0 }) {
+            for key in keys {
+                defaults.removeObject(forKey: key)
+            }
+        }
     }
 }
 

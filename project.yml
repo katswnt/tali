@@ -111,6 +111,19 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.kathrynswint.TaliTests
         GENERATE_INFOPLIST_FILE: true
 
+  TaliUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: Tali
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kathrynswint.TaliUITests
+        GENERATE_INFOPLIST_FILE: true
+        TEST_TARGET_NAME: Tali
+
 schemes:
   Tali:
     build:
@@ -119,6 +132,7 @@ schemes:
         Tali: all
         TaliMessages: all
         TaliTests: [test]
+        TaliUITests: [test]
     run:
       config: Debug
       executable: Tali
@@ -126,6 +140,7 @@ schemes:
       gatherCoverageData: true
       targets:
         - TaliTests
+        - TaliUITests
     profile:
       config: Release
       executable: Tali
