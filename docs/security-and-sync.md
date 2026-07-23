@@ -34,7 +34,10 @@ This document describes Tali’s current trust boundaries, synchronization behav
 5. The app stores the token in Keychain.
 6. D1 stores only its SHA-256 hash and expiration.
 
-Sessions currently last 180 days and can be revoked by signing out from that device. Public multi-user use should add a device/session list, revoke-all behavior, and explicit rotation policy.
+Sessions currently last 180 days. The app lists active devices, supports revoking an individual
+session, and revokes the current session on sign-out. Account deletion revokes every session by
+deleting the account. Automatic session rotation and a one-tap revoke-all operation do not yet
+exist.
 
 ## Phone pairing
 
@@ -47,7 +50,9 @@ An authenticated session can request one active eight-character code. The code:
 - is marked used after a successful pair;
 - cannot move a phone number already associated with another user.
 
-The SMS itself proves control of the sending number. Authentication and pairing endpoints still need rate limits before public onboarding.
+The SMS itself proves control of the sending number. Authentication attempts are rate-limited by a
+hash of Cloudflare's connection IP, code creation by generated user ID, and SMS pairing attempts by
+a hash of the sending number.
 
 ## Webhook integrity and idempotency
 
@@ -110,3 +115,5 @@ The scheduled retention job deletes SMS receipts and message contents after 30 d
 - A2P campaign approval for the actual onboarding and message flow
 - Independent signature/JWT test fixtures and security review
 - Physical-device and carrier-path testing
+- A documented backup and restore exercise for production D1 data
+- A decision on session rotation and account recovery before supporting non-Apple clients
