@@ -11,14 +11,13 @@ current product and data behavior; update it whenever those behaviors change.
 - **Secondary category:** Lifestyle
 - **Copyright:** 2026 Kathryn Swint
 - **Privacy policy URL:** https://tali-sms.katswint.workers.dev/privacy
-- **Support URL:** https://katswint.com
+- **Support URL:** https://tali-sms.katswint.workers.dev/support
 - **Marketing URL:** https://katswint.com
 - **Keywords:** activity log,habit tracker,journal,timestamp,history,patterns,wellness,notes
-- **Promotional text:** Record what happened and when—from the app, Messages, Siri, Shortcuts, or an optional text message.
+- **Promotional text:** Record what happened and when—from the app, Messages, Siri, or Shortcuts—then see a factual timeline and activity chart.
 
-Before submission, confirm the support URL has a visible way to contact Kathryn about support,
-feedback, and feature requests. App Store Connect requires this; a portfolio page by itself is not
-enough.
+Deploy and verify the dedicated support page before submission. It provides a visible contact path
+without asking users to disclose private habit data.
 
 ## Description
 
@@ -70,12 +69,10 @@ off-device. Declare the following:
 | User Content → Other User Content | Yes | No | App Functionality |
 | Identifiers → User ID | Yes | No | App Functionality |
 | Identifiers → Device ID | Yes | No | App Functionality |
-| Usage Data → Product Interaction | No | No | App Functionality |
-
 Tali does not request Apple name or email scopes. It does not collect location, contacts, purchases,
-health records, advertising data, or crash analytics. It does not track users across apps or
-websites. These answers must stay aligned with `App/PrivacyInfo.xcprivacy` and the deployed privacy
-policy.
+health records, usage analytics, advertising data, or crash analytics. It does not track users
+across apps or websites. These answers must stay aligned with `App/PrivacyInfo.xcprivacy` and the
+deployed privacy policy.
 
 ## Export compliance
 
@@ -103,6 +100,25 @@ Use the isolated `-tali-demo` store so no personal records appear. Capture:
 
 Provide current required iPhone sizes in App Store Connect. Do not stretch a screenshot or place it
 inside a device frame that obscures the actual interface.
+
+The checked-in set is 1206 × 2622, an accepted 6.3-inch iPhone screenshot size. App Store Connect
+may also require a separate 6.9-inch slot; capture that size from an appropriate simulator rather
+than resizing this set.
+
+## Accessibility claims
+
+Only select an App Store accessibility feature after validating the release build against Apple's
+current criteria. Current evidence supports:
+
+- **Larger Text:** the core journeys pass at the largest accessibility Dynamic Type size.
+- **Dark Interface:** the dashboard, detail, logging, settings, export, and empty states have been
+  visually checked in Dark Mode.
+- **Differentiate Without Color Alone:** activity cells expose dates and logged/not-logged state to
+  accessibility APIs, and a selected cell has a text caption.
+
+Do not claim VoiceOver support until focus order and control labels pass on a physical device or in
+Accessibility Inspector. Recheck sufficient contrast with a contrast-measurement tool before
+claiming it, even though the increased-contrast visual pass is clean.
 
 ## Final manual checks
 

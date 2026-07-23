@@ -27,7 +27,43 @@ export function smsProgramPage(): Response {
           Consent to SMS is optional and is not a condition of purchase. Tali does not send
           marketing or promotional messages.
         </p>
+        <p>
+          For account, privacy, or delivery help, visit
+          <a href="${baseURL}/support">Tali Support</a>.
+        </p>
       </section>
+    `,
+  );
+}
+
+export function supportPage(): Response {
+  return htmlPage(
+    "Tali Support",
+    "Help with the app, texting, privacy, and your data.",
+    "/support",
+    "Get help with Tali, report a problem, manage connected data, or contact its developer.",
+    `
+      ${section("Get help", `
+        Tali is an independent, pre-launch project operated by Kathryn Swint. For support,
+        feedback, or a privacy request, contact Kathryn through
+        <a href="https://www.linkedin.com/in/kathrynswint/">LinkedIn</a>. Include “Tali” in your
+        message, but do not send private habit names, notes, pairing codes, or account tokens.
+      `)}
+      ${section("Manage your data", `
+        Local data can be exported from Tali's menu. Connected account data can be exported or
+        deleted from Texting settings. Deleting the app does not automatically delete connected
+        server data.
+      `)}
+      ${section("Text-message help", `
+        Reply HELP for messaging assistance or STOP to unsubscribe. Message and data rates may
+        apply. If a reply does not arrive, confirm that the number is enrolled and check Tali's
+        <a href="${baseURL}/sms">SMS program information</a>.
+      `)}
+      ${section("Useful links", `
+        Read Tali's <a href="${baseURL}/privacy">Privacy Policy</a> and
+        <a href="${baseURL}/terms">SMS Terms</a>, or return to
+        <a href="https://katswint.com">Kathryn's portfolio</a>.
+      `)}
     `,
   );
 }
@@ -71,11 +107,11 @@ export function privacyPage(): Response {
       ${section("Messaging choices", `
         Message frequency varies based on use. Message and data rates may apply. Reply STOP at any
         time to unsubscribe and HELP for assistance. You can request access to or deletion of your
-        Tali data through the contact information at katswint.com.
+        Tali data through Tali Support.
       `)}
       ${section("Contact", `
         Questions about this policy or Tali's data practices can be submitted through
-        <a class="font-medium text-emerald-700 underline underline-offset-4" href="https://katswint.com">katswint.com</a>.
+        <a href="${baseURL}/support">Tali Support</a>.
       `)}
     `,
   );
@@ -101,7 +137,7 @@ export function termsPage(): Response {
       ${section("Stopping messages and getting help", `
         Reply STOP to unsubscribe. After opting out, no further messages will be sent unless you
         opt in again. Reply HELP for assistance or visit
-        <a class="font-medium text-emerald-700 underline underline-offset-4" href="https://katswint.com">katswint.com</a>.
+        <a href="${baseURL}/support">Tali Support</a>.
       `)}
       ${section("Availability", `
         Tali is provided as a pre-launch personal project and may change or be unavailable. Mobile
@@ -109,7 +145,7 @@ export function termsPage(): Response {
       `)}
       ${section("Privacy", `
         Tali's handling of mobile and habit information is described in the
-        <a class="font-medium text-emerald-700 underline underline-offset-4" href="${baseURL}/privacy">Tali SMS Privacy Policy</a>.
+        <a href="${baseURL}/privacy">Tali SMS Privacy Policy</a>.
       `)}
     `,
   );
@@ -139,7 +175,9 @@ function htmlPage(
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <meta name="description" content="${description}">
       <meta name="theme-color" content="#047857">
-      <meta name="color-scheme" content="light">
+      <meta name="color-scheme" content="light dark">
+      <meta name="application-name" content="Tali">
+      <meta name="robots" content="index,follow">
       <meta property="og:type" content="website">
       <meta property="og:site_name" content="Tali">
       <meta property="og:title" content="${title}">
@@ -150,7 +188,106 @@ function htmlPage(
       <meta name="twitter:description" content="${description}">
       <link rel="canonical" href="${canonicalURL}">
       <title>${title}</title>
-      <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+      <style>
+        :root {
+          color-scheme: light dark;
+          font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-synthesis: none;
+          --background: #fafaf9;
+          --surface: #ffffff;
+          --text: #0c0a09;
+          --secondary: #57534e;
+          --border: #e7e5e4;
+          --accent: #047857;
+        }
+        * { box-sizing: border-box; }
+        body {
+          min-height: 100dvh;
+          margin: 0;
+          background: var(--background);
+          color: var(--text);
+          -webkit-font-smoothing: antialiased;
+        }
+        body > header {
+          border-bottom: 1px solid var(--border);
+          background: var(--surface);
+        }
+        body > header > div {
+          display: flex;
+          width: min(100% - 3rem, 48rem);
+          margin-inline: auto;
+          align-items: center;
+          justify-content: space-between;
+          padding-block: 1.25rem;
+        }
+        nav ul {
+          display: flex;
+          gap: 1.25rem;
+          margin: 0;
+          padding: 0;
+          list-style: none;
+          font-size: 0.875rem;
+        }
+        a {
+          color: var(--accent);
+          font-weight: 600;
+          text-decoration-thickness: 0.08em;
+          text-underline-offset: 0.2em;
+        }
+        body > header a { text-decoration: none; }
+        main {
+          width: min(100% - 3rem, 48rem);
+          margin-inline: auto;
+          padding-block: 3rem 4rem;
+        }
+        main > header { margin-bottom: 2.5rem; }
+        main > header > p:first-child {
+          margin: 0 0 0.75rem;
+          color: var(--accent);
+          font-size: 0.875rem;
+          font-weight: 600;
+        }
+        h1 {
+          max-width: 18ch;
+          margin: 0;
+          font-size: clamp(2.25rem, 7vw, 3rem);
+          line-height: 1.05;
+          letter-spacing: -0.035em;
+        }
+        main > header > p:last-child {
+          margin: 1rem 0 0;
+          color: var(--secondary);
+          font-size: 1.125rem;
+          line-height: 1.6;
+        }
+        article section { padding-block: 1.75rem; }
+        article section:first-child { padding-top: 0; }
+        article section + section { border-top: 1px solid var(--border); }
+        article h2 {
+          margin: 0;
+          font-size: 1.4rem;
+          line-height: 1.25;
+          letter-spacing: -0.015em;
+        }
+        article p, article li {
+          color: var(--secondary);
+          line-height: 1.75;
+        }
+        article p { margin: 0.75rem 0 0; }
+        article ol { margin: 1rem 0 0; padding-left: 1.5rem; }
+        article li + li { margin-top: 0.65rem; }
+        strong { color: var(--text); }
+        @media (prefers-color-scheme: dark) {
+          :root {
+            --background: #0c0a09;
+            --surface: #1c1917;
+            --text: #fafaf9;
+            --secondary: #d6d3d1;
+            --border: #44403c;
+            --accent: #34d399;
+          }
+        }
+      </style>
     </head>
     <body class="min-h-dvh bg-stone-50 text-stone-950 antialiased">
       <header class="border-b border-stone-200 bg-white">
@@ -160,6 +297,7 @@ function htmlPage(
             <ul class="flex gap-5 text-sm text-stone-600">
               <li><a class="hover:text-stone-950" href="${baseURL}/privacy">Privacy</a></li>
               <li><a class="hover:text-stone-950" href="${baseURL}/terms">Terms</a></li>
+              <li><a class="hover:text-stone-950" href="${baseURL}/support">Support</a></li>
             </ul>
           </nav>
         </div>
@@ -183,6 +321,8 @@ function htmlPage(
       "x-content-type-options": "nosniff",
       "referrer-policy": "no-referrer",
       "x-frame-options": "DENY",
+      "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
     },
   });
 }

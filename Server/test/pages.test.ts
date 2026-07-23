@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { privacyPage, smsProgramPage, termsPage } from "../src/pages";
+import { privacyPage, smsProgramPage, supportPage, termsPage } from "../src/pages";
 
 describe("public SMS compliance pages", () => {
   it("publishes the required program disclosures", async () => {
@@ -10,6 +10,8 @@ describe("public SMS compliance pages", () => {
     expect(content).toContain("HELP");
     expect(content).toContain('<link rel="canonical" href="https://tali-sms.katswint.workers.dev/sms">');
     expect(content).toContain('property="og:description"');
+    expect(content).not.toContain("cdn.jsdelivr.net");
+    expect(smsProgramPage().headers.get("content-security-policy")).toContain("default-src 'none'");
   });
 
   it("states that mobile information is not shared for marketing", async () => {
@@ -27,5 +29,16 @@ describe("public SMS compliance pages", () => {
     expect(content).toContain("recurring automated transactional replies");
     expect(content).toContain("Reply STOP");
     expect(content).toContain("carriers are not liable");
+  });
+
+  it("publishes a dedicated support destination with a contact path", async () => {
+    const response = supportPage();
+    const content = await response.text();
+    expect(content).toContain("Tali Support");
+    expect(content).toContain("contact Kathryn");
+    expect(content).toContain("linkedin.com/in/kathrynswint");
+    expect(content).toContain("do not send private habit names");
+    expect(content).toContain('<link rel="canonical" href="https://tali-sms.katswint.workers.dev/support">');
+    expect(response.headers.get("permissions-policy")).toContain("geolocation=()");
   });
 });

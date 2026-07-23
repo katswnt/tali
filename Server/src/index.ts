@@ -11,7 +11,7 @@ import {
 } from "./auth";
 import { mergeSnapshot, readAccountExport } from "./database";
 import { createPairingCode, pairPhone, pairingCodeFromMessage, userForPhone } from "./pairing";
-import { privacyPage, smsProgramPage, termsPage } from "./pages";
+import { privacyPage, smsProgramPage, supportPage, termsPage } from "./pages";
 import { logOperational, observeRequest, requestIdentifier } from "./observability";
 import { clientIP, consumeRateLimit, rateLimitedJSON } from "./rate-limit";
 import { enforceRetention } from "./retention";
@@ -41,6 +41,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (request.method === "GET" && url.pathname === "/sms") return smsProgramPage();
   if (request.method === "GET" && url.pathname === "/privacy") return privacyPage();
   if (request.method === "GET" && url.pathname === "/terms") return termsPage();
+  if (request.method === "GET" && url.pathname === "/support") return supportPage();
 
   if (request.method === "GET" && url.pathname === "/health") {
     return Response.json({ ok: true, service: "tali-sms" });
