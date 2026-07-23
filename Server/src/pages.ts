@@ -4,6 +4,8 @@ export function smsProgramPage(): Response {
   return htmlPage(
     "Tali SMS",
     "Text your habits. Tali keeps the timeline.",
+    "/sms",
+    "How Tali SMS enrollment, habit logging, opt-out, and transactional messages work.",
     `
       <section class="space-y-4">
         <h2 class="text-balance text-2xl font-semibold">How enrollment works</h2>
@@ -32,13 +34,22 @@ export function smsProgramPage(): Response {
 
 export function privacyPage(): Response {
   return htmlPage(
-    "Tali SMS Privacy Policy",
+    "Tali Privacy Policy",
     "Effective July 22, 2026",
+    "/privacy",
+    "How Tali handles local habit records, account data, text messages, retention, export, and deletion.",
     `
+      ${section("Local app data", `
+        Tali can be used without an account. Habit names, aliases, timestamps, notes, archive state,
+        and display preferences created in that mode remain on the device and in Tali's shared app
+        container. Tali does not use this information for advertising or behavior profiling.
+      `)}
       ${section("Information Tali processes", `
-        Tali processes the mobile number enrolled in the SMS program, message contents such as
-        habit commands and optional notes, timestamps, synchronized habit records, and limited
-        technical logs needed to operate and secure the service.
+        When a user connects texting, Tali processes a Sign in with Apple account identifier, a
+        device/session identifier and user-visible device name, the mobile number enrolled in the
+        SMS program, message contents such as habit commands and optional notes, timestamps,
+        synchronized habit records, and limited technical logs needed to operate and secure the
+        service. Tali does not request the user's name or email address from Apple.
       `)}
       ${section("How information is used", `
         This information is used only to authenticate the enrolled user, record requested habit
@@ -74,6 +85,8 @@ export function termsPage(): Response {
   return htmlPage(
     "Tali SMS Terms",
     "Effective July 22, 2026",
+    "/terms",
+    "Terms for Tali's optional transactional SMS habit-logging service.",
     `
       ${section("Program description", `
         Tali is a pre-launch personal habit-tracking program operated by Kathryn Swint. Enrolled
@@ -111,13 +124,31 @@ function section(title: string, body: string): string {
   `;
 }
 
-function htmlPage(title: string, subtitle: string, content: string): Response {
+function htmlPage(
+  title: string,
+  subtitle: string,
+  path: string,
+  description: string,
+  content: string,
+): Response {
+  const canonicalURL = `${baseURL}${path}`;
   const html = `<!doctype html>
   <html lang="en">
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <meta name="description" content="${title}">
+      <meta name="description" content="${description}">
+      <meta name="theme-color" content="#047857">
+      <meta name="color-scheme" content="light">
+      <meta property="og:type" content="website">
+      <meta property="og:site_name" content="Tali">
+      <meta property="og:title" content="${title}">
+      <meta property="og:description" content="${description}">
+      <meta property="og:url" content="${canonicalURL}">
+      <meta name="twitter:card" content="summary">
+      <meta name="twitter:title" content="${title}">
+      <meta name="twitter:description" content="${description}">
+      <link rel="canonical" href="${canonicalURL}">
       <title>${title}</title>
       <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     </head>

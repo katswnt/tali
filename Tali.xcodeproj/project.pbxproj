@@ -26,6 +26,7 @@
 		9D2E21A707E712C4F7BE1070 /* HabitFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45064815F2459CB6ABF71D25 /* HabitFormatting.swift */; };
 		A900E398FFB872C2DB1A21D5 /* HabitVisibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51B5FD73ACD5A4B4BB5D965A /* HabitVisibility.swift */; };
 		ABCA425C54BE9F8DCD55855F /* TaliMessages.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6104DF09743E127AECBA3589 /* TaliMessages.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AC30AD85D95F169DB3A5D2D0 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5CF7D8D20E1C7DF3FE9EDD9F /* PrivacyInfo.xcprivacy */; };
 		B610ACAE8A3FC22E83E91924 /* AddHabitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907BD4CC87A8FDE65C2FF263 /* AddHabitView.swift */; };
 		B733D05EDD5C96027A17F52A /* TaliAppleSignInButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531179A52020C16ED4512E07 /* TaliAppleSignInButton.swift */; };
 		BF4EA66B8A30C2E4D1172D67 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C6FD88316F381750D87348 /* RootView.swift */; };
@@ -100,6 +101,7 @@
 		4E3A3D6BE8A5C313DB5D3FA9 /* HabitCommandParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitCommandParser.swift; sourceTree = "<group>"; };
 		51B5FD73ACD5A4B4BB5D965A /* HabitVisibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitVisibility.swift; sourceTree = "<group>"; };
 		531179A52020C16ED4512E07 /* TaliAppleSignInButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliAppleSignInButton.swift; sourceTree = "<group>"; };
+		5CF7D8D20E1C7DF3FE9EDD9F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6104DF09743E127AECBA3589 /* TaliMessages.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TaliMessages.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		684F4D15294AAF584FBBD3E8 /* HabitEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitEngineTests.swift; sourceTree = "<group>"; };
 		8142FB09CBF41BA6788C29FE /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
@@ -115,7 +117,7 @@
 		C08766122A87EFBD9A78569B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C2CDAECA6DFBA76D3B47EF9C /* TaliTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TaliTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C92F587925634AC335DB869E /* TaliExportDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliExportDocument.swift; sourceTree = "<group>"; };
-		D09BF900AD99F02F4B05F7D9 /* Tali.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tali.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D09BF900AD99F02F4B05F7D9 /* Tali.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Tali.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DAD82571163F592AFEDBD955 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DC19BECA96C9D24AC6A3678C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E18B5C0663170F1E0AF4E15B /* Tali.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tali.entitlements; sourceTree = "<group>"; };
@@ -197,6 +199,7 @@
 				228E53D5CB70D07E90CF34E0 /* HabitDetailView.swift */,
 				DAD82571163F592AFEDBD955 /* Info.plist */,
 				3189ED9370E553B6C37A4BAD /* LogHabitView.swift */,
+				5CF7D8D20E1C7DF3FE9EDD9F /* PrivacyInfo.xcprivacy */,
 				18C6FD88316F381750D87348 /* RootView.swift */,
 				EF69488649B33F527EA9EC55 /* SyncCoordinator.swift */,
 				086273D3B516E832414C063F /* SyncCredentials.swift */,
@@ -322,6 +325,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					1F9354404CDBDB28A284F6A8 = {
+						DevelopmentTeam = 7JZ2WK3L6X;
 						ProvisioningStyle = Automatic;
 					};
 					504F4985A79588BE0EA79AF4 = {
@@ -329,7 +333,7 @@
 						ProvisioningStyle = Automatic;
 					};
 					7A3F37910683A5A1411D4668 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 7JZ2WK3L6X;
 						ProvisioningStyle = Automatic;
 					};
 					9AF0B59E2B245492C116239D = {
@@ -366,6 +370,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2328832E181B439680152D03 /* Assets.xcassets in Resources */,
+				AC30AD85D95F169DB3A5D2D0 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -587,7 +592,6 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = MessagesExtension/TaliMessages.entitlements;
-				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7JZ2WK3L6X;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MessagesExtension/Info.plist;
@@ -671,7 +675,6 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = MessagesExtension/TaliMessages.entitlements;
-				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7JZ2WK3L6X;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MessagesExtension/Info.plist;
