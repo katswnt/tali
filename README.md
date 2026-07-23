@@ -131,7 +131,7 @@ revisit triggers for product, platform, data, backend, and development-process c
 | Distributed-data reasoning | Server revisions, mutation idempotency, UUID reconciliation, normalized-name duplicate repair, idempotent Twilio receipts, managed integration tests, and documented last-write-wins limits |
 | Quality discipline | CI, 63 domain and Worker tests, three deterministic UI journeys, a managed Worker/D1 integration, isolated demo data, and a one-command release check |
 | Operational judgment | Separate staging database/Worker, explicit production confirmation, backup and recovery runbook, rollback policy, privacy-safe observability, and load thresholds |
-| Product learning | A consent-first five-person [research protocol](docs/research-plan.md) with falsifiable comprehension, neutrality, trust, and export gates |
+| Product learning | A consent-first five-person [research protocol](docs/research-plan.md) and [field kit](docs/research-kit.md) with falsifiable comprehension, neutrality, trust, and export gates |
 | Learning from failure | SwiftData startup recovery, weekday-parser regression, duplicate reconciliation, A2P launch gating, and webhook delivery checks in the [case study](docs/portfolio-case-study.md) |
 
 ## Reliability and tests
