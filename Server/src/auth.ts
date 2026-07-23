@@ -19,7 +19,14 @@ interface AppleKeySet {
   keys: AppleJsonWebKey[];
 }
 
-type AppleJsonWebKey = JsonWebKey & { kid?: string };
+export type AppleJsonWebKey = JsonWebKey & { kid?: string };
+
+export type AppleKeyProvider = (forceRefresh?: boolean) => Promise<AppleJsonWebKey[]>;
+
+export interface AppleTokenVerificationOptions {
+  now?: Date;
+  keyProvider?: AppleKeyProvider;
+}
 
 interface SessionRow {
   session_id: string;
@@ -237,10 +244,11 @@ export function randomToken(byteCount: number): string {
   return base64URL(bytes);
 }
 
-async function verifyAppleIdentityToken(
+export async function verifyAppleIdentityToken(
   token: string,
   rawNonce: string,
   clientID: string,
+  options: AppleTokenVerificationOptions = {},
 ): Promise<AppleClaims> {
   const parts = token.split(".");
   if (parts.length !== 3) throw new Error("Malformed JWT");
@@ -248,8 +256,13 @@ async function verifyAppleIdentityToken(
   const claims = decodeJSON(parts[1]) as AppleClaims;
   if (header.alg !== "RS256" || typeof header.kid !== "string") throw new Error("Unsupported JWT header");
 
-  const keys = await appleKeys();
-  const jwk = keys.find((candidate) => candidate.kid === header.kid && candidate.kty === "RSA");
+  const keyProvider = options.keyProvider ?? appleKeys;
+  let keys = await keyProvider(false);
+  let jwk = signingKey(keys, header.kid);
+  if (!jwk) {
+    keys = await keyProvider(true);
+    jwk = signingKey(keys, header.kid);
+  }
   if (!jwk) throw new Error("Unknown Apple signing key");
   const key = await crypto.subtle.importKey(
     "jwk",
@@ -266,7 +279,7 @@ async function verifyAppleIdentityToken(
   );
   if (!verified) throw new Error("Invalid JWT signature");
 
-  const nowSeconds = Math.floor(Date.now() / 1_000);
+  const nowSeconds = Math.floor((options.now ?? new Date()).getTime() / 1_000);
   const audience = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
   if (claims.iss !== APPLE_ISSUER) throw new Error("Invalid issuer");
   if (!audience.includes(clientID)) throw new Error("Invalid audience");
@@ -277,14 +290,40 @@ async function verifyAppleIdentityToken(
   return claims;
 }
 
-async function appleKeys(): Promise<AppleJsonWebKey[]> {
-  if (appleKeyCache && appleKeyCache.expiresAt > Date.now()) return appleKeyCache.keys;
-  const response = await fetch(APPLE_KEYS_URL, { headers: { accept: "application/json" } });
-  if (!response.ok) throw new Error(`Apple keys returned HTTP ${response.status}`);
-  const body = await response.json<AppleKeySet>();
-  if (!Array.isArray(body.keys) || !body.keys.length) throw new Error("Apple returned no signing keys");
-  appleKeyCache = { keys: body.keys, expiresAt: Date.now() + 60 * 60 * 1_000 };
-  return body.keys;
+async function appleKeys(forceRefresh = false): Promise<AppleJsonWebKey[]> {
+  if (!forceRefresh && appleKeyCache && appleKeyCache.expiresAt > Date.now()) return appleKeyCache.keys;
+
+  try {
+    const response = await fetch(APPLE_KEYS_URL, { headers: { accept: "application/json" } });
+    if (!response.ok) throw new Error(`Apple keys returned HTTP ${response.status}`);
+    const body = await response.json<AppleKeySet>();
+    if (!Array.isArray(body.keys) || !body.keys.length) throw new Error("Apple returned no signing keys");
+    appleKeyCache = {
+      keys: body.keys,
+      expiresAt: Date.now() + cacheLifetimeMilliseconds(response.headers.get("cache-control")),
+    };
+    return body.keys;
+  } catch (error) {
+    // A previously fetched public key remains safe for signature verification and
+    // avoids turning a transient Apple outage into an outage for existing keys.
+    if (appleKeyCache?.keys.length) return appleKeyCache.keys;
+    throw error;
+  }
+}
+
+function signingKey(keys: AppleJsonWebKey[], kid: string): AppleJsonWebKey | undefined {
+  return keys.find((candidate) =>
+    candidate.kid === kid
+    && candidate.kty === "RSA"
+    && (!candidate.use || candidate.use === "sig")
+    && (!candidate.alg || candidate.alg === "RS256")
+  );
+}
+
+function cacheLifetimeMilliseconds(cacheControl: string | null): number {
+  const match = cacheControl?.match(/(?:^|,)\s*max-age=(\d+)/i);
+  const seconds = match ? Number(match[1]) : 60 * 60;
+  return Math.min(Math.max(seconds, 5 * 60), 24 * 60 * 60) * 1_000;
 }
 
 function decodeJSON(value: string): unknown {
