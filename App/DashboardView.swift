@@ -40,14 +40,23 @@ struct DashboardView: View {
             ScrollView {
                 LazyVStack(spacing: 24) {
                     syncStatusSection
-                    mostRecentSection
+                    if activeHabits.isEmpty {
+                        emptyDashboardSection
 
-                    ActivityHeatmapView(
-                        habits: activeHabits,
-                        events: activeEvents
-                    )
+                        ActivityHeatmapView(
+                            habits: [],
+                            events: []
+                        )
+                    } else {
+                        mostRecentSection
 
-                    habitsSection
+                        ActivityHeatmapView(
+                            habits: activeHabits,
+                            events: activeEvents
+                        )
+
+                        habitsSection
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 32)
@@ -55,22 +64,22 @@ struct DashboardView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Tali")
             .toolbar {
-                ToolbarItemGroup(placement: .topBarLeading) {
-                    Button {
-                        showingAddHabit = true
-                    } label: {
-                        Label("Add habit", systemImage: "plus")
-                    }
-
-                    Button {
-                        showingSyncSettings = true
-                    } label: {
-                        Label("Text Tali", systemImage: "message")
-                    }
-                }
-
-                ToolbarItemGroup(placement: .topBarTrailing) {
+                ToolbarItem(placement: .topBarLeading) {
                     Menu {
+                        Section {
+                            Button {
+                                showingAddHabit = true
+                            } label: {
+                                Label("Add habit", systemImage: "plus")
+                            }
+
+                            Button {
+                                showingSyncSettings = true
+                            } label: {
+                                Label("Texting", systemImage: "message")
+                            }
+                        }
+
                         Section("Display") {
                             Toggle(isOn: $showsTimeSince) {
                                 Label("Show time since", systemImage: "timer")
@@ -101,12 +110,20 @@ struct DashboardView: View {
                     } label: {
                         Label("More options", systemImage: "ellipsis.circle")
                     }
+                }
 
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showingLog = true
                     } label: {
-                        Label("Add an entry", systemImage: "plus.circle.fill")
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus")
+                            Text("Log")
+                        }
+                        .font(.body.weight(.semibold))
                     }
+                    .buttonStyle(.borderedProminent)
+                    .accessibilityLabel("Log an entry")
                     .disabled(activeHabits.isEmpty)
                 }
             }
@@ -154,6 +171,25 @@ struct DashboardView: View {
             }
         }
         .tint(.blue)
+    }
+
+    private var emptyDashboardSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Track something", systemImage: "list.bullet.clipboard")
+                .font(.title2.weight(.semibold))
+
+            Text("Add a habit, then log it whenever it happens.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+
+            Button("Add a habit") {
+                showingAddHabit = true
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
     }
 
     @ViewBuilder
