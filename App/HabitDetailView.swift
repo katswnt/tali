@@ -25,28 +25,33 @@ struct HabitDetailView: View {
     var body: some View {
         List {
             Section {
-                if let latest = events.first {
+                Button {
+                    showingLog = true
+                } label: {
+                    Label("Add entry", systemImage: "plus")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                }
+                .buttonStyle(.borderedProminent)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20))
+            }
+
+            if shouldShowTimeSince, let latest = events.first {
+                Section {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(shouldShowTimeSince ? "TIME SINCE" : "LAST ENTRY")
+                        Text("TIME SINCE")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
-                        if shouldShowTimeSince {
-                            Text(HabitFormatting.elapsed(from: latest.occurredAt))
-                                .font(.system(.largeTitle, design: .rounded, weight: .bold))
-                                .monospacedDigit()
-                        }
+                        Text(HabitFormatting.elapsed(from: latest.occurredAt))
+                            .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                            .monospacedDigit()
                         Text(HabitFormatting.timestamp(latest.occurredAt))
-                            .font(shouldShowTimeSince ? .subheadline : .title3.weight(.medium))
-                            .foregroundStyle(shouldShowTimeSince ? .secondary : .primary)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 8)
                     .accessibilityElement(children: .combine)
-                } else {
-                    ContentUnavailableView(
-                        "Never logged",
-                        systemImage: "calendar.badge.plus",
-                        description: Text("Entries for this habit will appear here.")
-                    )
                 }
             }
 
@@ -61,18 +66,23 @@ struct HabitDetailView: View {
             }
 
             Section("History") {
-                ForEach(events) { event in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(HabitFormatting.timestamp(event.occurredAt))
-                        if let note = event.note, !note.isEmpty {
-                            Text(note)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                if events.isEmpty {
+                    Text("No entries yet.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(events) { event in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(HabitFormatting.timestamp(event.occurredAt))
+                            if let note = event.note, !note.isEmpty {
+                                Text(note)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
-                    }
-                    .swipeActions {
-                        Button("Undo", role: .destructive) {
-                            eventToUndo = event
+                        .swipeActions {
+                            Button("Undo", role: .destructive) {
+                                eventToUndo = event
+                            }
                         }
                     }
                 }
@@ -102,12 +112,6 @@ struct HabitDetailView: View {
                     }
                 } label: {
                     Label("Habit actions", systemImage: "ellipsis.circle")
-                }
-
-                Button {
-                    showingLog = true
-                } label: {
-                    Label("Add an entry for \(habit.name)", systemImage: "plus.circle.fill")
                 }
             }
         }

@@ -100,7 +100,7 @@ struct SyncSettingsView: View {
         }
 
         Section {
-            DisclosureGroup("Developer connection") {
+            DisclosureGroup {
                 SecureField("Private connection key", text: $privateKey)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -126,6 +126,8 @@ struct SyncSettingsView: View {
                     endpoint = SyncCredentials.defaultEndpoint
                 }
                 .disabled(endpoint == SyncCredentials.defaultEndpoint)
+            } label: {
+                Label("Advanced", systemImage: "wrench.and.screwdriver")
             }
         } footer: {
             Text("Private keys are for local development and existing single-user installations.")

@@ -48,10 +48,64 @@ private struct StoreBootstrapView: View {
         isOpening = true
         errorMessage = nil
         do {
-            container = try PersistenceController.makeContainer()
+            let openedContainer = try PersistenceController.makeContainer(
+                inMemory: TaliDemoData.isEnabled
+            )
+            if TaliDemoData.isEnabled {
+                try TaliDemoData.seed(openedContainer)
+            }
+            container = openedContainer
         } catch {
             errorMessage = error.localizedDescription
         }
         isOpening = false
+    }
+}
+
+enum TaliDemoData {
+    static var isEnabled: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-tali-demo")
+        #else
+        false
+        #endif
+    }
+
+    @MainActor
+    static func seed(_ container: ModelContainer, now: Date = .now) throws {
+        guard isEnabled else { return }
+
+        let context = container.mainContext
+        let engine = HabitEngine(context: context)
+        let yoga = try engine.addHabit(name: "Yoga")
+        let weed = try engine.addHabit(name: "Weed")
+        let physicalTherapy = try engine.addHabit(
+            name: "Physical therapy",
+            aliases: ["pt"]
+        )
+        let callMom = try engine.addHabit(name: "Call Mom")
+
+        for day in [1, 3, 6, 7, 10, 15, 22, 28, 30, 42, 45, 60, 75, 80] {
+            try engine.log(habit: yoga, at: demoDate(daysAgo: day, hour: 8, now: now), source: .app)
+        }
+        for day in [4, 11, 19, 33, 47, 65] {
+            try engine.log(habit: weed, at: demoDate(daysAgo: day, hour: 20, now: now), source: .sms)
+        }
+        for day in [2, 9, 16, 23, 30] {
+            try engine.log(
+                habit: physicalTherapy,
+                at: demoDate(daysAgo: day, hour: 17, now: now),
+                source: .messages
+            )
+        }
+        for day in [5, 18, 37, 58] {
+            try engine.log(habit: callMom, at: demoDate(daysAgo: day, hour: 19, now: now), source: .shortcut)
+        }
+    }
+
+    private static func demoDate(daysAgo: Int, hour: Int, now: Date) -> Date {
+        let calendar = Calendar.autoupdatingCurrent
+        let day = calendar.date(byAdding: .day, value: -daysAgo, to: now) ?? now
+        return calendar.date(bySettingHour: hour, minute: 0, second: 0, of: day) ?? day
     }
 }
