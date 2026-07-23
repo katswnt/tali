@@ -82,7 +82,86 @@ struct HabitCommandParserTests {
         #expect(parser.parse("habits") == .list)
     }
 
+    @Test("Swift parser satisfies the shared app and SMS command contract")
+    func satisfiesSharedContract() throws {
+        let contract = try JSONDecoder().decode(
+            CommandContract.self,
+            from: Data(contentsOf: contractURL)
+        )
+        #expect(contract.version == 1)
+
+        for testCase in contract.cases {
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = try #require(TimeZone(identifier: testCase.timeZone))
+            let reference = try #require(iso8601Formatter().date(from: testCase.now))
+            let command = HabitCommandParser(calendar: calendar, now: { reference }).parse(testCase.input)
+            #expect(canonical(command) == testCase.expected, Comment(rawValue: testCase.name))
+        }
+    }
+
     private var parser: HabitCommandParser {
         HabitCommandParser(calendar: calendar, now: { now })
+    }
+
+    private var contractURL: URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appending(path: "Fixtures/command-contract-v1.json")
+    }
+
+    private func canonical(_ command: HabitCommand) -> ContractCommand {
+        switch command {
+        case .log(let habit, let occurredAt, let note):
+            return ContractCommand(
+                type: "log",
+                habit: habit,
+                occurredAt: occurredAt.map { iso8601Formatter().string(from: $0) },
+                note: note
+            )
+        case .since(let habit):
+            return ContractCommand(type: "since", habit: habit)
+        case .history(let habit):
+            return ContractCommand(type: "history", habit: habit)
+        case .undo:
+            return ContractCommand(type: "undo")
+        case .list:
+            return ContractCommand(type: "list")
+        case .help, .unknown:
+            return ContractCommand(type: "help")
+        }
+    }
+
+    private func iso8601Formatter() -> ISO8601DateFormatter {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }
+}
+
+private struct CommandContract: Decodable {
+    let version: Int
+    let cases: [CommandContractCase]
+}
+
+private struct CommandContractCase: Decodable {
+    let name: String
+    let input: String
+    let now: String
+    let timeZone: String
+    let expected: ContractCommand
+}
+
+private struct ContractCommand: Codable, Equatable {
+    let type: String
+    var habit: String?
+    var occurredAt: String?
+    var note: String?
+
+    init(type: String, habit: String? = nil, occurredAt: String? = nil, note: String? = nil) {
+        self.type = type
+        self.habit = habit
+        self.occurredAt = occurredAt
+        self.note = note
     }
 }

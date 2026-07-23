@@ -40,13 +40,7 @@ export function parseCommand(
   const history = afterPrefix(value, ["history ", "stats "]);
   if (history !== undefined) return history ? { type: "history", habit: history } : { type: "help" };
 
-  let logText = value;
-  for (const prefix of ["#did ", "i did ", "did ", "log "]) {
-    if (logText.startsWith(prefix)) {
-      logText = logText.slice(prefix.length);
-      break;
-    }
-  }
+  const logText = trimmed.replace(/^(?:#did|i\s+did|did|log)\s+/i, "");
 
   const [habitAndDate, ...noteParts] = logText.split(" -- ");
   const note = noteParts.join(" -- ").trim() || undefined;

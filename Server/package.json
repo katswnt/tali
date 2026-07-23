@@ -16,6 +16,7 @@
     "test:release": "npm run audit && npm run check && npm test -- --run && npm run test:integration:managed"
   },
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "@cloudflare/workers-types": "latest",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",

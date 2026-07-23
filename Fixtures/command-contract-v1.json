@@ -1,0 +1,201 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "bare habit preserves user spelling",
+      "input": "Yoga",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "Yoga"
+      }
+    },
+    {
+      "name": "conversational prefix",
+      "input": "I did Physical Therapy",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "Physical Therapy"
+      }
+    },
+    {
+      "name": "note preserves punctuation and capitalization",
+      "input": "Yoga -- Hips felt Better!",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "Yoga",
+        "note": "Hips felt Better!"
+      }
+    },
+    {
+      "name": "multiple note separators",
+      "input": "Yoga -- Left side -- then Right",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "Yoga",
+        "note": "Left side -- then Right"
+      }
+    },
+    {
+      "name": "yesterday at clock time",
+      "input": "Meditate yesterday at 7pm",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "Meditate",
+        "occurredAt": "2026-07-22T02:00:00.000Z"
+      }
+    },
+    {
+      "name": "today at 24 hour time",
+      "input": "Medication today 23:15",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "Medication",
+        "occurredAt": "2026-07-23T06:15:00.000Z"
+      }
+    },
+    {
+      "name": "weekday resolves most recent occurrence",
+      "input": "weed Sunday 2pm",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "weed",
+        "occurredAt": "2026-07-19T21:00:00.000Z"
+      }
+    },
+    {
+      "name": "weekday with on and at",
+      "input": "weed on Sunday at 2pm",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "weed",
+        "occurredAt": "2026-07-19T21:00:00.000Z"
+      }
+    },
+    {
+      "name": "future time on current weekday resolves prior week",
+      "input": "weed Wednesday 8pm",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "weed",
+        "occurredAt": "2026-07-16T03:00:00.000Z"
+      }
+    },
+    {
+      "name": "explicit last current weekday resolves prior week",
+      "input": "weed last Wednesday 2pm",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "weed",
+        "occurredAt": "2026-07-15T21:00:00.000Z"
+      }
+    },
+    {
+      "name": "midnight",
+      "input": "Sleep today at 12am",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "Sleep",
+        "occurredAt": "2026-07-22T07:00:00.000Z"
+      }
+    },
+    {
+      "name": "noon",
+      "input": "Lunch today at 12pm",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "Lunch",
+        "occurredAt": "2026-07-22T19:00:00.000Z"
+      }
+    },
+    {
+      "name": "since query",
+      "input": "Since Yoga",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "since",
+        "habit": "yoga"
+      }
+    },
+    {
+      "name": "when did query",
+      "input": "When did I Physical Therapy",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "since",
+        "habit": "physical therapy"
+      }
+    },
+    {
+      "name": "history query",
+      "input": "History Meditation",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "history",
+        "habit": "meditation"
+      }
+    },
+    {
+      "name": "undo synonym",
+      "input": "Never mind",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "undo"
+      }
+    },
+    {
+      "name": "list synonym",
+      "input": "List habits",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "list"
+      }
+    },
+    {
+      "name": "help",
+      "input": "?",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "help"
+      }
+    },
+    {
+      "name": "empty input",
+      "input": "   ",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "help"
+      }
+    }
+  ]
+}

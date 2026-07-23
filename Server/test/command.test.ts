@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { parseCommand } from "../src/command";
 
 const now = new Date("2026-07-22T19:00:00.000Z");
@@ -11,7 +13,7 @@ describe("parseCommand", () => {
   it("strips conversational prefixes and keeps a note", () => {
     expect(parseCommand("I did PT -- knee felt good", { now })).toEqual({
       type: "log",
-      habit: "pt",
+      habit: "PT",
       occurredAt: undefined,
       note: "knee felt good",
     });
@@ -60,5 +62,28 @@ describe("parseCommand", () => {
       occurredAt: "2026-07-15T21:00:00.000Z",
       note: undefined,
     });
+  });
+
+  it("satisfies the shared app and SMS command contract", () => {
+    const contractURL = new URL("../../Fixtures/command-contract-v1.json", import.meta.url);
+    const contract = JSON.parse(readFileSync(fileURLToPath(contractURL), "utf8")) as {
+      version: number;
+      cases: Array<{
+        name: string;
+        input: string;
+        now: string;
+        timeZone: string;
+        expected: Record<string, unknown>;
+      }>;
+    };
+    expect(contract.version).toBe(1);
+
+    for (const testCase of contract.cases) {
+      const command = parseCommand(testCase.input, {
+        now: new Date(testCase.now),
+        timeZone: testCase.timeZone,
+      });
+      expect(JSON.parse(JSON.stringify(command)), testCase.name).toEqual(testCase.expected);
+    }
   });
 });

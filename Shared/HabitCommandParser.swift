@@ -21,7 +21,7 @@ public struct HabitCommandParser {
 
     public func parse(_ input: String) -> HabitCommand {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return .unknown("") }
+        guard !trimmed.isEmpty else { return .help }
 
         let normalized = Habit.normalize(trimmed)
         switch normalized {
@@ -36,18 +36,14 @@ public struct HabitCommandParser {
         }
 
         if let value = value(afterAnyPrefix: ["since ", "when did i ", "when was ", "last "], in: normalized) {
-            return value.isEmpty ? .unknown(trimmed) : .since(habit: value)
+            return value.isEmpty ? .help : .since(habit: value)
         }
 
         if let value = value(afterAnyPrefix: ["history ", "stats "], in: normalized) {
-            return value.isEmpty ? .unknown(trimmed) : .history(habit: value)
+            return value.isEmpty ? .help : .history(habit: value)
         }
 
-        var logText = normalized
-        for prefix in ["#did ", "i did ", "did ", "log "] where logText.hasPrefix(prefix) {
-            logText.removeFirst(prefix.count)
-            break
-        }
+        let logText = removingLogPrefix(from: trimmed)
 
         let noteParts = logText.components(separatedBy: " -- ")
         let note = noteParts.count > 1
@@ -58,6 +54,19 @@ public struct HabitCommandParser {
 
         guard !dated.habit.isEmpty else { return .unknown(trimmed) }
         return .log(habit: dated.habit, occurredAt: dated.date, note: note)
+    }
+
+    private func removingLogPrefix(from value: String) -> String {
+        let pattern = #"^(?:#did|i\s+did|did|log)\s+"#
+        guard let expression = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
+            return value
+        }
+        let range = NSRange(value.startIndex..<value.endIndex, in: value)
+        guard let match = expression.firstMatch(in: value, range: range),
+              let matchRange = Range(match.range, in: value) else {
+            return value
+        }
+        return String(value[matchRange.upperBound...])
     }
 
     private func value(afterAnyPrefix prefixes: [String], in value: String) -> String? {
