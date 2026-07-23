@@ -246,6 +246,7 @@ private struct EditHabitView: View {
                         Label(errorMessage, systemImage: "exclamationmark.circle.fill")
                             .foregroundStyle(.red)
                             .accessibilityLabel("Error: \(errorMessage)")
+                            .accessibilityAddTraits(.updatesFrequently)
                     }
                 }
             }

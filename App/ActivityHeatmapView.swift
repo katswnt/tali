@@ -2,6 +2,9 @@ import HabitCore
 import SwiftUI
 
 struct ActivityHeatmapView: View {
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let habits: [Habit]
     let events: [HabitEvent]
     let allowsFiltering: Bool
@@ -53,38 +56,119 @@ struct ActivityHeatmapView: View {
             .first { calendar.isDate($0.date, inSameDayAs: selectedDate) }
     }
 
+    private var usesAccessibleLayout: Bool {
+        voiceOverEnabled || dynamicTypeSize.isAccessibilitySize
+    }
+
+    private var activeDays: [HeatmapDay] {
+        weeks
+            .joined()
+            .filter { $0.count > 0 }
+            .sorted { $0.date > $1.date }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Activity")
-                        .font(.title3.weight(.semibold))
-                    Text("Past four months")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    activityHeading
+                    Spacer()
+                    filterMenu
                 }
 
-                Spacer()
-
-                if allowsFiltering {
-                    Menu {
-                        Button("All habits") { selectedHabitID = nil }
-                        ForEach(habits) { habit in
-                            Button(habit.name) { selectedHabitID = habit.id }
-                        }
-                    } label: {
-                        HStack(spacing: 5) {
-                            Text(selectedHabitName)
-                                .lineLimit(1)
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(.caption2.weight(.semibold))
-                        }
-                        .font(.subheadline.weight(.medium))
-                    }
-                    .accessibilityLabel("Activity filter, \(selectedHabitName)")
+                VStack(alignment: .leading, spacing: 10) {
+                    activityHeading
+                    filterMenu
                 }
             }
 
+            if usesAccessibleLayout {
+                accessibleActivityList
+            } else {
+                activityGrid
+                activityCaption
+                legend
+            }
+        }
+        .padding(18)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
+        .onChange(of: selectedHabitID) {
+            selectedDate = nil
+        }
+    }
+
+    private var activityHeading: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Activity")
+                .font(.title3.weight(.semibold))
+            Text("Past four months")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private var filterMenu: some View {
+        if allowsFiltering {
+            Menu {
+                Button("All habits") { selectedHabitID = nil }
+                ForEach(habits) { habit in
+                    Button(habit.name) { selectedHabitID = habit.id }
+                }
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(selectedHabitName)
+                        .lineLimit(1)
+                    Text("Filter")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .font(.subheadline.weight(.medium))
+            }
+            .accessibilityLabel("Activity filter")
+            .accessibilityValue(selectedHabitName)
+        }
+    }
+
+    private var accessibleActivityList: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if activeDays.isEmpty {
+                Text("No activity recorded in the past four months.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(activeDays.prefix(14)) { day in
+                    Button {
+                        selectedDate = day.date
+                    } label: {
+                        LabeledContent(
+                            day.date.formatted(date: .abbreviated, time: .omitted),
+                            value: entryCountLabel(day.count)
+                        )
+                        .padding(.vertical, 10)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(accessibilityLabel(for: day))
+
+                    if day.id != activeDays.prefix(14).last?.id {
+                        Divider()
+                    }
+                }
+            }
+
+            if activeDays.count > 14 {
+                Text("\(activeDays.count - 14) earlier active days are available in History.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 10)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private var activityGrid: some View {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 8) {
                 VStack(spacing: cellSpacing) {
                     ForEach(0..<7, id: \.self) { dayIndex in
@@ -145,29 +229,25 @@ struct ActivityHeatmapView: View {
                 }
                 .scrollIndicators(.hidden)
             }
-
-            activityCaption
-
-            HStack(spacing: 6) {
-                Text("No entry")
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(color(for: 0))
-                    .frame(width: 11, height: 11)
-                    .accessibilityHidden(true)
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(color(for: 1))
-                    .frame(width: 11, height: 11)
-                    .accessibilityHidden(true)
-                Text("Recorded")
-            }
-            .font(.caption2)
-            .foregroundStyle(.secondary)
         }
-        .padding(18)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
-        .onChange(of: selectedHabitID) {
-            selectedDate = nil
+    }
+
+    private var legend: some View {
+        HStack(spacing: 6) {
+            Text("No entry")
+            RoundedRectangle(cornerRadius: 2)
+                .fill(color(for: 0))
+                .frame(width: 11, height: 11)
+                .accessibilityHidden(true)
+            RoundedRectangle(cornerRadius: 2)
+                .fill(color(for: 1))
+                .frame(width: 11, height: 11)
+                .accessibilityHidden(true)
+            Text("Recorded")
         }
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
     }
 
     @ViewBuilder

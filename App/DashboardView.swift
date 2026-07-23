@@ -425,6 +425,7 @@ private struct ArchivedHabitsView: View {
                         Label(errorMessage, systemImage: "exclamationmark.circle.fill")
                             .foregroundStyle(.red)
                             .accessibilityLabel("Error: \(errorMessage)")
+                            .accessibilityAddTraits(.updatesFrequently)
                     }
                 }
             }

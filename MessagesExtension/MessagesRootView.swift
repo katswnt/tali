@@ -81,6 +81,8 @@ struct MessagesRootView: View {
                     .frame(width: 32, height: 32)
                     .background(commandIsEmpty ? Color.secondary : Color.blue, in: Circle())
             }
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
             .disabled(commandIsEmpty)
             .accessibilityLabel("Submit habit command")
         }
@@ -123,6 +125,7 @@ struct MessagesRootView: View {
                 .padding(12)
                 .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
                 .accessibilityLabel("Error: \(errorMessage)")
+                .accessibilityAddTraits(.updatesFrequently)
         } else if let feedback {
             VStack(alignment: .leading, spacing: 10) {
                 Label(feedback, systemImage: "info.circle.fill")
@@ -141,6 +144,7 @@ struct MessagesRootView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+            .accessibilityAddTraits(.updatesFrequently)
         }
     }
 

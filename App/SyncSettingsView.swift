@@ -318,11 +318,13 @@ struct SyncSettingsView: View {
             Label(resultMessage, systemImage: "arrow.triangle.2.circlepath.circle.fill")
                 .foregroundStyle(.blue)
                 .accessibilityLabel("Complete: \(resultMessage)")
+                .accessibilityAddTraits(.updatesFrequently)
         }
         if let errorMessage {
             Label(errorMessage, systemImage: "exclamationmark.circle.fill")
                 .foregroundStyle(.red)
                 .accessibilityLabel("Error: \(errorMessage)")
+                .accessibilityAddTraits(.updatesFrequently)
         }
     }
 

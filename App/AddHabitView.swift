@@ -40,6 +40,7 @@ struct AddHabitView: View {
                         Text(errorMessage)
                             .foregroundStyle(.red)
                             .accessibilityLabel("Error: \(errorMessage)")
+                            .accessibilityAddTraits(.updatesFrequently)
                     }
                 }
             }
