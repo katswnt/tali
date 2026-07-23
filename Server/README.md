@@ -60,14 +60,22 @@ Keep `.dev.vars` local. It is ignored by Git.
    npx wrangler login
    ```
 
-2. Deploy once. Wrangler will provision the `tali` D1 database declared in `wrangler.jsonc` and write its ID into that file:
+2. Create a D1 database for your deployment:
 
    ```bash
-   npm run deploy
-   npm run db:migrate:remote
+   npx wrangler d1 create tali
    ```
 
-3. Generate a sync token and save the three production secrets:
+   Replace the checked-in `database_id` in `wrangler.jsonc` with the ID Wrangler returns. The committed ID belongs to Tali’s deployment and is not reusable by a fork.
+
+3. Deploy the Worker and apply its migrations:
+
+   ```bash
+    npm run deploy
+    npm run db:migrate:remote
+   ```
+
+4. Generate a sync token and save the three production secrets:
 
    ```bash
    openssl rand -hex 32
@@ -80,7 +88,7 @@ Keep `.dev.vars` local. It is ignored by Git.
 
    `APPLE_CLIENT_ID` is a non-secret Worker variable and must match the native app bundle identifier (`com.kathrynswint.Tali`).
 
-4. Copy the `https://…workers.dev` URL printed by Wrangler. Confirm that `<worker-url>/health` returns `{"ok":true,"service":"tali-sms"}`.
+5. Copy the `https://…workers.dev` URL printed by Wrangler. Confirm that `<worker-url>/health` returns `{"ok":true,"service":"tali-sms"}`.
 
 ## Connect Twilio
 
@@ -100,6 +108,8 @@ Twilio signs inbound webhooks with `X-Twilio-Signature`; the Worker validates th
 5. Check the connection in Tali. The first sync then uploads the habits already on the phone.
 6. Text a habit name to the Twilio number. Open Tali or pull down on the dashboard to fetch the entry.
 
-After setup, the Texting screen shows connection status, a masked paired number, the Tali phone number, and a manual **Sync now** action. The Worker URL is stored in the app group's preferences only when customized. Session tokens are stored in Keychain and never committed to the project. The original private-key connection remains under **Developer connection** only for backward compatibility.
+After setup, the Texting screen shows connection status, a masked paired number, the Tali phone number, and a manual **Sync now** action. The Worker URL is stored in the app group's preferences only when customized. Session tokens are stored in Keychain and never committed to the project. The original private-key connection remains under **Advanced** only for backward compatibility.
 
 Do not invite additional SMS users while the current A2P campaign still describes a single-developer beta. Update or replace the campaign and its public opt-in disclosures first; the approved registration must match the real onboarding and message traffic.
+
+For the authentication boundary, pairing threat model, synchronization algorithm, and accepted alpha constraints, see [Security and sync](../docs/security-and-sync.md).
