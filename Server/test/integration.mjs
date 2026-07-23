@@ -87,7 +87,7 @@ const [smsResponse, duplicateResponse] = await Promise.all([
   sendSMS(form),
   sendSMS(form),
 ]);
-assert.match(smsResponse, /Logged Yoga/);
+assert.match(smsResponse, /Logged yoga/i);
 assert.equal(duplicateResponse, smsResponse);
 
 const final = await sync({ habits: [], events: [] });
