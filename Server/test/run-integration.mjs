@@ -40,6 +40,7 @@ const worker = spawn(
     "ALLOW_UNSIGNED_TWILIO:true",
   ],
   {
+    detached: process.platform !== "win32",
     env: process.env,
     stdio: ["ignore", "pipe", "pipe"],
   },
@@ -79,11 +80,7 @@ try {
   if (output) console.error(`\nWorker output:\n${output}`);
   throw error;
 } finally {
-  worker.kill("SIGTERM");
-  await Promise.race([
-    once(worker, "exit"),
-    delay(5_000).then(() => worker.kill("SIGKILL")),
-  ]);
+  await stopWorker();
 }
 
 async function waitForHealth() {
@@ -102,4 +99,31 @@ async function waitForHealth() {
     await delay(250);
   }
   throw new Error(`Local Worker did not become ready: ${lastError?.message ?? "unknown error"}`);
+}
+
+async function stopWorker() {
+  if (worker.exitCode !== null) return;
+
+  const exit = once(worker, "exit");
+  signalWorker("SIGTERM");
+  const stopped = await Promise.race([
+    exit.then(() => true),
+    delay(5_000).then(() => false),
+  ]);
+  if (stopped || worker.exitCode !== null) return;
+
+  signalWorker("SIGKILL");
+  await exit;
+}
+
+function signalWorker(signal) {
+  try {
+    if (process.platform === "win32") {
+      worker.kill(signal);
+    } else {
+      process.kill(-worker.pid, signal);
+    }
+  } catch (error) {
+    if (error?.code !== "ESRCH") throw error;
+  }
 }
