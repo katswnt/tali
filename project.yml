@@ -53,6 +53,7 @@ targets:
           - Default
     settings:
       base:
+        DEVELOPMENT_TEAM: 7JZ2WK3L6X
         PRODUCT_BUNDLE_IDENTIFIER: com.kathrynswint.Tali
         PRODUCT_NAME: Tali
         GENERATE_INFOPLIST_FILE: false
@@ -82,6 +83,7 @@ targets:
           - group.com.kathrynswint.Tali
     settings:
       base:
+        DEVELOPMENT_TEAM: 7JZ2WK3L6X
         PRODUCT_BUNDLE_IDENTIFIER: com.kathrynswint.Tali.MessagesExtension
         PRODUCT_NAME: TaliMessages
         GENERATE_INFOPLIST_FILE: false
