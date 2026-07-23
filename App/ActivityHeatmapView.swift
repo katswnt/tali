@@ -304,7 +304,7 @@ struct ActivityHeatmapView: View {
         case 0:
             return Color(.tertiarySystemFill)
         default:
-            return .blue
+            return .accentColor
         }
     }
 

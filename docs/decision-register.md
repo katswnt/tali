@@ -259,3 +259,20 @@ unshipped work remain documented.
 **Revisit when:** Team contribution rules, employer policy, licensing, or model-data requirements
 change. The author should be able to explain, modify, and debug every shipped boundary regardless
 of who or what produced the first draft.
+
+### D-016 — SMS green is Tali’s single interface accent
+
+**Status:** Accepted
+
+**Decision:** Tali uses the familiar SMS green for primary actions, links, status completion, and
+binary activity cells. Informational content remains neutral, and destructive or error states
+remain red.
+
+**Why:** Green communicates that Tali is an SMS agent rather than an iMessage bot, while one shared
+asset token creates a consistent identity without heavily branding every surface.
+
+**Cost:** The color inherits an association with Apple’s SMS interface and must never be the only
+way Tali communicates state.
+
+**Revisit when:** Accessibility testing identifies a contrast or color-comprehension problem, or
+Tali expands beyond messaging enough that the transport reference becomes misleading.

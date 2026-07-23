@@ -15,7 +15,7 @@ struct TextingConnectionHeader: View {
                 systemImage: connected ? "link.circle.fill" : "message.badge.waveform.fill"
             )
             .font(.headline)
-            .foregroundStyle(.blue)
+            .foregroundStyle(Color.accentColor)
             Text(detail)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -31,7 +31,7 @@ struct TextingStatusRows: View {
     var body: some View {
         if let resultMessage {
             Label(resultMessage, systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.blue)
+                .foregroundStyle(Color.accentColor)
                 .accessibilityLabel("Complete: \(resultMessage)")
                 .accessibilityAddTraits(.updatesFrequently)
         }

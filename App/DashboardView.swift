@@ -177,7 +177,7 @@ struct DashboardView: View {
                 exportDocument = nil
             }
         }
-        .tint(.blue)
+        .tint(.accentColor)
     }
 
     private var emptyDashboardSection: some View {
