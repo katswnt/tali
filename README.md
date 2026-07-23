@@ -8,6 +8,15 @@ Tali records what happened and when. It does not decide whether an activity is g
 
 The working personal alpha includes a native iPhone app, Messages extension, Siri and Shortcuts actions, and an optional SMS service built with Twilio, Cloudflare Workers, and D1. Public SMS onboarding remains closed while the A2P campaign and production safeguards are completed.
 
+## Product tour
+
+<p align="center">
+  <img src="docs/images/tali-dashboard.png" width="360" alt="Tali dashboard showing the most recent entry, binary activity heatmap, and habit list">
+  <img src="docs/images/tali-habit-detail.png" width="360" alt="Tali habit detail showing optional elapsed time, a binary activity heatmap, and timestamp history">
+</p>
+
+These screens use the repository’s isolated, in-memory demo data. They do not contain personal history or contact the SMS service.
+
 ## Why Tali exists
 
 Most habit trackers make two assumptions:
@@ -159,6 +168,16 @@ In Xcode:
 4. Run the `Tali` scheme on an iPhone or simulator.
 
 The extension can launch in Simulator, but a physical iPhone is the meaningful end-to-end test for Messages and App Group provisioning.
+
+### Seeded portfolio demo
+
+Debug builds support a repeatable in-memory demo that never reads the normal store or synchronizes with the Worker:
+
+```bash
+xcrun simctl launch --terminate-running-process booted com.kathrynswint.Tali -tali-demo
+```
+
+The demo records a small mix of neutral and potentially loaded activities so the interface can be reviewed without publishing personal history. Closing and relaunching without `-tali-demo` returns to the normal store.
 
 ## Optional SMS service
 

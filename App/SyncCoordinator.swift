@@ -20,6 +20,7 @@ enum SyncCoordinator {
     private static var needsAnotherPass = false
 
     static func syncIfConfigured(context: ModelContext) async {
+        guard !TaliDemoData.isEnabled else { return }
         guard SyncCredentials.isConfigured else { return }
         status.hasPendingChanges = true
 
