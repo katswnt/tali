@@ -17,5 +17,22 @@
 	},
 	"triggers": {
 		"crons": ["17 8 * * *"]
+	},
+	"env": {
+		"staging": {
+			"name": "tali-sms-staging",
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "tali-staging",
+					"database_id": "40c66f34-77c1-489e-b115-0170d9304964"
+				}
+			],
+			"vars": {
+				"APPLE_CLIENT_ID": "com.kathrynswint.Tali",
+				"OWNER_TIME_ZONE": "America/Los_Angeles",
+				"ALLOW_UNSIGNED_TWILIO": "false"
+			}
+		}
 	}
 }
