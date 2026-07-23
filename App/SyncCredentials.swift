@@ -120,6 +120,7 @@ enum SyncCredentials {
     }
 
     static func clear() throws {
+        let previousEndpoint = endpoint
         let status = SecItemDelete(baseQuery as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw NSError(
@@ -130,6 +131,7 @@ enum SyncCredentials {
         }
         defaults.removeObject(forKey: endpointKey)
         defaults.removeObject(forKey: authenticationMethodKey)
+        TaliSyncService.resetCursor(endpoint: previousEndpoint)
     }
 
     static var isConfigured: Bool {

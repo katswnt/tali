@@ -151,22 +151,24 @@ appropriate. Permanent erasure belongs to the explicit account-deletion path.
 **Revisit when:** Retention requirements or user research call for per-record permanent deletion.
 That feature needs defined synchronization and export semantics rather than a local row deletion.
 
-### D-010 — Snapshot sync with stable UUIDs and last-write-wins
+### D-010 — Revisioned snapshot sync with stable UUIDs and last-write-wins
 
 **Status:** Accepted for personal alpha; intentionally temporary at larger scale
 
-**Decision:** Client and server exchange complete snapshots. Stable UUIDs preserve identity,
+**Decision:** Client and server exchange complete snapshots. A server-issued revision detects stale
+work, a client mutation UUID makes retries idempotent, stable entity UUIDs preserve identity,
 normalized names repair historical duplicates, and the newer `updatedAt` wins.
 
 **Why:** The model is small, inspectable, testable end to end, and sufficient for current data
 volume.
 
-**Cost:** It trusts reasonably accurate client clocks, does not merge fields, and transfers more
-data as histories grow.
+**Cost:** Entity conflict resolution still trusts reasonably accurate client clocks, does not merge
+fields, and transfers more data as histories grow. Revision reservation and snapshot reconciliation
+are not one D1 transaction.
 
 **Revisit when:** Tali supports sustained multi-device editing, snapshots approach a measured
-latency or size budget, or conflict reports occur. Candidate replacements are server revisions,
-logical clocks, cursor-based deltas, and an explicit conflict UI.
+latency or size budget, or conflict reports occur. Candidate replacements are logical clocks,
+cursor-based deltas, a transactional mutation boundary, and an explicit conflict UI.
 
 ### D-011 — Sign in with Apple plus one-time phone pairing
 
@@ -178,11 +180,10 @@ stores only its hash, and links an SMS number through a short-lived one-time cod
 **Why:** It minimizes identity collection, avoids passwords, fits the native platform, and separates
 account proof from phone-number control.
 
-**Cost:** Connected accounts depend on Apple identity. Sessions expire after 180 days and currently
-have individual revocation but no refresh-token rotation or one-tap revoke-all operation.
+**Cost:** Connected accounts depend on Apple identity. Short access tokens and rotating refresh
+sessions add lifecycle and replay-recovery complexity.
 
-**Revisit when:** A non-Apple client is justified, recovery failures appear, or public use requires
-shorter sessions and automatic rotation.
+**Revisit when:** A non-Apple client is justified or recovery failures appear.
 
 ### D-012 — Twilio, Cloudflare Workers, and D1 for SMS
 
@@ -239,4 +240,3 @@ unshipped work remain documented.
 **Revisit when:** Team contribution rules, employer policy, licensing, or model-data requirements
 change. The author should be able to explain, modify, and debug every shipped boundary regardless
 of who or what produced the first draft.
-

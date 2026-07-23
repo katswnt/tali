@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseSyncRequest, parseSyncSnapshot, SyncPayloadError } from "../src/validation";
+import {
+  parseSyncRequest,
+  parseSyncSnapshot,
+  parseVersionedSyncRequest,
+  SyncPayloadError,
+} from "../src/validation";
 
 const habit = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -47,5 +52,46 @@ describe("sync payload validation", () => {
       body: "{}",
     });
     await expect(parseSyncRequest(request)).rejects.toMatchObject({ status: 413 });
+  });
+
+  it("validates and canonicalizes the revisioned sync envelope", async () => {
+    const request = new Request("https://example.com/v2/sync", {
+      method: "POST",
+      body: JSON.stringify({
+        baseRevision: 4,
+        mutationId: "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+        snapshot: { habits: [habit], events: [] },
+      }),
+    });
+
+    await expect(parseVersionedSyncRequest(request)).resolves.toMatchObject({
+      baseRevision: 4,
+      mutationID: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      snapshot: {
+        habits: [{ createdAt: "2026-07-22T20:34:56.000Z" }],
+        events: [],
+      },
+    });
+  });
+
+  it("rejects invalid revision cursors and mutation IDs", async () => {
+    const payload = {
+      baseRevision: -1,
+      mutationId: "not-a-uuid",
+      snapshot: { habits: [habit], events: [] },
+    };
+    const invalidRevision = new Request("https://example.com/v2/sync", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    await expect(parseVersionedSyncRequest(invalidRevision))
+      .rejects.toThrow("baseRevision must be a non-negative integer");
+
+    const invalidMutation = new Request("https://example.com/v2/sync", {
+      method: "POST",
+      body: JSON.stringify({ ...payload, baseRevision: 0 }),
+    });
+    await expect(parseVersionedSyncRequest(invalidMutation))
+      .rejects.toThrow("mutationId must be a UUID");
   });
 });

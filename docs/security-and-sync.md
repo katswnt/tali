@@ -30,14 +30,14 @@ This document describes Tali’s current trust boundaries, synchronization behav
 1. The app creates a cryptographic nonce and requests Sign in with Apple.
 2. The Worker verifies the JWT signature against Apple’s public keys.
 3. It validates the issuer, audience, expiration, issued-at time, subject, and hashed nonce.
-4. The Worker returns a random 256-bit device session.
-5. The app stores the token in Keychain.
-6. D1 stores only its SHA-256 hash and expiration.
+4. The Worker returns a random 256-bit access token and refresh token.
+5. The app stores both in Keychain.
+6. D1 stores only SHA-256 hashes and expirations.
 
-Sessions currently last 180 days. The app lists active devices, supports revoking an individual
-session, and revokes the current session on sign-out. Account deletion revokes every session by
-deleting the account. Automatic session rotation and a one-tap revoke-all operation do not yet
-exist.
+Access tokens last 15 minutes. Refresh sessions last 90 days and rotate on every use. Reusing a
+superseded refresh token is treated as a possible credential replay and revokes every session for
+that user. The app lists active devices, supports individual revocation, and offers “sign out
+everywhere.” Account deletion removes every session with the account.
 
 ## Phone pairing
 
@@ -62,9 +62,25 @@ Each inbound `MessageSid` is recorded with its response. A repeated delivery ret
 
 ## Synchronization model
 
-The native app sends a snapshot containing habits and events. Both use stable UUIDs, creation timestamps, and update timestamps.
+The native app sends a snapshot containing habits and events. Both use stable UUIDs, creation
+timestamps, and update timestamps. Version 2 wraps that snapshot in a server-issued base revision
+and a stable client mutation UUID.
 
-The Worker:
+For each authenticated user, the Worker:
+
+1. Rejects a stale base revision with `409`, the current revision, and the canonical server
+   snapshot.
+2. Lets the app merge that snapshot locally using the normal newer-update rule.
+3. Accepts one automatic retry against the new revision.
+4. Records the mutation UUID so a network retry cannot apply the same logical mutation twice.
+5. Returns the new revision and complete canonical snapshot.
+
+Every SMS mutation also increments the same revision. This means a device that was offline while
+an SMS arrived receives an explicit conflict response rather than silently assuming its prior
+snapshot was current. Version 1 remains available temporarily so an already-installed client can
+sync during the rollout; new clients try version 2 first.
+
+Within an accepted snapshot, the Worker:
 
 1. Loads the authenticated user’s existing habits.
 2. Repairs historical duplicates with equal normalized names.
@@ -77,7 +93,10 @@ The app applies the same newer-update rule and performs one final local duplicat
 
 ### Why this model
 
-Snapshot sync is small, inspectable, and sufficient for the current data volume. UUIDs preserve identity across capture surfaces, and voided events make undo synchronize like any other update.
+Snapshot sync remains small, inspectable, and sufficient for the current data volume. UUIDs
+preserve identity across capture surfaces, voided events make undo synchronize like any other
+update, and server revisions make stale concurrent work visible without making client clocks the
+arbiter of whether a snapshot was based on current state.
 
 ### Accepted constraints
 
@@ -85,12 +104,16 @@ Snapshot sync is small, inspectable, and sufficient for the current data volume.
 - Concurrent edits do not merge individual fields.
 - The protocol transfers full snapshots rather than deltas.
 - Synchronization occurs on app activity or explicit refresh rather than background push.
+- Revision reservation and snapshot reconciliation are separate D1 operations. Last-write-wins
+  keeps entity application idempotent, but a future high-concurrency protocol should move the
+  complete mutation behind a transactional server boundary.
 
 Account deletion removes events, SMS receipts, habits, phone pairings, pairing-code history, sessions, and the user row in one D1 batch. The app intentionally keeps its local-only store so it remains useful without an account.
 
 Authenticated exports include every server-side user record while excluding session-token hashes and pairing-code hashes. The app’s complete JSON archive combines that verified server export with the local SwiftData export.
 
-Before broader multi-device use, Tali should evaluate server-issued revisions or a logical clock, pagination or deltas, and a documented conflict UX.
+Before broader multi-device use, Tali should evaluate cursor-based deltas, field-aware conflict
+UX, and a documented maximum snapshot size against measured payloads and conflict frequency.
 
 ## Logging and observability
 
@@ -116,4 +139,4 @@ The scheduled retention job deletes SMS receipts and message contents after 30 d
 - Independent signature/JWT test fixtures and security review
 - Physical-device and carrier-path testing
 - A documented backup and restore exercise for production D1 data
-- A decision on session rotation and account recovery before supporting non-Apple clients
+- An account-recovery decision before supporting non-Apple clients

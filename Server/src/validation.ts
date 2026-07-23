@@ -13,6 +13,26 @@ export class SyncPayloadError extends Error {
 }
 
 export async function parseSyncRequest(request: Request): Promise<SyncSnapshot> {
+  return parseSyncSnapshot(await parseJSONBody(request));
+}
+
+export async function parseVersionedSyncRequest(request: Request): Promise<{
+  baseRevision: number;
+  mutationID: string;
+  snapshot: SyncSnapshot;
+}> {
+  const root = record(await parseJSONBody(request), "Versioned sync payload");
+  if (!Number.isSafeInteger(root.baseRevision) || (root.baseRevision as number) < 0) {
+    throw new SyncPayloadError("baseRevision must be a non-negative integer.");
+  }
+  return {
+    baseRevision: root.baseRevision as number,
+    mutationID: uuid(root.mutationId, "mutationId"),
+    snapshot: parseSyncSnapshot(root.snapshot),
+  };
+}
+
+async function parseJSONBody(request: Request): Promise<unknown> {
   const declaredLength = Number(request.headers.get("content-length") ?? 0);
   if (declaredLength > MAX_BODY_BYTES) throw new SyncPayloadError("Sync payload is too large.", 413);
 
@@ -27,7 +47,7 @@ export async function parseSyncRequest(request: Request): Promise<SyncSnapshot> 
   } catch {
     throw new SyncPayloadError("Sync payload must be valid JSON.");
   }
-  return parseSyncSnapshot(input);
+  return input;
 }
 
 export function parseSyncSnapshot(input: unknown): SyncSnapshot {

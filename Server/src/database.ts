@@ -4,6 +4,7 @@ export async function mergeSnapshot(
   db: D1Database,
   userID: string,
   snapshot: SyncSnapshot,
+  options: { bumpRevision?: boolean } = {},
 ): Promise<SyncSnapshot> {
   const existing = await db.prepare("SELECT * FROM habits WHERE user_id = ? ORDER BY created_at, id")
     .bind(userID)
@@ -117,8 +118,22 @@ export async function mergeSnapshot(
   }
 
   assertUniqueHabitTerms(habitsByID.values());
-  if (statements.length) await db.batch(statements);
+  if (statements.length) {
+    if (options.bumpRevision !== false) statements.push(bumpSyncRevisionStatement(db, userID));
+    await db.batch(statements);
+  }
   return readSnapshot(db, userID);
+}
+
+export function bumpSyncRevisionStatement(db: D1Database, userID: string): D1PreparedStatement {
+  const now = new Date().toISOString();
+  return db.prepare(`
+    INSERT INTO sync_state (user_id, revision, updated_at)
+    VALUES (?, 1, ?)
+    ON CONFLICT(user_id) DO UPDATE SET
+      revision = sync_state.revision + 1,
+      updated_at = excluded.updated_at
+  `).bind(userID, now);
 }
 
 function rowFromDTO(habit: HabitDTO, userID: string): HabitRow {

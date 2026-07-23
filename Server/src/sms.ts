@@ -1,4 +1,5 @@
 import { normalize, parseCommand } from "./command";
+import { bumpSyncRevisionStatement } from "./database";
 import type { EventRow, HabitRow } from "./types";
 
 interface SMSReceipt {
@@ -21,8 +22,9 @@ export async function executeSMSCommand(
   }
 
   const commit = async (response: string, mutations: D1PreparedStatement[] = []): Promise<string> => {
+    const revision = mutations.length ? [bumpSyncRevisionStatement(db, userID)] : [];
     if (!receipt) {
-      if (mutations.length) await db.batch(mutations);
+      if (mutations.length) await db.batch([...mutations, ...revision]);
       return response;
     }
 
@@ -34,7 +36,7 @@ export async function executeSMSCommand(
     try {
       // D1 batches are transactional. A concurrent delivery with the same MessageSid
       // loses the primary-key race and its habit mutation is rolled back with the batch.
-      await db.batch([...mutations, record]);
+      await db.batch([...mutations, ...revision, record]);
       return response;
     } catch (error) {
       const duplicate = await db.prepare("SELECT response FROM sms_messages WHERE user_id = ? AND sid = ?")

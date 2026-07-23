@@ -37,21 +37,76 @@ public enum TaliSyncService {
         token: String,
         session: URLSession = .shared
     ) async throws -> TaliSyncReport {
-        let url = try syncURL(from: endpoint)
         try consolidateLocalHabits(in: context)
-        let localHabits = try context.fetch(FetchDescriptor<Habit>())
-        let localEvents = try context.fetch(FetchDescriptor<HabitEvent>())
-        let snapshot = SyncSnapshot(
-            habits: localHabits.map(SyncHabit.init),
-            events: localEvents.compactMap(SyncEvent.init)
-        )
+        let mutationID = UUID()
+        var baseRevision = storedRevision(for: endpoint)
 
-        var request = URLRequest(url: url)
+        for attempt in 0...1 {
+            let snapshot = try localSnapshot(context: context)
+            var request = URLRequest(url: try syncURL(from: endpoint, version: 2))
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.httpBody = try encoder.encode(VersionedSyncRequest(
+                baseRevision: baseRevision,
+                mutationId: mutationID,
+                snapshot: snapshot
+            ))
+
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw TaliSyncError.invalidResponse
+            }
+            if httpResponse.statusCode == 401 { throw TaliSyncError.unauthorized }
+            if httpResponse.statusCode == 404 {
+                return try await legacySync(
+                    context: context,
+                    endpoint: endpoint,
+                    token: token,
+                    snapshot: snapshot,
+                    session: session
+                )
+            }
+            if httpResponse.statusCode == 409, attempt == 0,
+               let conflict = try? decoder.decode(VersionedSyncConflict.self, from: data) {
+                try merge(conflict.snapshot, into: context)
+                baseRevision = conflict.revision
+                storeRevision(baseRevision, for: endpoint)
+                continue
+            }
+            guard (200..<300).contains(httpResponse.statusCode),
+                  let remote = try? decoder.decode(VersionedSyncResponse.self, from: data) else {
+                let message = (try? JSONDecoder().decode(ServerError.self, from: data).error)
+                    ?? "The sync service returned HTTP \(httpResponse.statusCode)."
+                throw TaliSyncError.server(message)
+            }
+
+            try merge(remote.snapshot, into: context)
+            storeRevision(remote.revision, for: endpoint)
+            return TaliSyncReport(
+                habitCount: remote.snapshot.habits.count,
+                eventCount: remote.snapshot.events.count
+            )
+        }
+        throw TaliSyncError.server("Tali could not reconcile concurrent changes. Try syncing again.")
+    }
+
+    public static func resetCursor(endpoint: String) {
+        revisionDefaults.removeObject(forKey: revisionKey(for: endpoint))
+    }
+
+    private static func legacySync(
+        context: ModelContext,
+        endpoint: String,
+        token: String,
+        snapshot: SyncSnapshot,
+        session: URLSession
+    ) async throws -> TaliSyncReport {
+        var request = URLRequest(url: try syncURL(from: endpoint, version: 1))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.httpBody = try encoder.encode(snapshot)
-
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw TaliSyncError.invalidResponse
@@ -62,27 +117,55 @@ public enum TaliSyncService {
                 ?? "The sync service returned HTTP \(httpResponse.statusCode)."
             throw TaliSyncError.server(message)
         }
-
         let remote = try decoder.decode(SyncSnapshot.self, from: data)
         try merge(remote, into: context)
         return TaliSyncReport(habitCount: remote.habits.count, eventCount: remote.events.count)
     }
 
-    private static func syncURL(from endpoint: String) throws -> URL {
+    private static func localSnapshot(context: ModelContext) throws -> SyncSnapshot {
+        let localHabits = try context.fetch(FetchDescriptor<Habit>())
+        let localEvents = try context.fetch(FetchDescriptor<HabitEvent>())
+        return SyncSnapshot(
+            habits: localHabits.map(SyncHabit.init),
+            events: localEvents.compactMap(SyncEvent.init)
+        )
+    }
+
+    private static func syncURL(from endpoint: String, version: Int) throws -> URL {
         let value = endpoint.trimmingCharacters(in: .whitespacesAndNewlines)
         guard var components = URLComponents(string: value),
               components.scheme == "https",
               components.host != nil else {
             throw TaliSyncError.invalidEndpoint
         }
-        if !components.path.hasSuffix("/v1/sync") {
+        let route = "v\(version)/sync"
+        if !components.path.hasSuffix("/\(route)") {
             components.path = components.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-            components.path = "/" + ([components.path, "v1/sync"]
+            components.path = "/" + ([components.path, route]
                 .filter { !$0.isEmpty && $0 != "/" }
                 .joined(separator: "/"))
         }
         guard let url = components.url else { throw TaliSyncError.invalidEndpoint }
         return url
+    }
+
+    private static let revisionDefaults =
+        UserDefaults(suiteName: PersistenceController.appGroupIdentifier) ?? .standard
+
+    private static func storedRevision(for endpoint: String) -> Int {
+        revisionDefaults.integer(forKey: revisionKey(for: endpoint))
+    }
+
+    private static func storeRevision(_ revision: Int, for endpoint: String) {
+        revisionDefaults.set(revision, forKey: revisionKey(for: endpoint))
+    }
+
+    private static func revisionKey(for endpoint: String) -> String {
+        let encoded = Data(endpoint.utf8).base64EncodedString()
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "=", with: "")
+        return "tali.sync.revision.\(encoded)"
     }
 
     private static func merge(_ snapshot: SyncSnapshot, into context: ModelContext) throws {
@@ -252,6 +335,22 @@ public enum TaliSyncService {
 private struct SyncSnapshot: Codable {
     let habits: [SyncHabit]
     let events: [SyncEvent]
+}
+
+private struct VersionedSyncRequest: Encodable {
+    let baseRevision: Int
+    let mutationId: UUID
+    let snapshot: SyncSnapshot
+}
+
+private struct VersionedSyncResponse: Decodable {
+    let revision: Int
+    let snapshot: SyncSnapshot
+}
+
+private struct VersionedSyncConflict: Decodable {
+    let revision: Int
+    let snapshot: SyncSnapshot
 }
 
 private struct SyncHabit: Codable {

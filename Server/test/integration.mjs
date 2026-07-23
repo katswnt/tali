@@ -133,6 +133,30 @@ assert.equal(secondFinal.events.some((event) => event.habitId === secondHabitID 
 const legacyFinal = await sync({ habits: [], events: [] });
 assert.equal(legacyFinal.events.some((event) => event.habitId === secondHabitID), false);
 
+const versionedMutationID = crypto.randomUUID();
+const versionedConflict = await versionedSync({
+  baseRevision: 0,
+  mutationId: versionedMutationID,
+  snapshot: { habits: [], events: [] },
+}, token, 409);
+assert.equal(versionedConflict.code, "stale_revision");
+assert.equal(versionedConflict.revision > 0, true);
+assert.equal(versionedConflict.snapshot.habits.some((habit) =>
+  habit.name.trim().toLowerCase() === "yoga"
+), true);
+const versionedResult = await versionedSync({
+  baseRevision: versionedConflict.revision,
+  mutationId: versionedMutationID,
+  snapshot: versionedConflict.snapshot,
+});
+assert.equal(versionedResult.revision, versionedConflict.revision + 1);
+const idempotentResult = await versionedSync({
+  baseRevision: versionedConflict.revision,
+  mutationId: versionedMutationID,
+  snapshot: versionedConflict.snapshot,
+});
+assert.equal(idempotentResult.revision, versionedResult.revision);
+
 seedRotatingSession();
 const refreshedResponse = await fetch(`${baseURL}/v1/auth/refresh`, {
   method: "POST",
@@ -258,6 +282,19 @@ async function sync(snapshot, bearerToken = token) {
   if (response.status !== 200) {
     throw new Error(`Sync failed (${response.status}): ${await response.text()}`);
   }
+  return response.json();
+}
+
+async function versionedSync(payload, bearerToken = token, expectedStatus = 200) {
+  const response = await fetch(`${baseURL}/v2/sync`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${bearerToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  assert.equal(response.status, expectedStatus);
   return response.json();
 }
 

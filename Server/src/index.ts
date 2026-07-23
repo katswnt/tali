@@ -16,9 +16,10 @@ import { logOperational, observeRequest, requestIdentifier } from "./observabili
 import { clientIP, consumeRateLimit, rateLimitedJSON } from "./rate-limit";
 import { enforceRetention } from "./retention";
 import { executeSMSCommand } from "./sms";
+import { versionedSync } from "./sync-v2";
 import { isAdvancedOptOutReply, twiml, validateTwilioRequest } from "./twilio";
 import type { Env } from "./types";
-import { parseSyncRequest, SyncPayloadError } from "./validation";
+import { parseSyncRequest, parseVersionedSyncRequest, SyncPayloadError } from "./validation";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -161,6 +162,19 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
           category: "database-or-merge",
         });
       }
+      return jsonError(message, status);
+    }
+  }
+
+  if (request.method === "POST" && url.pathname === "/v2/sync") {
+    const user = await authenticateRequest(request, env);
+    if (!user) return jsonError("Unauthorized", 401);
+    try {
+      const input = await parseVersionedSyncRequest(request);
+      return versionedSync(env.DB, user.id, input);
+    } catch (error) {
+      const status = error instanceof SyncPayloadError ? error.status : 500;
+      const message = error instanceof SyncPayloadError ? error.message : "Sync failed";
       return jsonError(message, status);
     }
   }
