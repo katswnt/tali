@@ -13,7 +13,7 @@
 
 ## Simulator
 
-- [ ] Launch without a SwiftData/App Group crash
+- [x] Launch without a SwiftData/App Group crash
 - [ ] Add, edit, log, archive, and restore a habit
 - [ ] Confirm duplicate habit names or aliases show an inline error
 - [ ] Pull to refresh and confirm SMS events appear once
@@ -22,8 +22,9 @@
 - [ ] Confirm the complete JSON archive includes both `local` and `server` sections when signed in
 - [ ] List active devices, revoke a non-current session, and confirm that token becomes unauthorized
 - [ ] Delete a test account and confirm server export, sync, and pairing access are revoked
-- [ ] Test large Dynamic Type, dark mode, and VoiceOver labels
-- [ ] With accessibility Dynamic Type enabled, confirm Activity becomes a readable active-day list
+- [x] Test maximum Dynamic Type, dark mode, and increased contrast
+- [ ] Test VoiceOver focus order and labels on a physical device or with Accessibility Inspector
+- [x] With accessibility Dynamic Type enabled, confirm Activity becomes a readable active-day list
 
 ## Physical iPhone
 

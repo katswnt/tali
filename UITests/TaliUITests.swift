@@ -34,6 +34,7 @@ final class TaliUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Add a habit, then log it whenever it happens."].exists)
         XCTAssertTrue(app.staticTexts["Activity"].exists)
         XCTAssertTrue(app.staticTexts["Activity will appear here."].exists)
+        XCTAssertFalse(app.buttons["Activity filter"].exists)
         XCTAssertFalse(app.buttons["Log an entry"].isEnabled)
     }
 

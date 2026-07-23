@@ -110,7 +110,7 @@ struct ActivityHeatmapView: View {
 
     @ViewBuilder
     private var filterMenu: some View {
-        if allowsFiltering {
+        if allowsFiltering && !habits.isEmpty {
             Menu {
                 Button("All habits") { selectedHabitID = nil }
                 ForEach(habits) { habit in

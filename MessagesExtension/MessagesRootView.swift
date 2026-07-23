@@ -18,6 +18,7 @@ struct MessagesRootView: View {
     @State private var errorMessage: String?
     @State private var receipt: HabitReceipt?
     @FocusState private var commandIsFocused: Bool
+    private let smsGreen = Color(red: 0.204, green: 0.780, blue: 0.349)
 
     private var activeHabits: [Habit] {
         habits.filter { !$0.isArchived }
@@ -43,7 +44,7 @@ struct MessagesRootView: View {
             .padding(16)
         }
         .background(Color(.systemBackground))
-        .tint(.blue)
+        .tint(smsGreen)
     }
 
     private var header: some View {
@@ -52,7 +53,7 @@ struct MessagesRootView: View {
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(.white)
                 .frame(width: 34, height: 34)
-                .background(.blue, in: Circle())
+                .background(smsGreen, in: Circle())
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 1) {
@@ -79,7 +80,7 @@ struct MessagesRootView: View {
                     .font(.callout.weight(.bold))
                     .foregroundStyle(.white)
                     .frame(width: 32, height: 32)
-                    .background(commandIsEmpty ? Color.secondary : Color.blue, in: Circle())
+                    .background(commandIsEmpty ? Color.secondary : smsGreen, in: Circle())
             }
             .frame(minWidth: 44, minHeight: 44)
             .contentShape(Rectangle())
