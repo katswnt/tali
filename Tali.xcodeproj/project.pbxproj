@@ -1,0 +1,799 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		04D6B46DCCD9351417A78D58 /* LogHabitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3189ED9370E553B6C37A4BAD /* LogHabitView.swift */; };
+		123760FA77DD4E5A4705BBD6 /* TaliApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A578888AC7CCBD211F75E5DA /* TaliApp.swift */; };
+		1855D67A2D20D59BB9C09848 /* HabitEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 684F4D15294AAF584FBBD3E8 /* HabitEngineTests.swift */; };
+		1C79206AB2567B767DFFFEC7 /* HabitAppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 981DBF96779A0BA8FCD31928 /* HabitAppIntents.swift */; };
+		1F9D6EE3180D61FFF7FA8259 /* HabitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9C44AA5B09E0157193784C5 /* HabitCore.framework */; };
+		216E1A795339577C9FBB6690 /* MessagesRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CD05AE51D2D8DB1F54533E2 /* MessagesRootView.swift */; };
+		227DFB338DEAEF695697AEC2 /* TaliExportDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = C92F587925634AC335DB869E /* TaliExportDocument.swift */; };
+		22FD6E537F1F71175348F9E8 /* HabitDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228E53D5CB70D07E90CF34E0 /* HabitDetailView.swift */; };
+		2328832E181B439680152D03 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DC19BECA96C9D24AC6A3678C /* Assets.xcassets */; };
+		4B5E123F57A7877A16C8CF19 /* SyncSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F462B6EC3EBBB96FBF7B056 /* SyncSettingsView.swift */; };
+		583EBECED961E3BEDAFC7BB9 /* TaliSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04DA0D51D1A8C94EBCA5052D /* TaliSyncService.swift */; };
+		5AB9B3D476741C6BF055DEFD /* TaliDataExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C358FF8DB21F2455567D8AC /* TaliDataExport.swift */; };
+		668E72F19F4DE3EA21A9DF7A /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1CCBEE7FE2FA86E15502A67 /* DashboardView.swift */; };
+		7541E3380669AE23890A9A7F /* SyncCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF69488649B33F527EA9EC55 /* SyncCoordinator.swift */; };
+		853F125D7A4BF5367BD04EDB /* HabitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF389CE303C4B24EA6FF3EFE /* HabitModels.swift */; };
+		8B86219F2AEB44C44BB21546 /* HabitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9C44AA5B09E0157193784C5 /* HabitCore.framework */; };
+		9D2E21A707E712C4F7BE1070 /* HabitFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45064815F2459CB6ABF71D25 /* HabitFormatting.swift */; };
+		A900E398FFB872C2DB1A21D5 /* HabitVisibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51B5FD73ACD5A4B4BB5D965A /* HabitVisibility.swift */; };
+		ABCA425C54BE9F8DCD55855F /* TaliMessages.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6104DF09743E127AECBA3589 /* TaliMessages.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B610ACAE8A3FC22E83E91924 /* AddHabitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907BD4CC87A8FDE65C2FF263 /* AddHabitView.swift */; };
+		B733D05EDD5C96027A17F52A /* TaliAppleSignInButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531179A52020C16ED4512E07 /* TaliAppleSignInButton.swift */; };
+		BF4EA66B8A30C2E4D1172D67 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C6FD88316F381750D87348 /* RootView.swift */; };
+		D46363AE989B63F289E421D4 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8142FB09CBF41BA6788C29FE /* PersistenceController.swift */; };
+		D46F6756E6C0A127424B9CEA /* HabitCommandParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3A3D6BE8A5C313DB5D3FA9 /* HabitCommandParser.swift */; };
+		D8F603DE3050823C58F1B799 /* HabitEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9EBE6A0D868F67593CA0FD9 /* HabitEngine.swift */; };
+		DE0BFD8E0A1372717846971A /* HabitCommandParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3764AC58563C6E76068F113 /* HabitCommandParserTests.swift */; };
+		E142B81EC3C1BE29AEBF0B0B /* MessagesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39FB6D0CBA91C496ADD821E7 /* MessagesViewController.swift */; };
+		E3E20EE01DF33B12998D497F /* HabitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9C44AA5B09E0157193784C5 /* HabitCore.framework */; };
+		E758FD44FDCD4B1D9F4AD383 /* ActivityHeatmapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BEA5B87B53E196BE66C3529 /* ActivityHeatmapView.swift */; };
+		E78A8B86307538E77F2FA390 /* TaliAccountService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34E1217C6B4B9B1D4438C38E /* TaliAccountService.swift */; };
+		E7A2EB04E9633AE3259BE8A4 /* SyncCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 086273D3B516E832414C063F /* SyncCredentials.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		1DFC2378495D521E689F841D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 956AC14695FDB5E61DCD24B4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7A3F37910683A5A1411D4668;
+			remoteInfo = TaliMessages;
+		};
+		22E92F110BFFE2FAF7015D69 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 956AC14695FDB5E61DCD24B4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 504F4985A79588BE0EA79AF4;
+			remoteInfo = HabitCore;
+		};
+		7C19E7E87DFB5B6945C9DC22 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 956AC14695FDB5E61DCD24B4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 504F4985A79588BE0EA79AF4;
+			remoteInfo = HabitCore;
+		};
+		C55FF85A095E102F3FDE223F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 956AC14695FDB5E61DCD24B4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 504F4985A79588BE0EA79AF4;
+			remoteInfo = HabitCore;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DF01483404900071D7812D69 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				ABCA425C54BE9F8DCD55855F /* TaliMessages.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		04DA0D51D1A8C94EBCA5052D /* TaliSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliSyncService.swift; sourceTree = "<group>"; };
+		086273D3B516E832414C063F /* SyncCredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncCredentials.swift; sourceTree = "<group>"; };
+		0F462B6EC3EBBB96FBF7B056 /* SyncSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncSettingsView.swift; sourceTree = "<group>"; };
+		18C6FD88316F381750D87348 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		228E53D5CB70D07E90CF34E0 /* HabitDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitDetailView.swift; sourceTree = "<group>"; };
+		2BEA5B87B53E196BE66C3529 /* ActivityHeatmapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityHeatmapView.swift; sourceTree = "<group>"; };
+		3189ED9370E553B6C37A4BAD /* LogHabitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogHabitView.swift; sourceTree = "<group>"; };
+		34E1217C6B4B9B1D4438C38E /* TaliAccountService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliAccountService.swift; sourceTree = "<group>"; };
+		39FB6D0CBA91C496ADD821E7 /* MessagesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesViewController.swift; sourceTree = "<group>"; };
+		45064815F2459CB6ABF71D25 /* HabitFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitFormatting.swift; sourceTree = "<group>"; };
+		4C358FF8DB21F2455567D8AC /* TaliDataExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliDataExport.swift; sourceTree = "<group>"; };
+		4E3A3D6BE8A5C313DB5D3FA9 /* HabitCommandParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitCommandParser.swift; sourceTree = "<group>"; };
+		51B5FD73ACD5A4B4BB5D965A /* HabitVisibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitVisibility.swift; sourceTree = "<group>"; };
+		531179A52020C16ED4512E07 /* TaliAppleSignInButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliAppleSignInButton.swift; sourceTree = "<group>"; };
+		6104DF09743E127AECBA3589 /* TaliMessages.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TaliMessages.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		684F4D15294AAF584FBBD3E8 /* HabitEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitEngineTests.swift; sourceTree = "<group>"; };
+		8142FB09CBF41BA6788C29FE /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
+		86568B0105A341BE12D6B964 /* TaliMessages.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TaliMessages.entitlements; sourceTree = "<group>"; };
+		907BD4CC87A8FDE65C2FF263 /* AddHabitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddHabitView.swift; sourceTree = "<group>"; };
+		981DBF96779A0BA8FCD31928 /* HabitAppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitAppIntents.swift; sourceTree = "<group>"; };
+		9CD05AE51D2D8DB1F54533E2 /* MessagesRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesRootView.swift; sourceTree = "<group>"; };
+		A1CCBEE7FE2FA86E15502A67 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		A578888AC7CCBD211F75E5DA /* TaliApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliApp.swift; sourceTree = "<group>"; };
+		A9C44AA5B09E0157193784C5 /* HabitCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HabitCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B3764AC58563C6E76068F113 /* HabitCommandParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitCommandParserTests.swift; sourceTree = "<group>"; };
+		B9EBE6A0D868F67593CA0FD9 /* HabitEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitEngine.swift; sourceTree = "<group>"; };
+		C08766122A87EFBD9A78569B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C2CDAECA6DFBA76D3B47EF9C /* TaliTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TaliTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C92F587925634AC335DB869E /* TaliExportDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliExportDocument.swift; sourceTree = "<group>"; };
+		D09BF900AD99F02F4B05F7D9 /* Tali.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tali.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DAD82571163F592AFEDBD955 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DC19BECA96C9D24AC6A3678C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E18B5C0663170F1E0AF4E15B /* Tali.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tali.entitlements; sourceTree = "<group>"; };
+		EF389CE303C4B24EA6FF3EFE /* HabitModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitModels.swift; sourceTree = "<group>"; };
+		EF69488649B33F527EA9EC55 /* SyncCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncCoordinator.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		19DD895D663070F7F0B9F0BB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E3E20EE01DF33B12998D497F /* HabitCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D0EF489309C5D1AF2C9A18E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8B86219F2AEB44C44BB21546 /* HabitCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		92E270B942BDCE7F36658C37 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1F9D6EE3180D61FFF7FA8259 /* HabitCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		19B2186C26EA85D51DDFFE9D /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				4E3A3D6BE8A5C313DB5D3FA9 /* HabitCommandParser.swift */,
+				B9EBE6A0D868F67593CA0FD9 /* HabitEngine.swift */,
+				45064815F2459CB6ABF71D25 /* HabitFormatting.swift */,
+				EF389CE303C4B24EA6FF3EFE /* HabitModels.swift */,
+				51B5FD73ACD5A4B4BB5D965A /* HabitVisibility.swift */,
+				8142FB09CBF41BA6788C29FE /* PersistenceController.swift */,
+				4C358FF8DB21F2455567D8AC /* TaliDataExport.swift */,
+				04DA0D51D1A8C94EBCA5052D /* TaliSyncService.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		273F2BB0525CABDA01835D6B /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				B3764AC58563C6E76068F113 /* HabitCommandParserTests.swift */,
+				684F4D15294AAF584FBBD3E8 /* HabitEngineTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		3DAF36C4B2D0F3C4C4B75B16 = {
+			isa = PBXGroup;
+			children = (
+				4BE23EEE3176E83B9254B243 /* App */,
+				FE5AB8818EB8F10A9453DA00 /* MessagesExtension */,
+				19B2186C26EA85D51DDFFE9D /* Shared */,
+				273F2BB0525CABDA01835D6B /* Tests */,
+				60B4494E1DF2129234560C87 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4BE23EEE3176E83B9254B243 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				2BEA5B87B53E196BE66C3529 /* ActivityHeatmapView.swift */,
+				907BD4CC87A8FDE65C2FF263 /* AddHabitView.swift */,
+				DC19BECA96C9D24AC6A3678C /* Assets.xcassets */,
+				A1CCBEE7FE2FA86E15502A67 /* DashboardView.swift */,
+				981DBF96779A0BA8FCD31928 /* HabitAppIntents.swift */,
+				228E53D5CB70D07E90CF34E0 /* HabitDetailView.swift */,
+				DAD82571163F592AFEDBD955 /* Info.plist */,
+				3189ED9370E553B6C37A4BAD /* LogHabitView.swift */,
+				18C6FD88316F381750D87348 /* RootView.swift */,
+				EF69488649B33F527EA9EC55 /* SyncCoordinator.swift */,
+				086273D3B516E832414C063F /* SyncCredentials.swift */,
+				0F462B6EC3EBBB96FBF7B056 /* SyncSettingsView.swift */,
+				E18B5C0663170F1E0AF4E15B /* Tali.entitlements */,
+				34E1217C6B4B9B1D4438C38E /* TaliAccountService.swift */,
+				A578888AC7CCBD211F75E5DA /* TaliApp.swift */,
+				531179A52020C16ED4512E07 /* TaliAppleSignInButton.swift */,
+				C92F587925634AC335DB869E /* TaliExportDocument.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		60B4494E1DF2129234560C87 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A9C44AA5B09E0157193784C5 /* HabitCore.framework */,
+				D09BF900AD99F02F4B05F7D9 /* Tali.app */,
+				6104DF09743E127AECBA3589 /* TaliMessages.appex */,
+				C2CDAECA6DFBA76D3B47EF9C /* TaliTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		FE5AB8818EB8F10A9453DA00 /* MessagesExtension */ = {
+			isa = PBXGroup;
+			children = (
+				C08766122A87EFBD9A78569B /* Info.plist */,
+				9CD05AE51D2D8DB1F54533E2 /* MessagesRootView.swift */,
+				39FB6D0CBA91C496ADD821E7 /* MessagesViewController.swift */,
+				86568B0105A341BE12D6B964 /* TaliMessages.entitlements */,
+			);
+			path = MessagesExtension;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1F9354404CDBDB28A284F6A8 /* Tali */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C17CF6CB9EC3CC1A4C3D0D63 /* Build configuration list for PBXNativeTarget "Tali" */;
+			buildPhases = (
+				8691BB9178F4C523F6D32A53 /* Sources */,
+				433BB2792B9E8DEEF5E718FF /* Resources */,
+				4D0EF489309C5D1AF2C9A18E /* Frameworks */,
+				DF01483404900071D7812D69 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				194F005D27619CC5560307A1 /* PBXTargetDependency */,
+				BA37E8478A39B9AF0B6EABE4 /* PBXTargetDependency */,
+			);
+			name = Tali;
+			packageProductDependencies = (
+			);
+			productName = Tali;
+			productReference = D09BF900AD99F02F4B05F7D9 /* Tali.app */;
+			productType = "com.apple.product-type.application";
+		};
+		504F4985A79588BE0EA79AF4 /* HabitCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A659C2FF53F89E1FFECD721 /* Build configuration list for PBXNativeTarget "HabitCore" */;
+			buildPhases = (
+				5B7A766A92C820729D82BBA9 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HabitCore;
+			packageProductDependencies = (
+			);
+			productName = HabitCore;
+			productReference = A9C44AA5B09E0157193784C5 /* HabitCore.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		7A3F37910683A5A1411D4668 /* TaliMessages */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E0DA8DD527659453EE16CA90 /* Build configuration list for PBXNativeTarget "TaliMessages" */;
+			buildPhases = (
+				0E63338C8E6776D1F26E9243 /* Sources */,
+				19DD895D663070F7F0B9F0BB /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				77A5D6E9F98EEAA858A8D8D7 /* PBXTargetDependency */,
+			);
+			name = TaliMessages;
+			packageProductDependencies = (
+			);
+			productName = TaliMessages;
+			productReference = 6104DF09743E127AECBA3589 /* TaliMessages.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		9AF0B59E2B245492C116239D /* TaliTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 16C0ABA70EFDB7C508CBC49F /* Build configuration list for PBXNativeTarget "TaliTests" */;
+			buildPhases = (
+				1A0BDDBE0447F973E3A1B378 /* Sources */,
+				92E270B942BDCE7F36658C37 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				984FD87B17ADB4C3E32C8F74 /* PBXTargetDependency */,
+			);
+			name = TaliTests;
+			packageProductDependencies = (
+			);
+			productName = TaliTests;
+			productReference = C2CDAECA6DFBA76D3B47EF9C /* TaliTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		956AC14695FDB5E61DCD24B4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					1F9354404CDBDB28A284F6A8 = {
+						ProvisioningStyle = Automatic;
+					};
+					504F4985A79588BE0EA79AF4 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					7A3F37910683A5A1411D4668 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					9AF0B59E2B245492C116239D = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 3A9E705B2E8D74E3DA726C63 /* Build configuration list for PBXProject "Tali" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 3DAF36C4B2D0F3C4C4B75B16;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 60B4494E1DF2129234560C87 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				504F4985A79588BE0EA79AF4 /* HabitCore */,
+				1F9354404CDBDB28A284F6A8 /* Tali */,
+				7A3F37910683A5A1411D4668 /* TaliMessages */,
+				9AF0B59E2B245492C116239D /* TaliTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		433BB2792B9E8DEEF5E718FF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2328832E181B439680152D03 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0E63338C8E6776D1F26E9243 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				216E1A795339577C9FBB6690 /* MessagesRootView.swift in Sources */,
+				E142B81EC3C1BE29AEBF0B0B /* MessagesViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1A0BDDBE0447F973E3A1B378 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DE0BFD8E0A1372717846971A /* HabitCommandParserTests.swift in Sources */,
+				1855D67A2D20D59BB9C09848 /* HabitEngineTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5B7A766A92C820729D82BBA9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D46F6756E6C0A127424B9CEA /* HabitCommandParser.swift in Sources */,
+				D8F603DE3050823C58F1B799 /* HabitEngine.swift in Sources */,
+				9D2E21A707E712C4F7BE1070 /* HabitFormatting.swift in Sources */,
+				853F125D7A4BF5367BD04EDB /* HabitModels.swift in Sources */,
+				A900E398FFB872C2DB1A21D5 /* HabitVisibility.swift in Sources */,
+				D46363AE989B63F289E421D4 /* PersistenceController.swift in Sources */,
+				5AB9B3D476741C6BF055DEFD /* TaliDataExport.swift in Sources */,
+				583EBECED961E3BEDAFC7BB9 /* TaliSyncService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8691BB9178F4C523F6D32A53 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E758FD44FDCD4B1D9F4AD383 /* ActivityHeatmapView.swift in Sources */,
+				B610ACAE8A3FC22E83E91924 /* AddHabitView.swift in Sources */,
+				668E72F19F4DE3EA21A9DF7A /* DashboardView.swift in Sources */,
+				1C79206AB2567B767DFFFEC7 /* HabitAppIntents.swift in Sources */,
+				22FD6E537F1F71175348F9E8 /* HabitDetailView.swift in Sources */,
+				04D6B46DCCD9351417A78D58 /* LogHabitView.swift in Sources */,
+				BF4EA66B8A30C2E4D1172D67 /* RootView.swift in Sources */,
+				7541E3380669AE23890A9A7F /* SyncCoordinator.swift in Sources */,
+				E7A2EB04E9633AE3259BE8A4 /* SyncCredentials.swift in Sources */,
+				4B5E123F57A7877A16C8CF19 /* SyncSettingsView.swift in Sources */,
+				E78A8B86307538E77F2FA390 /* TaliAccountService.swift in Sources */,
+				123760FA77DD4E5A4705BBD6 /* TaliApp.swift in Sources */,
+				B733D05EDD5C96027A17F52A /* TaliAppleSignInButton.swift in Sources */,
+				227DFB338DEAEF695697AEC2 /* TaliExportDocument.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		194F005D27619CC5560307A1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 504F4985A79588BE0EA79AF4 /* HabitCore */;
+			targetProxy = 7C19E7E87DFB5B6945C9DC22 /* PBXContainerItemProxy */;
+		};
+		77A5D6E9F98EEAA858A8D8D7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 504F4985A79588BE0EA79AF4 /* HabitCore */;
+			targetProxy = 22E92F110BFFE2FAF7015D69 /* PBXContainerItemProxy */;
+		};
+		984FD87B17ADB4C3E32C8F74 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 504F4985A79588BE0EA79AF4 /* HabitCore */;
+			targetProxy = C55FF85A095E102F3FDE223F /* PBXContainerItemProxy */;
+		};
+		BA37E8478A39B9AF0B6EABE4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7A3F37910683A5A1411D4668 /* TaliMessages */;
+			targetProxy = 1DFC2378495D521E689F841D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		02EAFD1FE332FD1D06BC7AAC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/Tali.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 7JZ2WK3L6X;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kathrynswint.Tali;
+				PRODUCT_NAME = Tali;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		1A578A53F05FED60C34267AC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		5280C2761427564431C64606 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MACH_O_TYPE = staticlib;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kathrynswint.Tali.HabitCore;
+				PRODUCT_NAME = HabitCore;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		67DF0020AD8EF7A3CBFBA826 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kathrynswint.TaliTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		909647DCA4A9ED46A6E17C6E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = MessagesExtension/TaliMessages.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MessagesExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kathrynswint.Tali.MessagesExtension;
+				PRODUCT_NAME = TaliMessages;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A3F42772EC10B69B3A9880BA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/Tali.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 7JZ2WK3L6X;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kathrynswint.Tali;
+				PRODUCT_NAME = Tali;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A44872F85F2E406494A7139E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MACH_O_TYPE = staticlib;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kathrynswint.Tali.HabitCore;
+				PRODUCT_NAME = HabitCore;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		B096C48B93769FD90E1B9571 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kathrynswint.TaliTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D6E1B5C922F15A909A92A5A3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = MessagesExtension/TaliMessages.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MessagesExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.kathrynswint.Tali.MessagesExtension;
+				PRODUCT_NAME = TaliMessages;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DB0FBB4E63A2E420099F9E10 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		16C0ABA70EFDB7C508CBC49F /* Build configuration list for PBXNativeTarget "TaliTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B096C48B93769FD90E1B9571 /* Debug */,
+				67DF0020AD8EF7A3CBFBA826 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		3A9E705B2E8D74E3DA726C63 /* Build configuration list for PBXProject "Tali" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1A578A53F05FED60C34267AC /* Debug */,
+				DB0FBB4E63A2E420099F9E10 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7A659C2FF53F89E1FFECD721 /* Build configuration list for PBXNativeTarget "HabitCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A44872F85F2E406494A7139E /* Debug */,
+				5280C2761427564431C64606 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C17CF6CB9EC3CC1A4C3D0D63 /* Build configuration list for PBXNativeTarget "Tali" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A3F42772EC10B69B3A9880BA /* Debug */,
+				02EAFD1FE332FD1D06BC7AAC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E0DA8DD527659453EE16CA90 /* Build configuration list for PBXNativeTarget "TaliMessages" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D6E1B5C922F15A909A92A5A3 /* Debug */,
+				909647DCA4A9ED46A6E17C6E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 956AC14695FDB5E61DCD24B4 /* Project object */;
+}

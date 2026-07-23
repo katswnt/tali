@@ -1,0 +1,4 @@
+SYNC_TOKEN="generate-a-long-random-value"
+OWNER_PHONE="+15555550123"
+TWILIO_AUTH_TOKEN="your-twilio-auth-token"
+ALLOW_UNSIGNED_TWILIO="true"

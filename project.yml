@@ -1,0 +1,124 @@
+name: Tali
+
+options:
+  bundleIdPrefix: com.kathrynswint
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 0.1.0
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+    ENABLE_USER_SCRIPT_SANDBOXING: true
+
+targets:
+  HabitCore:
+    type: framework
+    platform: iOS
+    sources:
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kathrynswint.Tali.HabitCore
+        PRODUCT_NAME: HabitCore
+        MACH_O_TYPE: staticlib
+        DEFINES_MODULE: true
+        GENERATE_INFOPLIST_FILE: true
+        SKIP_INSTALL: true
+
+  Tali:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Tali
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+    entitlements:
+      path: App/Tali.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.kathrynswint.Tali
+        com.apple.developer.applesignin:
+          - Default
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kathrynswint.Tali
+        PRODUCT_NAME: Tali
+        GENERATE_INFOPLIST_FILE: false
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    dependencies:
+      - target: HabitCore
+        embed: false
+      - target: TaliMessages
+        embed: true
+
+  TaliMessages:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: MessagesExtension
+    info:
+      path: MessagesExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Tali
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.message-payload-provider
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).MessagesViewController
+    entitlements:
+      path: MessagesExtension/TaliMessages.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.kathrynswint.Tali
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kathrynswint.Tali.MessagesExtension
+        PRODUCT_NAME: TaliMessages
+        GENERATE_INFOPLIST_FILE: false
+        APPLICATION_EXTENSION_API_ONLY: true
+        SKIP_INSTALL: true
+    dependencies:
+      - target: HabitCore
+        embed: false
+
+  TaliTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: HabitCore
+        embed: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kathrynswint.TaliTests
+        GENERATE_INFOPLIST_FILE: true
+
+schemes:
+  Tali:
+    build:
+      targets:
+        HabitCore: all
+        Tali: all
+        TaliMessages: all
+        TaliTests: [test]
+    run:
+      config: Debug
+      executable: Tali
+    test:
+      gatherCoverageData: true
+      targets:
+        - TaliTests
+    profile:
+      config: Release
+      executable: Tali

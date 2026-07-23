@@ -1,0 +1,21 @@
+{
+  "name": "tali-sms",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply tali --local",
+    "db:migrate:remote": "wrangler d1 migrations apply tali --remote",
+    "test": "vitest run",
+    "test:integration:local": "node test/integration.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.26.1"
+  }
+}

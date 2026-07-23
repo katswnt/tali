@@ -1,0 +1,11 @@
+.DS_Store
+.build/
+.build-spm/
+.swiftpm/
+DerivedData/
+*.xcresult
+*.xcuserstate
+xcuserdata/
+Server/node_modules/
+Server/.wrangler/
+Server/.dev.vars
