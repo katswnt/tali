@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:integration:local": "node test/integration.mjs",
     "test:integration:managed": "node test/run-integration.mjs",
+    "test:smoke:staging": "node test/staging-smoke.mjs",
     "load:smoke": "k6 run load/smoke.js",
     "test:release": "npm run audit && npm run check && npm test -- --run && npm run test:integration:managed"
   },

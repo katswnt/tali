@@ -11,7 +11,8 @@ Never use the production database to test migrations, load, retention, account d
 
 ## Required secrets
 
-Set these for both environments, using environment-specific values where appropriate:
+Set these for both environments, using environment-specific values where appropriate. A new
+Cloudflare Worker must exist before Wrangler accepts secrets for it.
 
 ```sh
 cd Server
@@ -24,11 +25,18 @@ Production omits `--env staging`. Do not put secret values in `.dev.vars.example
 
 ## Deploy
 
-Deploy staging first:
+For the first staging deployment, apply migrations and create the Worker, then immediately add the
+three staging secrets:
 
 ```sh
 ./scripts/deploy-worker.sh staging
+npx wrangler secret put TWILIO_AUTH_TOKEN --env staging
+npx wrangler secret put OWNER_PHONE --env staging
+npx wrangler secret put SYNC_TOKEN --env staging
 ```
+
+Do not configure a Twilio webhook for staging until its secret is present and the health and
+read-only staging smoke checks pass. Later staging deployments need only the deploy script.
 
 After smoke, integration, and load checks pass, back up production and deploy with an explicit confirmation:
 
@@ -44,6 +52,7 @@ The deploy script runs type checks and Worker tests before applying migrations, 
 Run the health-only load smoke against staging:
 
 ```sh
+TALI_BASE_URL=https://tali-sms-staging.<account>.workers.dev npm --prefix Server run test:smoke:staging
 TALI_BASE_URL=https://tali-sms-staging.<account>.workers.dev npm --prefix Server run load:smoke
 ```
 
