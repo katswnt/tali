@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 
-const baseURL = "http://127.0.0.1:8787";
+const baseURL = process.env.TALI_BASE_URL ?? "http://127.0.0.1:8787";
 const token = "local-test-token";
 const yogaID = "11111111-1111-4111-8111-111111111111";
 const appEventID = "22222222-2222-4222-8222-222222222222";

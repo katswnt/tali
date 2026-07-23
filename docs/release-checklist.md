@@ -2,13 +2,13 @@
 
 ## Automated
 
-- [ ] `swift test --scratch-path .build-spm`
-- [ ] `npm test -- --run` in `Server`
-- [ ] `npm run check` in `Server`
-- [ ] `npm run db:migrate:local` in `Server`
-- [ ] Run `npm run dev` and then `npm run test:integration:local`
-- [ ] Trigger the local scheduled handler and confirm retention completes without an error
-- [ ] Build the `Tali` scheme for the selected simulator with normal signing
+- [ ] Run `./scripts/release-check.sh`
+- [ ] Confirm it regenerates the Xcode project without a diff
+- [ ] Confirm all 19 Swift tests and all 29 Worker tests pass
+- [ ] Confirm the npm audit reports no high or critical advisories
+- [ ] Confirm the managed local Worker/D1 test passes sync, SMS, tenant isolation, account lifecycle, rate limits, and retention
+- [ ] Confirm the `Tali` app and embedded Messages extension build without warnings
+- [ ] Confirm `App/PrivacyInfo.xcprivacy` matches the production behavior and `docs/app-store-submission.md`
 
 ## Simulator
 
@@ -22,16 +22,27 @@
 - [ ] List active devices, revoke a non-current session, and confirm that token becomes unauthorized
 - [ ] Delete a test account and confirm server export, sync, and pairing access are revoked
 - [ ] Test large Dynamic Type, dark mode, and VoiceOver labels
+- [ ] With accessibility Dynamic Type enabled, confirm Activity becomes a readable active-day list
 
 ## Physical iPhone
 
-- [ ] Select the development team for both Tali targets
+- [ ] Confirm development team `7JZ2WK3L6X` resolves for both Tali targets
 - [ ] Confirm the same App Group is enabled for the app and Messages extension
 - [ ] Install and launch Tali from Xcode
 - [ ] Open Tali from the Messages app drawer
 - [ ] Log a habit and insert an optional receipt
 - [ ] Verify the app and extension see the same entry
 - [ ] Verify Siri and Shortcuts discover Tali's App Intents
+
+## Archive and TestFlight
+
+- [ ] Increment `CURRENT_PROJECT_VERSION` before each upload
+- [ ] Archive with the `Tali` scheme using a generic iOS device destination
+- [ ] Validate the archive in Organizer with no privacy, entitlement, or extension-version warnings
+- [ ] Confirm the archive contains `PrivacyInfo.xcprivacy`, the Messages extension, App Group, and Sign in with Apple entitlements
+- [ ] Reconcile App Privacy answers with `docs/app-store-submission.md`
+- [ ] Verify the privacy and support URLs are public and accurate
+- [ ] Upload to TestFlight and complete internal testing on a physical iPhone
 
 ## SMS and carrier
 

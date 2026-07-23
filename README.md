@@ -125,11 +125,18 @@ swift test --scratch-path .build-spm
 
 cd Server
 npm ci
-npm run check
-npm test
+npm run test:release
 ```
 
 Physical-device, App Group, Messages, Siri, and carrier behavior remain explicit release-checklist items because simulator and unit tests cannot prove those integrations.
+
+The repository-level release check regenerates the Xcode project, runs every Swift and Worker test,
+boots an isolated local Worker/D1 integration environment, triggers retention, and builds the app
+plus Messages extension:
+
+```bash
+./scripts/release-check.sh
+```
 
 ## Project structure
 

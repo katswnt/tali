@@ -57,3 +57,6 @@ jobs:
 
       - name: Run Worker tests
         run: npm test
+
+      - name: Run local Worker and D1 integration
+        run: npm run test:integration:managed
