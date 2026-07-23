@@ -219,7 +219,26 @@ aggregate event instrumentation with a written data budget before adding any SDK
 
 ## Delivery decisions
 
-### D-014 — AI-assisted, human-directed development
+### D-014 — Confirmed contact creation instead of silent address-book mutation
+
+**Status:** Accepted
+
+**Decision:** Tali offers Apple’s native new-contact sheet prefilled with Tali’s name, SMS number,
+website, and app icon. The user reviews and confirms the save. Tali does not request broad Contacts
+access or write a contact silently.
+
+**Why:** SMS cannot assign its own display name or contact photo on another person’s device. A
+native confirmation sheet creates the useful contact without pretending Tali controls the sender
+identity, and it keeps an address-book mutation visible and reversible.
+
+**Cost:** Meeting Tali includes one intentional save action. The icon depends on the installed app
+bundle, and simulator behavior does not prove the physical-device Contacts path.
+
+**Revisit when:** Usability research shows the sheet is hard to discover, or an explicitly requested
+vCard MMS proves clearer and worth its delivery, hosting, and carrier costs. Never trade away user
+confirmation merely to reduce a tap.
+
+### D-015 — AI-assisted, human-directed development
 
 **Status:** Accepted and disclosed
 
