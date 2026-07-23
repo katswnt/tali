@@ -45,6 +45,12 @@ export function privacyPage(): Response {
         activity, return transactional replies, synchronize the Tali app, prevent abuse, and
         troubleshoot service problems.
       `)}
+      ${section("Retention and deletion", `
+        Habit records remain until the user deletes the account. SMS delivery receipts and message
+        contents are removed after 30 days, expired pairing-code history after one day, and old
+        revoked or expired sessions after 30 days. Users can export or delete their server data
+        from Tali's Texting settings.
+      `)}
       ${section("Mobile information and sharing", `
         Mobile information, including phone numbers and SMS consent records, is not sold, rented,
         or shared with third parties or affiliates for their marketing or promotional purposes.

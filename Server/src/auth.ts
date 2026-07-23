@@ -1,5 +1,6 @@
 import { LEGACY_USER_ID } from "./types";
 import type { AuthenticatedUser, Env } from "./types";
+import { logOperational, requestIdentifier } from "./observability";
 
 const APPLE_ISSUER = "https://appleid.apple.com";
 const APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys";
@@ -91,8 +92,11 @@ export async function signInWithApple(request: Request, env: Env): Promise<Respo
   try {
     const claims = await verifyAppleIdentityToken(identityToken, rawNonce, env.APPLE_CLIENT_ID);
     subject = claims.sub as string;
-  } catch (error) {
-    console.warn("Apple identity token rejected", error);
+  } catch {
+    logOperational("warn", "auth.apple_rejected", {
+      requestID: requestIdentifier(request),
+      category: "token-verification",
+    });
     return jsonError("Apple sign-in could not be verified.", 401);
   }
 

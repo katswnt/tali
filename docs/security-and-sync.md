@@ -89,7 +89,7 @@ Before broader multi-device use, Tali should evaluate server-issued revisions or
 
 ## Logging and observability
 
-Tali intentionally has no behavioral analytics in the personal alpha. Production operations still need structured signals for:
+Tali intentionally has no behavioral analytics in the personal alpha. Production operations emit structured signals for:
 
 - authentication failures by category;
 - invalid webhook signatures;
@@ -99,13 +99,14 @@ Tali intentionally has no behavioral analytics in the personal alpha. Production
 - Twilio delivery status;
 - client-visible sync errors.
 
-Those events should use generated identifiers and error categories, not habit names, notes, phone numbers, or raw SMS bodies.
+Those events use generated identifiers and error categories, not habit names, notes, phone numbers, identity tokens, session tokens, or raw SMS bodies. TwiML replies include a signed delivery-status callback so delivery failures can be correlated by generated Twilio Message SID.
+
+Authentication attempts are limited by a hash of Cloudflare’s connection IP, pairing-code creation by generated user ID, and SMS pairing attempts by a hash of the sending number. Raw identifiers are never stored in the rate-limit table.
+
+The scheduled retention job deletes SMS receipts and message contents after 30 days, pairing-code history after one day, and old revoked or expired sessions after 30 days. Habit records remain until the user deletes the account.
 
 ## Public-launch gates
 
 - A2P campaign approval for the actual onboarding and message flow
-- Per-user and per-IP rate limits
-- Defined retention and deletion behavior
 - Independent signature/JWT test fixtures and security review
-- Privacy-preserving operational monitoring and alerts
 - Physical-device and carrier-path testing

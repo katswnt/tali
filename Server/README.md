@@ -14,6 +14,7 @@ This Cloudflare Worker turns a Twilio phone number into a multi-user text interf
 - `POST /v1/pairing/code` — create a short-lived one-time pairing code
 - `DELETE /v1/session` — revoke the current device session
 - `POST /twilio/incoming` — Twilio incoming-message webhook
+- `POST /twilio/status` — signed, content-free delivery-status callback
 - `POST /v1/sync` — bidirectional snapshot sync for the Tali app
 
 The SMS parser accepts the same core commands as the native app:
@@ -39,6 +40,10 @@ Sync consolidates habits by normalized name when different installations upload 
 
 Migration `0003_multi_user.sql` assigns all pre-existing data to a fixed legacy user. The original `SYNC_TOKEN` and `OWNER_PHONE` keep working during migration. When that owner signs in and pairs the existing phone, Tali atomically moves the new Apple session onto the legacy user so the old data remains intact. Rotate or retire `SYNC_TOKEN` after that transition is verified.
 
+Migration `0005_rate_limits.sql` stores only hashed abuse-control identifiers. Authentication is limited by Cloudflare connection IP, pairing-code creation by generated user ID, and SMS pairing attempts by a hash of the sending number.
+
+The daily scheduled handler removes expired rate-limit rows, pairing-code history older than one day, SMS receipts and message contents older than 30 days, and revoked or expired sessions after 30 days. Habit data remains until account deletion.
+
 ## Local development
 
 ```bash
@@ -47,6 +52,8 @@ npm install
 npm run db:migrate:local
 npm run dev
 ```
+
+Production operational logs are structured JSON and contain route categories, generated request and user IDs, status codes, duration, and failure categories. They intentionally exclude phone numbers, habit names, notes, raw message bodies, identity tokens, and session tokens.
 
 In another terminal:
 

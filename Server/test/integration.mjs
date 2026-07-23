@@ -13,6 +13,7 @@ const secondUserID = "33333333-3333-4333-8333-333333333333";
 const secondToken = "second-local-test-token";
 const otherSessionToken = "other-local-test-token";
 const secondPhone = "+15555550125";
+const limitedPhone = "+15555550126";
 const secondSessionID = "44444444-4444-4444-8444-444444444444";
 const otherSessionID = "77777777-7777-4777-8777-777777777777";
 const claimToken = "legacy-claim-test-token";
@@ -153,6 +154,27 @@ assert.equal(exported.habits.some((habit) => habit.name.trim().toLowerCase() ===
 assert.equal(JSON.stringify(exported).includes("token_hash"), false);
 assert.equal(JSON.stringify(exported).includes(otherSessionToken), false);
 
+const pairingCodeStatuses = [];
+for (let attempt = 0; attempt < 6; attempt += 1) {
+  const response = await fetch(`${baseURL}/v1/pairing/code`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${secondToken}` },
+  });
+  pairingCodeStatuses.push(response.status);
+}
+assert.deepEqual(pairingCodeStatuses, [200, 200, 200, 200, 200, 429]);
+
+let finalPairingAttempt = "";
+for (let attempt = 0; attempt < 11; attempt += 1) {
+  finalPairingAttempt = await sendSMS(new URLSearchParams({
+    From: limitedPhone,
+    To: "+15555550124",
+    Body: "PAIR ZZZZ9999",
+    MessageSid: `SM-RATE-${attempt}`,
+  }));
+}
+assert.match(finalPairingAttempt, /Too many pairing attempts/);
+
 seedLegacyClaim();
 const claimResponse = await sendSMS(new URLSearchParams({
   From: "+15555550123",
@@ -213,7 +235,10 @@ function seedSecondUser() {
   const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
   const tokenHash = createHash("sha256").update(secondToken).digest("hex");
   const otherTokenHash = createHash("sha256").update(otherSessionToken).digest("hex");
+  const userLimitKey = `pairing-user:${createHash("sha256").update(secondUserID).digest("hex")}`;
+  const phoneLimitKey = `pairing-phone:${createHash("sha256").update(limitedPhone).digest("hex")}`;
   const sql = `
+    DELETE FROM rate_limits WHERE key IN ('${userLimitKey}', '${phoneLimitKey}');
     INSERT OR REPLACE INTO users (id, apple_subject, time_zone, created_at, updated_at)
     VALUES ('${secondUserID}', 'integration-second-user', 'America/New_York', '${now}', '${now}');
     INSERT OR REPLACE INTO sessions (

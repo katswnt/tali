@@ -25,6 +25,17 @@ describe("Twilio helpers", () => {
     await expect(twiml("Yoga & PT <done>").text()).resolves.toContain("Yoga &amp; PT &lt;done&gt;");
   });
 
+  it("adds an escaped delivery callback without changing the message", async () => {
+    const response = await twiml(
+      "Logged Yoga.",
+      "https://example.com/twilio/status?source=a&kind=b",
+    ).text();
+    expect(response).toContain(
+      'statusCallback="https://example.com/twilio/status?source=a&amp;kind=b"',
+    );
+    expect(response).toContain(">Logged Yoga.</Message>");
+  });
+
   it("returns empty TwiML when Twilio already handled Advanced Opt-Out", async () => {
     const parameters = new URLSearchParams({ OptOutType: "STOP" });
     expect(isAdvancedOptOutReply(parameters)).toBe(true);

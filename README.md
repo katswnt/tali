@@ -116,7 +116,7 @@ The longer narrative is in the [product and engineering case study](docs/portfol
 ## Reliability and tests
 
 - **19 Swift tests** cover parsing, aliases, backdating, logging, undo, archive/restore, export, time-since visibility, schema migration, and duplicate consolidation.
-- **22 Worker tests** cover the SMS grammar, time zones, validation limits, compliance pages and copy, Twilio signatures, XML escaping, and pairing-code parsing.
+- **29 Worker tests** cover the SMS grammar, time zones, validation limits, compliance pages and copy, Twilio signatures, XML escaping, pairing-code parsing, hashed rate limits, retention, and privacy-safe logging.
 - A local Worker/D1 integration test exercises round-trip sync, two-user isolation, deliberate duplicate creation, event remapping, webhook idempotency, SMS logging, and legacy-account migration.
 - The Xcode scheme gathers coverage for the shared framework.
 
@@ -200,9 +200,6 @@ Tali is a working personal alpha and portfolio project, not an App Store release
 Before inviting multi-user SMS traffic:
 
 - Obtain A2P approval for the real onboarding and traffic.
-- Add per-user and per-IP rate limits around authentication and pairing.
-- Add privacy-preserving operational monitoring without habit names or message bodies.
-- Define and enforce server data-retention behavior.
 - Complete physical-device, VoiceOver, large Dynamic Type, dark mode, and TestFlight testing.
 
 The complete checklist lives in [docs/release-checklist.md](docs/release-checklist.md).

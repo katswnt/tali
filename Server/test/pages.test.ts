@@ -14,6 +14,8 @@ describe("public SMS compliance pages", () => {
     const content = await privacyPage().text();
     expect(content).toContain("not sold, rented");
     expect(content).toContain("marketing or promotional purposes");
+    expect(content).toContain("contents are removed after 30 days");
+    expect(content).toContain("export or delete their server data");
   });
 
   it("publishes recurring-message, opt-out, and carrier terms", async () => {

@@ -7,6 +7,7 @@
 - [ ] `npm run check` in `Server`
 - [ ] `npm run db:migrate:local` in `Server`
 - [ ] Run `npm run dev` and then `npm run test:integration:local`
+- [ ] Trigger the local scheduled handler and confirm retention completes without an error
 - [ ] Build the `Tali` scheme for the selected simulator with normal signing
 
 ## Simulator
@@ -40,4 +41,5 @@
 - [ ] Incoming webhook is `https://tali-sms.katswint.workers.dev/twilio/incoming` using HTTP POST
 - [ ] Text `START`, `HELP`, a configured habit, `HABITS`, `UNDO`, and `STOP`
 - [ ] Confirm Twilio logs contain no 11200, 30034, or signature failures
+- [ ] Confirm `/twilio/status` records delivery categories without message contents or phone numbers
 - [ ] Confirm the app syncs the SMS entry exactly once

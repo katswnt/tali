@@ -14,5 +14,8 @@
 		"APPLE_CLIENT_ID": "com.kathrynswint.Tali",
 		"OWNER_TIME_ZONE": "America/Los_Angeles",
 		"ALLOW_UNSIGNED_TWILIO": "false"
+	},
+	"triggers": {
+		"crons": ["17 8 * * *"]
 	}
 }
