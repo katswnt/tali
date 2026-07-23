@@ -1,5 +1,7 @@
 # Tali
 
+[![CI](https://github.com/katswnt/tali/actions/workflows/ci.yml/badge.svg)](https://github.com/katswnt/tali/actions/workflows/ci.yml)
+
 **An emotionally neutral activity log you can update by sending a message.**
 
 Tali records what happened and when. It does not decide whether an activity is good or bad, turn repetition into a streak, or recommend what the user should do next.
