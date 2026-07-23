@@ -2,13 +2,14 @@
 
 ## Automated
 
-- [ ] Run `./scripts/release-check.sh`
-- [ ] Confirm it regenerates the Xcode project without a diff
-- [ ] Confirm all 19 Swift tests and all 29 Worker tests pass
-- [ ] Confirm the npm audit reports no high or critical advisories
-- [ ] Confirm the managed local Worker/D1 test passes sync, SMS, tenant isolation, account lifecycle, rate limits, and retention
-- [ ] Confirm the `Tali` app and embedded Messages extension build without warnings
-- [ ] Confirm `App/PrivacyInfo.xcprivacy` matches the production behavior and `docs/app-store-submission.md`
+- [x] Run `./scripts/release-check.sh`
+- [x] Confirm it regenerates the Xcode project without a diff
+- [x] Confirm all 20 Swift tests and all 43 Worker tests pass
+- [x] Confirm the npm audit reports no high or critical advisories
+- [x] Confirm the managed local Worker/D1 test passes revisioned sync, SMS, tenant isolation, rotating-session lifecycle, rate limits, and retention
+- [x] Confirm the `Tali` app and embedded Messages extension build without source warnings
+- [x] Confirm all three deterministic iOS UI smoke journeys pass locally
+- [x] Confirm `App/PrivacyInfo.xcprivacy` matches the production behavior and `docs/app-store-submission.md`
 
 ## Simulator
 

@@ -3,7 +3,8 @@ import XCTest
 final class TaliUITests: XCTestCase {
     private var app: XCUIApplication!
 
-    override func setUpWithError() throws {
+    @MainActor
+    override func setUp() async throws {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments = ["-tali-ui-test"]
@@ -11,7 +12,8 @@ final class TaliUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Tali"].waitForExistence(timeout: 8))
     }
 
-    override func tearDownWithError() throws {
+    @MainActor
+    override func tearDown() async throws {
         if (testRun?.failureCount ?? 0) > 0 {
             let screenshot = XCTAttachment(screenshot: app.screenshot())
             screenshot.name = "Tali failure"
@@ -26,6 +28,7 @@ final class TaliUITests: XCTestCase {
         app.terminate()
     }
 
+    @MainActor
     func testEmptyStateExplainsProductWithoutSuggestedHabits() {
         XCTAssertTrue(app.staticTexts["Track something"].exists)
         XCTAssertTrue(app.staticTexts["Add a habit, then log it whenever it happens."].exists)
@@ -34,6 +37,7 @@ final class TaliUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Log an entry"].isEnabled)
     }
 
+    @MainActor
     func testCriticalLocalJourney() {
         addHabit(named: "Yoga", aliases: "stretch")
 
@@ -68,12 +72,14 @@ final class TaliUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["TIME SINCE"].exists)
     }
 
+    @MainActor
     func testExportChoicesAreDiscoverable() {
         app.buttons["dashboard.more"].tap()
         XCTAssertTrue(app.buttons["All data as CSV"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.buttons["Complete archive as JSON"].exists)
     }
 
+    @MainActor
     private func addHabit(named name: String, aliases: String) {
         app.buttons["dashboard.empty.addHabit"].tap()
         XCTAssertTrue(app.navigationBars["New Habit"].waitForExistence(timeout: 3))
