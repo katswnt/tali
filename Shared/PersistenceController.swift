@@ -1,5 +1,5 @@
 import Foundation
-import SwiftData
+@preconcurrency import SwiftData
 
 public enum TaliSchemaV1: VersionedSchema {
     public static let versionIdentifier = Schema.Version(1, 0, 0)
