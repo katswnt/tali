@@ -19,6 +19,7 @@ struct SyncSettingsView: View {
     @State private var showingDisconnectAlert = false
     @State private var showingSignOutEverywhereAlert = false
     @State private var showingDeleteAccountAlert = false
+    @State private var showingContactSheet = false
     @State private var resultMessage: String?
     @State private var errorMessage: String?
 
@@ -86,21 +87,25 @@ struct SyncSettingsView: View {
             } message: {
                 Text("Every device connected to this Tali account, including this one, will need to sign in again.")
             }
+            .sheet(isPresented: $showingContactSheet) {
+                TaliContactSheet { saved in
+                    showingContactSheet = false
+                    if saved {
+                        resultMessage = "Tali was added to Contacts."
+                    }
+                }
+                .ignoresSafeArea()
+            }
         }
     }
 
     @ViewBuilder
     private var setupContent: some View {
         Section {
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Connect Tali to texting", systemImage: "message.badge.waveform.fill")
-                    .font(.headline)
-                    .foregroundStyle(.blue)
-                Text("Sign in to keep your data separate, then pair the phone number you’ll use to text Tali.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.vertical, 6)
+            TextingConnectionHeader(
+                title: "Connect Tali to texting",
+                detail: "Sign in to keep your data separate, then pair the phone number you’ll use to text Tali."
+            )
 
             TaliAppleSignInButton(isWorking: isWorking) { identityToken, nonce in
                 signIn(identityToken: identityToken, nonce: nonce)
@@ -157,18 +162,11 @@ struct SyncSettingsView: View {
     @ViewBuilder
     private var connectedContent: some View {
         Section {
-            VStack(alignment: .leading, spacing: 8) {
-                Label(
-                    authenticationMethod == .apple ? "Tali account connected" : "Texting is connected",
-                    systemImage: "link.circle.fill"
-                )
-                .font(.headline)
-                .foregroundStyle(.blue)
-                Text("Incoming habit messages appear after Tali syncs.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.vertical, 6)
+            TextingConnectionHeader(
+                title: authenticationMethod == .apple ? "Tali account connected" : "Texting is connected",
+                detail: "Incoming habit messages appear after Tali syncs.",
+                connected: true
+            )
         }
 
         if authenticationMethod == .apple && account?.paired != true {
@@ -184,6 +182,12 @@ struct SyncSettingsView: View {
                     openURL(messageURL())
                 } label: {
                     Label("Open Messages", systemImage: "message.fill")
+                }
+
+                Button {
+                    showingContactSheet = true
+                } label: {
+                    Label("Add Tali to Contacts", systemImage: "person.crop.circle.badge.plus")
                 }
             }
         }
@@ -328,18 +332,7 @@ struct SyncSettingsView: View {
 
     @ViewBuilder
     private var statusRows: some View {
-        if let resultMessage {
-            Label(resultMessage, systemImage: "arrow.triangle.2.circlepath.circle.fill")
-                .foregroundStyle(.blue)
-                .accessibilityLabel("Complete: \(resultMessage)")
-                .accessibilityAddTraits(.updatesFrequently)
-        }
-        if let errorMessage {
-            Label(errorMessage, systemImage: "exclamationmark.circle.fill")
-                .foregroundStyle(.red)
-                .accessibilityLabel("Error: \(errorMessage)")
-                .accessibilityAddTraits(.updatesFrequently)
-        }
+        TextingStatusRows(resultMessage: resultMessage, errorMessage: errorMessage)
     }
 
     private var serverName: String {

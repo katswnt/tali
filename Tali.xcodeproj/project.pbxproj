@@ -28,6 +28,7 @@
 		A900E398FFB872C2DB1A21D5 /* HabitVisibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51B5FD73ACD5A4B4BB5D965A /* HabitVisibility.swift */; };
 		ABCA425C54BE9F8DCD55855F /* TaliMessages.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6104DF09743E127AECBA3589 /* TaliMessages.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AC30AD85D95F169DB3A5D2D0 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5CF7D8D20E1C7DF3FE9EDD9F /* PrivacyInfo.xcprivacy */; };
+		B4B29557C0AD397399B0B013 /* SyncSettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC9E8DFE84E2D1C4463B0F3E /* SyncSettingsComponents.swift */; };
 		B610ACAE8A3FC22E83E91924 /* AddHabitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907BD4CC87A8FDE65C2FF263 /* AddHabitView.swift */; };
 		B733D05EDD5C96027A17F52A /* TaliAppleSignInButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531179A52020C16ED4512E07 /* TaliAppleSignInButton.swift */; };
 		BF4EA66B8A30C2E4D1172D67 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C6FD88316F381750D87348 /* RootView.swift */; };
@@ -131,6 +132,7 @@
 		DAD82571163F592AFEDBD955 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DC19BECA96C9D24AC6A3678C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E18B5C0663170F1E0AF4E15B /* Tali.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tali.entitlements; sourceTree = "<group>"; };
+		EC9E8DFE84E2D1C4463B0F3E /* SyncSettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncSettingsComponents.swift; sourceTree = "<group>"; };
 		EF389CE303C4B24EA6FF3EFE /* HabitModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitModels.swift; sourceTree = "<group>"; };
 		EF69488649B33F527EA9EC55 /* SyncCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncCoordinator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -214,6 +216,7 @@
 				18C6FD88316F381750D87348 /* RootView.swift */,
 				EF69488649B33F527EA9EC55 /* SyncCoordinator.swift */,
 				086273D3B516E832414C063F /* SyncCredentials.swift */,
+				EC9E8DFE84E2D1C4463B0F3E /* SyncSettingsComponents.swift */,
 				0F462B6EC3EBBB96FBF7B056 /* SyncSettingsView.swift */,
 				E18B5C0663170F1E0AF4E15B /* Tali.entitlements */,
 				34E1217C6B4B9B1D4438C38E /* TaliAccountService.swift */,
@@ -475,6 +478,7 @@
 				BF4EA66B8A30C2E4D1172D67 /* RootView.swift in Sources */,
 				7541E3380669AE23890A9A7F /* SyncCoordinator.swift in Sources */,
 				E7A2EB04E9633AE3259BE8A4 /* SyncCredentials.swift in Sources */,
+				B4B29557C0AD397399B0B013 /* SyncSettingsComponents.swift in Sources */,
 				4B5E123F57A7877A16C8CF19 /* SyncSettingsView.swift in Sources */,
 				E78A8B86307538E77F2FA390 /* TaliAccountService.swift in Sources */,
 				123760FA77DD4E5A4705BBD6 /* TaliApp.swift in Sources */,
