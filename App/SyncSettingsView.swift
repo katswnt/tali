@@ -1,6 +1,7 @@
 import HabitCore
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct SyncSettingsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -13,8 +14,10 @@ struct SyncSettingsView: View {
     @State private var authenticationMethod = SyncCredentials.AuthenticationMethod.privateKey
     @State private var account: TaliAccountSummary?
     @State private var pairingCode: TaliPairingCode?
+    @State private var sessions: [TaliSessionSummary] = []
     @State private var isWorking = false
     @State private var showingDisconnectAlert = false
+    @State private var showingDeleteAccountAlert = false
     @State private var resultMessage: String?
     @State private var errorMessage: String?
 
@@ -65,6 +68,14 @@ struct SyncSettingsView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("Habit data stays on this device, but texts will not sync until you reconnect.")
+            }
+            .alert("Delete account and server data?", isPresented: $showingDeleteAccountAlert) {
+                Button("Delete Account", role: .destructive) {
+                    deleteAccount()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This permanently deletes the server copy of your habits, entries, texts, pairings, and sessions. Data saved on this device remains available locally.")
             }
         }
     }
@@ -196,6 +207,56 @@ struct SyncSettingsView: View {
                 showingDisconnectAlert = true
             }
         }
+
+        if authenticationMethod == .apple {
+            sessionsSection
+
+            Section {
+                Button("Delete account and server data", role: .destructive) {
+                    showingDeleteAccountAlert = true
+                }
+                .disabled(isWorking)
+            } footer: {
+                Text("This cannot be undone. Your on-device Tali data is not deleted.")
+            }
+        }
+    }
+
+    private var sessionsSection: some View {
+        Section("Devices") {
+            if sessions.isEmpty {
+                Text("No active sessions found.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(sessions) { session in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(session.deviceName)
+                            Spacer()
+                            if session.current {
+                                Text("This device")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Button("Sign Out", role: .destructive) {
+                                    revoke(session)
+                                }
+                                .disabled(isWorking)
+                            }
+                        }
+                        Text("Last used \(formattedSessionDate(session.lastUsedAt))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .contain)
+                }
+            }
+
+            Button("Refresh devices") {
+                Task { await refreshSessions() }
+            }
+            .disabled(isWorking)
+        }
     }
 
     private var pairingSection: some View {
@@ -277,7 +338,8 @@ struct SyncSettingsView: View {
                 let result = try await TaliAccountService.signIn(
                     endpoint: endpoint,
                     identityToken: identityToken,
-                    nonce: nonce
+                    nonce: nonce,
+                    deviceName: UIDevice.current.name
                 )
                 try SyncCredentials.save(endpoint: endpoint, token: result.token, method: .apple)
                 authenticationMethod = .apple
@@ -294,6 +356,7 @@ struct SyncSettingsView: View {
                 } else {
                     resultMessage = "Signed in. Pair your phone to finish connecting texting."
                 }
+                await refreshSessions()
             } catch {
                 SyncCoordinator.recordFailure(error)
                 errorMessage = error.localizedDescription
@@ -354,6 +417,7 @@ struct SyncSettingsView: View {
                 endpoint: SyncCredentials.endpoint,
                 token: SyncCredentials.token()
             )
+            await refreshSessions()
             if account?.paired == true {
                 pairingCode = nil
                 if showResult {
@@ -404,6 +468,7 @@ struct SyncSettingsView: View {
             privateKey = ""
             account = nil
             pairingCode = nil
+            sessions = []
             clearStatus()
             isConnected = false
             authenticationMethod = .privateKey
@@ -413,6 +478,65 @@ struct SyncSettingsView: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func refreshSessions() async {
+        guard authenticationMethod == .apple, SyncCredentials.isConfigured else { return }
+        do {
+            sessions = try await TaliAccountService.sessions(
+                endpoint: SyncCredentials.endpoint,
+                token: SyncCredentials.token()
+            )
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func revoke(_ session: TaliSessionSummary) {
+        isWorking = true
+        clearStatus()
+        Task {
+            do {
+                try await TaliAccountService.revokeSession(
+                    id: session.id,
+                    endpoint: SyncCredentials.endpoint,
+                    token: SyncCredentials.token()
+                )
+                await refreshSessions()
+                resultMessage = "Signed out \(session.deviceName)."
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isWorking = false
+        }
+    }
+
+    private func deleteAccount() {
+        isWorking = true
+        clearStatus()
+        let endpoint = SyncCredentials.endpoint
+        let token = SyncCredentials.token()
+        Task {
+            do {
+                try await TaliAccountService.deleteAccount(endpoint: endpoint, token: token)
+                try SyncCredentials.clear()
+                self.endpoint = SyncCredentials.defaultEndpoint
+                isConnected = false
+                authenticationMethod = .privateKey
+                account = nil
+                pairingCode = nil
+                sessions = []
+                resultMessage = "Account and server data deleted. Local data remains on this device."
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isWorking = false
+        }
+    }
+
+    private func formattedSessionDate(_ value: String) -> String {
+        guard let date = try? Date(value, strategy: .iso8601) else { return value }
+        return date.formatted(date: .abbreviated, time: .shortened)
     }
 
     private func clearStatus() {

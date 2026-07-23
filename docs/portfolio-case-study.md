@@ -97,7 +97,7 @@ Tali publishes SMS enrollment, privacy, and terms pages and implements the same 
 
 The current synchronization model is intentionally pragmatic: UUID identity, `updatedAt` comparison, and normalized-name repair. It is appropriate for the personal alpha but still depends on client clocks and does not provide server revisions or field-level conflict resolution.
 
-The multi-user backend still needs account deletion, remote-export verification, rate limits, device/session management, privacy-preserving monitoring, and a defined retention policy before public use. The carrier campaign must also be approved for the actual product flow.
+The multi-user backend now includes account deletion, verified remote export, and active-device session revocation. It still needs rate limits, privacy-preserving monitoring, and a defined retention policy before public use. The carrier campaign must also be approved for the actual product flow.
 
 ## Next product questions
 

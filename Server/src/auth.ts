@@ -21,8 +21,18 @@ interface AppleKeySet {
 type AppleJsonWebKey = JsonWebKey & { kid?: string };
 
 interface SessionRow {
+  session_id: string;
   user_id: string;
   time_zone: string;
+}
+
+export interface SessionSummary {
+  id: string;
+  deviceName: string;
+  createdAt: string;
+  lastUsedAt: string;
+  expiresAt: string;
+  current: boolean;
 }
 
 let appleKeyCache: { expiresAt: number; keys: AppleJsonWebKey[] } | undefined;
@@ -37,16 +47,29 @@ export async function authenticateRequest(request: Request, env: Env): Promise<A
   }
 
   const tokenHash = await sha256(token);
+  const now = new Date();
+  const nowISO = now.toISOString();
   const session = await env.DB.prepare(`
-    SELECT sessions.user_id, users.time_zone
+    SELECT sessions.id AS session_id, sessions.user_id, users.time_zone
     FROM sessions JOIN users ON users.id = sessions.user_id
     WHERE sessions.token_hash = ?
       AND sessions.revoked_at IS NULL
       AND sessions.expires_at > ?
-  `).bind(tokenHash, new Date().toISOString()).first<SessionRow>();
-  return session
-    ? { id: session.user_id, timeZone: session.time_zone, authentication: "session" }
-    : null;
+  `).bind(tokenHash, nowISO).first<SessionRow>();
+  if (!session) return null;
+
+  const staleBefore = new Date(now.getTime() - 15 * 60 * 1_000).toISOString();
+  await env.DB.prepare(`
+    UPDATE sessions SET last_used_at = ?
+    WHERE id = ? AND (last_used_at IS NULL OR last_used_at < ?)
+  `).bind(nowISO, session.session_id, staleBefore).run();
+
+  return {
+    id: session.user_id,
+    timeZone: session.time_zone,
+    authentication: "session",
+    sessionID: session.session_id,
+  };
 }
 
 export async function signInWithApple(request: Request, env: Env): Promise<Response> {
@@ -60,6 +83,7 @@ export async function signInWithApple(request: Request, env: Env): Promise<Respo
   const identityToken = stringValue(input.identityToken);
   const rawNonce = stringValue(input.nonce);
   const timeZone = validTimeZone(stringValue(input.timeZone)) ?? "UTC";
+  const deviceName = boundedString(input.deviceName, 80) || "Apple device";
   if (!identityToken || !rawNonce) return jsonError("The Apple identity token and nonce are required.", 400);
   if (!env.APPLE_CLIENT_ID) return jsonError("Sign in with Apple is not configured.", 503);
 
@@ -95,9 +119,19 @@ export async function signInWithApple(request: Request, env: Env): Promise<Respo
     `).bind(userID, subject, timeZone, nowISO, nowISO));
   }
   statements.push(env.DB.prepare(`
-    INSERT INTO sessions (id, user_id, token_hash, created_at, expires_at, revoked_at)
-    VALUES (?, ?, ?, ?, ?, NULL)
-  `).bind(sessionID, userID, await sha256(sessionToken), nowISO, expiresAt));
+    INSERT INTO sessions (
+      id, user_id, token_hash, device_name, created_at, last_used_at, expires_at, revoked_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+  `).bind(
+    sessionID,
+    userID,
+    await sha256(sessionToken),
+    deviceName,
+    nowISO,
+    nowISO,
+    expiresAt,
+  ));
   await env.DB.batch(statements);
 
   return Response.json({ token: sessionToken, expiresAt, account: await accountSummary(env.DB, userID) });
@@ -120,6 +154,73 @@ export async function revokeSession(request: Request, env: Env): Promise<void> {
   await env.DB.prepare("UPDATE sessions SET revoked_at = ? WHERE token_hash = ?")
     .bind(new Date().toISOString(), await sha256(token))
     .run();
+}
+
+export async function listSessions(
+  db: D1Database,
+  userID: string,
+  currentSessionID: string,
+): Promise<SessionSummary[]> {
+  const result = await db.prepare(`
+    SELECT id, device_name, created_at, last_used_at, expires_at
+    FROM sessions
+    WHERE user_id = ? AND revoked_at IS NULL AND expires_at > ?
+    ORDER BY COALESCE(last_used_at, created_at) DESC
+  `).bind(userID, new Date().toISOString()).all<{
+    id: string;
+    device_name: string;
+    created_at: string;
+    last_used_at: string | null;
+    expires_at: string;
+  }>();
+
+  return result.results.map((session) => ({
+    id: session.id,
+    deviceName: session.device_name,
+    createdAt: session.created_at,
+    lastUsedAt: session.last_used_at ?? session.created_at,
+    expiresAt: session.expires_at,
+    current: session.id === currentSessionID,
+  }));
+}
+
+export async function revokeSessionByID(
+  db: D1Database,
+  userID: string,
+  sessionID: string,
+): Promise<boolean> {
+  const result = await db.prepare(`
+    UPDATE sessions SET revoked_at = ?
+    WHERE id = ? AND user_id = ? AND revoked_at IS NULL
+  `).bind(new Date().toISOString(), sessionID, userID).run();
+  return (result.meta.changes ?? 0) > 0;
+}
+
+export async function deleteAccount(
+  request: Request,
+  env: Env,
+  userID: string,
+): Promise<Response> {
+  let input: Record<string, unknown>;
+  try {
+    input = await request.json<Record<string, unknown>>();
+  } catch {
+    return jsonError("Confirm account deletion with valid JSON.", 400);
+  }
+  if (input.confirmation !== "DELETE") {
+    return jsonError("Type DELETE to confirm account deletion.", 400);
+  }
+
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM events WHERE user_id = ?").bind(userID),
+    env.DB.prepare("DELETE FROM sms_messages WHERE user_id = ?").bind(userID),
+    env.DB.prepare("DELETE FROM habits WHERE user_id = ?").bind(userID),
+    env.DB.prepare("DELETE FROM phone_numbers WHERE user_id = ?").bind(userID),
+    env.DB.prepare("DELETE FROM pairing_codes WHERE user_id = ?").bind(userID),
+    env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userID),
+    env.DB.prepare("DELETE FROM users WHERE id = ?").bind(userID),
+  ]);
+  return new Response(null, { status: 204 });
 }
 
 export async function sha256(value: string): Promise<string> {
@@ -210,6 +311,10 @@ function validTimeZone(value: string): string | null {
 
 function stringValue(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function boundedString(value: unknown, maximumLength: number): string {
+  return stringValue(value).slice(0, maximumLength);
 }
 
 function maskedPhone(phone: string): string {

@@ -200,9 +200,7 @@ Tali is a working personal alpha and portfolio project, not an App Store release
 Before inviting multi-user SMS traffic:
 
 - Obtain A2P approval for the real onboarding and traffic.
-- Add account deletion and verify a complete remote-data export path.
 - Add per-user and per-IP rate limits around authentication and pairing.
-- Add device/session management beyond single-session sign-out.
 - Add privacy-preserving operational monitoring without habit names or message bodies.
 - Define and enforce server data-retention behavior.
 - Complete physical-device, VoiceOver, large Dynamic Type, dark mode, and TestFlight testing.

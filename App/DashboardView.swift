@@ -21,6 +21,7 @@ struct DashboardView: View {
     @State private var exportType: UTType = .commaSeparatedText
     @State private var exportFilename = "Tali export"
     @State private var showingExporter = false
+    @State private var isPreparingExport = false
     @State private var exportError: String?
 
     private var activeHabits: [Habit] {
@@ -104,8 +105,12 @@ struct DashboardView: View {
                             Button {
                                 exportJSON()
                             } label: {
-                                Label("All data as JSON", systemImage: "doc.text")
+                                Label(
+                                    isPreparingExport ? "Preparing archive…" : "Complete archive as JSON",
+                                    systemImage: "doc.text"
+                                )
                             }
+                            .disabled(isPreparingExport)
                         }
                     } label: {
                         Label("More options", systemImage: "ellipsis.circle")
@@ -327,13 +332,32 @@ struct DashboardView: View {
     }
 
     private func exportJSON() {
-        do {
-            exportType = .json
-            exportFilename = "Tali all data \(exportDate)"
-            exportDocument = TaliExportDocument(data: try TaliDataExport.json(habits: habits, events: events))
-            showingExporter = true
-        } catch {
-            exportError = error.localizedDescription
+        isPreparingExport = true
+        Task {
+            do {
+                let localData = try TaliDataExport.json(habits: habits, events: events)
+                let serverData: Data?
+                if SyncCredentials.isConfigured {
+                    serverData = try await TaliAccountService.exportData(
+                        endpoint: SyncCredentials.endpoint,
+                        token: SyncCredentials.token()
+                    )
+                } else {
+                    serverData = nil
+                }
+                exportType = .json
+                exportFilename = "Tali complete archive \(exportDate)"
+                exportDocument = TaliExportDocument(
+                    data: try TaliCompleteDataExport.archive(
+                        localData: localData,
+                        serverData: serverData
+                    )
+                )
+                showingExporter = true
+            } catch {
+                exportError = error.localizedDescription
+            }
+            isPreparingExport = false
         }
     }
 

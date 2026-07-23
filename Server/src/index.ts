@@ -1,5 +1,13 @@
-import { accountSummary, authenticateRequest, revokeSession, signInWithApple } from "./auth";
-import { mergeSnapshot } from "./database";
+import {
+  accountSummary,
+  authenticateRequest,
+  deleteAccount,
+  listSessions,
+  revokeSession,
+  revokeSessionByID,
+  signInWithApple,
+} from "./auth";
+import { mergeSnapshot, readAccountExport } from "./database";
 import { createPairingCode, pairPhone, pairingCodeFromMessage, userForPhone } from "./pairing";
 import { privacyPage, smsProgramPage, termsPage } from "./pages";
 import { executeSMSCommand } from "./sms";
@@ -27,6 +35,51 @@ export default {
       const user = await authenticateRequest(request, env);
       if (!user) return jsonError("Unauthorized", 401);
       return Response.json({ account: await accountSummary(env.DB, user.id) });
+    }
+
+    if (request.method === "GET" && url.pathname === "/v1/account/export") {
+      const user = await authenticateRequest(request, env);
+      if (!user) return jsonError("Unauthorized", 401);
+      const filename = `tali-server-data-${new Date().toISOString().slice(0, 10)}.json`;
+      return new Response(JSON.stringify(
+        await readAccountExport(env.DB, user.id, user.sessionID),
+        null,
+        2,
+      ), {
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "content-disposition": `attachment; filename="${filename}"`,
+          "cache-control": "no-store",
+        },
+      });
+    }
+
+    if (request.method === "DELETE" && url.pathname === "/v1/account") {
+      const user = await authenticateRequest(request, env);
+      if (!user || user.authentication !== "session") {
+        return jsonError("Sign in with Apple to delete this account.", 401);
+      }
+      return deleteAccount(request, env, user.id);
+    }
+
+    if (request.method === "GET" && url.pathname === "/v1/sessions") {
+      const user = await authenticateRequest(request, env);
+      if (!user || user.authentication !== "session" || !user.sessionID) {
+        return jsonError("Sign in with Apple to manage devices.", 401);
+      }
+      return Response.json({
+        sessions: await listSessions(env.DB, user.id, user.sessionID),
+      });
+    }
+
+    const sessionMatch = /^\/v1\/sessions\/([0-9a-f-]{36})$/i.exec(url.pathname);
+    if (request.method === "DELETE" && sessionMatch) {
+      const user = await authenticateRequest(request, env);
+      if (!user || user.authentication !== "session") {
+        return jsonError("Sign in with Apple to manage devices.", 401);
+      }
+      const revoked = await revokeSessionByID(env.DB, user.id, sessionMatch[1]);
+      return revoked ? new Response(null, { status: 204 }) : jsonError("Session not found.", 404);
     }
 
     if (request.method === "POST" && url.pathname === "/v1/pairing/code") {

@@ -80,7 +80,10 @@ Snapshot sync is small, inspectable, and sufficient for the current data volume.
 - Concurrent edits do not merge individual fields.
 - The protocol transfers full snapshots rather than deltas.
 - Synchronization occurs on app activity or explicit refresh rather than background push.
-- A deleted account workflow does not yet exist.
+
+Account deletion removes events, SMS receipts, habits, phone pairings, pairing-code history, sessions, and the user row in one D1 batch. The app intentionally keeps its local-only store so it remains useful without an account.
+
+Authenticated exports include every server-side user record while excluding session-token hashes and pairing-code hashes. The app’s complete JSON archive combines that verified server export with the local SwiftData export.
 
 Before broader multi-device use, Tali should evaluate server-issued revisions or a logical clock, pagination or deltas, and a documented conflict UX.
 
@@ -102,8 +105,6 @@ Those events should use generated identifiers and error categories, not habit na
 
 - A2P campaign approval for the actual onboarding and message flow
 - Per-user and per-IP rate limits
-- Account deletion and verified export
-- Session/device management
 - Defined retention and deletion behavior
 - Independent signature/JWT test fixtures and security review
 - Privacy-preserving operational monitoring and alerts

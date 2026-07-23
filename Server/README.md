@@ -7,6 +7,10 @@ This Cloudflare Worker turns a Twilio phone number into a multi-user text interf
 - `GET /health` — deployment health check
 - `POST /v1/auth/apple` — verify an Apple identity token and issue a device session
 - `GET /v1/account` — return masked phone-pairing status
+- `GET /v1/account/export` — export every user-scoped server record without credential hashes
+- `DELETE /v1/account` — permanently delete an authenticated account and its server data
+- `GET /v1/sessions` — list active device sessions
+- `DELETE /v1/sessions/:id` — revoke one device session
 - `POST /v1/pairing/code` — create a short-lived one-time pairing code
 - `DELETE /v1/session` — revoke the current device session
 - `POST /twilio/incoming` — Twilio incoming-message webhook

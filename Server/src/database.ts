@@ -199,6 +199,58 @@ export async function readSnapshot(db: D1Database, userID: string): Promise<Sync
   };
 }
 
+export async function readAccountExport(
+  db: D1Database,
+  userID: string,
+  currentSessionID?: string,
+): Promise<Record<string, unknown>> {
+  const [
+    user,
+    sessions,
+    phones,
+    pairingHistory,
+    messages,
+    snapshot,
+  ] = await Promise.all([
+    db.prepare(`
+      SELECT id, apple_subject, time_zone, created_at, updated_at
+      FROM users WHERE id = ?
+    `).bind(userID).first<Record<string, unknown>>(),
+    db.prepare(`
+      SELECT id, device_name, created_at, last_used_at, expires_at, revoked_at
+      FROM sessions WHERE user_id = ? ORDER BY created_at
+    `).bind(userID).all<Record<string, unknown>>(),
+    db.prepare(`
+      SELECT phone, paired_at
+      FROM phone_numbers WHERE user_id = ? ORDER BY paired_at
+    `).bind(userID).all<Record<string, unknown>>(),
+    db.prepare(`
+      SELECT created_at, expires_at, used_at
+      FROM pairing_codes WHERE user_id = ? ORDER BY created_at
+    `).bind(userID).all<Record<string, unknown>>(),
+    db.prepare(`
+      SELECT sid, from_phone, body, response, created_at
+      FROM sms_messages WHERE user_id = ? ORDER BY created_at
+    `).bind(userID).all<Record<string, unknown>>(),
+    readSnapshot(db, userID),
+  ]);
+
+  return {
+    formatVersion: 1,
+    exportedAt: new Date().toISOString(),
+    account: user,
+    sessions: sessions.results.map((session) => ({
+      ...session,
+      current: session.id === currentSessionID,
+    })),
+    phoneNumbers: phones.results,
+    pairingHistory: pairingHistory.results,
+    smsMessages: messages.results,
+    habits: snapshot.habits,
+    events: snapshot.events,
+  };
+}
+
 export function habitDTO(row: HabitRow): HabitDTO {
   return {
     id: row.id,

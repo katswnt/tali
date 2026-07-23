@@ -11,7 +11,10 @@ const duplicateHabitID = crypto.randomUUID();
 const duplicateEventID = crypto.randomUUID();
 const secondUserID = "33333333-3333-4333-8333-333333333333";
 const secondToken = "second-local-test-token";
+const otherSessionToken = "other-local-test-token";
 const secondPhone = "+15555550125";
+const secondSessionID = "44444444-4444-4444-8444-444444444444";
+const otherSessionID = "77777777-7777-4777-8777-777777777777";
 const claimToken = "legacy-claim-test-token";
 const claimCode = "PAIR2345";
 
@@ -125,6 +128,31 @@ assert.equal(secondFinal.events.some((event) => event.habitId === secondHabitID 
 const legacyFinal = await sync({ habits: [], events: [] });
 assert.equal(legacyFinal.events.some((event) => event.habitId === secondHabitID), false);
 
+const sessionsBeforeRevoke = await authorizedJSON("/v1/sessions", secondToken);
+assert.equal(sessionsBeforeRevoke.sessions.some((session) =>
+  session.id === secondSessionID && session.current === true && session.deviceName === "Integration iPhone"
+), true);
+assert.equal(sessionsBeforeRevoke.sessions.some((session) =>
+  session.id === otherSessionID && session.current === false && session.deviceName === "Old iPhone"
+), true);
+
+const revokeResponse = await fetch(`${baseURL}/v1/sessions/${otherSessionID}`, {
+  method: "DELETE",
+  headers: { authorization: `Bearer ${secondToken}` },
+});
+assert.equal(revokeResponse.status, 204);
+assert.equal((await authorizedJSON("/v1/sessions", secondToken)).sessions.some(
+  (session) => session.id === otherSessionID
+), false);
+
+const exported = await authorizedJSON("/v1/account/export", secondToken);
+assert.equal(exported.formatVersion, 1);
+assert.equal(exported.phoneNumbers.some((row) => row.phone === secondPhone), true);
+assert.equal(exported.habits.some((habit) => habit.name === secondHabitName), true);
+assert.equal(exported.habits.some((habit) => habit.name.trim().toLowerCase() === "yoga"), false);
+assert.equal(JSON.stringify(exported).includes("token_hash"), false);
+assert.equal(JSON.stringify(exported).includes(otherSessionToken), false);
+
 seedLegacyClaim();
 const claimResponse = await sendSMS(new URLSearchParams({
   From: "+15555550123",
@@ -139,6 +167,29 @@ const claimedAccountResponse = await fetch(`${baseURL}/v1/account`, {
 assert.equal(claimedAccountResponse.status, 200);
 const claimedAccount = await claimedAccountResponse.json();
 assert.equal(claimedAccount.account.paired, true);
+
+const rejectedDeletion = await fetch(`${baseURL}/v1/account`, {
+  method: "DELETE",
+  headers: {
+    authorization: `Bearer ${secondToken}`,
+    "content-type": "application/json",
+  },
+  body: JSON.stringify({ confirmation: "not yet" }),
+});
+assert.equal(rejectedDeletion.status, 400);
+
+const deletion = await fetch(`${baseURL}/v1/account`, {
+  method: "DELETE",
+  headers: {
+    authorization: `Bearer ${secondToken}`,
+    "content-type": "application/json",
+  },
+  body: JSON.stringify({ confirmation: "DELETE" }),
+});
+assert.equal(deletion.status, 204);
+assert.equal((await fetch(`${baseURL}/v1/account`, {
+  headers: { authorization: `Bearer ${secondToken}` },
+})).status, 401);
 
 console.log(`Local SMS flow and two-user isolation passed: ${final.habits.length} legacy habit(s).`);
 
@@ -161,11 +212,24 @@ function seedSecondUser() {
   const now = new Date().toISOString();
   const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
   const tokenHash = createHash("sha256").update(secondToken).digest("hex");
+  const otherTokenHash = createHash("sha256").update(otherSessionToken).digest("hex");
   const sql = `
     INSERT OR REPLACE INTO users (id, apple_subject, time_zone, created_at, updated_at)
     VALUES ('${secondUserID}', 'integration-second-user', 'America/New_York', '${now}', '${now}');
-    INSERT OR REPLACE INTO sessions (id, user_id, token_hash, created_at, expires_at, revoked_at)
-    VALUES ('44444444-4444-4444-8444-444444444444', '${secondUserID}', '${tokenHash}', '${now}', '${future}', NULL);
+    INSERT OR REPLACE INTO sessions (
+      id, user_id, token_hash, device_name, created_at, last_used_at, expires_at, revoked_at
+    )
+    VALUES (
+      '${secondSessionID}', '${secondUserID}', '${tokenHash}', 'Integration iPhone',
+      '${now}', '${now}', '${future}', NULL
+    );
+    INSERT OR REPLACE INTO sessions (
+      id, user_id, token_hash, device_name, created_at, last_used_at, expires_at, revoked_at
+    )
+    VALUES (
+      '${otherSessionID}', '${secondUserID}', '${otherTokenHash}', 'Old iPhone',
+      '${now}', '${now}', '${future}', NULL
+    );
     INSERT OR REPLACE INTO phone_numbers (phone, user_id, paired_at)
     VALUES ('${secondPhone}', '${secondUserID}', '${now}');
   `;
@@ -182,6 +246,8 @@ function seedLegacyClaim() {
   const tokenHash = createHash("sha256").update(claimToken).digest("hex");
   const codeHash = createHash("sha256").update(claimCode).digest("hex");
   const sql = `
+    DELETE FROM sessions WHERE id = '66666666-6666-4666-8666-666666666666';
+    DELETE FROM pairing_codes WHERE code_hash = '${codeHash}';
     DELETE FROM sessions WHERE user_id = '${temporaryUserID}';
     DELETE FROM pairing_codes WHERE user_id = '${temporaryUserID}';
     DELETE FROM users WHERE id = '${temporaryUserID}';
@@ -205,4 +271,14 @@ async function sendSMS(form) {
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: form,
   }).then((response) => response.text());
+}
+
+async function authorizedJSON(path, bearerToken) {
+  const response = await fetch(`${baseURL}${path}`, {
+    headers: { authorization: `Bearer ${bearerToken}` },
+  });
+  if (!response.ok) {
+    throw new Error(`${path} failed (${response.status}): ${await response.text()}`);
+  }
+  return response.json();
 }

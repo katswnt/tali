@@ -17,6 +17,9 @@
 - [ ] Pull to refresh and confirm SMS events appear once
 - [ ] Confirm the Texting sheet shows connection status and can sync manually
 - [ ] Export CSV and JSON; verify archived habits, voided entries, notes, and timestamps are present
+- [ ] Confirm the complete JSON archive includes both `local` and `server` sections when signed in
+- [ ] List active devices, revoke a non-current session, and confirm that token becomes unauthorized
+- [ ] Delete a test account and confirm server export, sync, and pairing access are revoked
 - [ ] Test large Dynamic Type, dark mode, and VoiceOver labels
 
 ## Physical iPhone
