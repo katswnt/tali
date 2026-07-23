@@ -4,7 +4,8 @@ import { logOperational, requestIdentifier } from "./observability";
 
 const APPLE_ISSUER = "https://appleid.apple.com";
 const APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys";
-const SESSION_LIFETIME_MS = 180 * 24 * 60 * 60 * 1_000;
+const ACCESS_TOKEN_LIFETIME_MS = 15 * 60 * 1_000;
+const SESSION_LIFETIME_MS = 90 * 24 * 60 * 60 * 1_000;
 
 interface AppleClaims {
   iss?: unknown;
@@ -62,7 +63,7 @@ export async function authenticateRequest(request: Request, env: Env): Promise<A
     FROM sessions JOIN users ON users.id = sessions.user_id
     WHERE sessions.token_hash = ?
       AND sessions.revoked_at IS NULL
-      AND sessions.expires_at > ?
+      AND COALESCE(sessions.access_expires_at, sessions.expires_at) > ?
   `).bind(tokenHash, nowISO).first<SessionRow>();
   if (!session) return null;
 
@@ -114,8 +115,7 @@ export async function signInWithApple(request: Request, env: Env): Promise<Respo
     .first<{ id: string }>();
   const userID = existing?.id ?? crypto.randomUUID();
   const sessionID = crypto.randomUUID();
-  const sessionToken = randomToken(32);
-  const expiresAt = new Date(now.getTime() + SESSION_LIFETIME_MS).toISOString();
+  const tokens = sessionTokens(now);
 
   const statements: D1PreparedStatement[] = [];
   statements.push(env.DB.prepare("DELETE FROM sessions WHERE user_id = ? AND expires_at <= ?")
@@ -131,21 +131,102 @@ export async function signInWithApple(request: Request, env: Env): Promise<Respo
   }
   statements.push(env.DB.prepare(`
     INSERT INTO sessions (
-      id, user_id, token_hash, device_name, created_at, last_used_at, expires_at, revoked_at
+      id, user_id, token_hash, refresh_token_hash, previous_refresh_token_hash,
+      device_name, created_at, last_used_at, access_expires_at, expires_at, revoked_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
+    VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL)
   `).bind(
     sessionID,
     userID,
-    await sha256(sessionToken),
+    await sha256(tokens.accessToken),
+    await sha256(tokens.refreshToken),
     deviceName,
     nowISO,
     nowISO,
-    expiresAt,
+    tokens.accessExpiresAt,
+    tokens.sessionExpiresAt,
   ));
   await env.DB.batch(statements);
 
-  return Response.json({ token: sessionToken, expiresAt, account: await accountSummary(env.DB, userID) });
+  return Response.json({
+    token: tokens.accessToken,
+    expiresAt: tokens.accessExpiresAt,
+    ...tokens,
+    account: await accountSummary(env.DB, userID),
+  }, { headers: { "cache-control": "no-store" } });
+}
+
+export async function refreshSession(request: Request, env: Env): Promise<Response> {
+  let input: Record<string, unknown>;
+  try {
+    input = await request.json<Record<string, unknown>>();
+  } catch {
+    return jsonError("The refresh request must be valid JSON.", 400);
+  }
+  const refreshToken = stringValue(input.refreshToken);
+  if (!refreshToken) return jsonError("A refresh token is required.", 400);
+
+  const refreshHash = await sha256(refreshToken);
+  const now = new Date();
+  const nowISO = now.toISOString();
+  const session = await env.DB.prepare(`
+    SELECT id, user_id
+    FROM sessions
+    WHERE refresh_token_hash = ?
+      AND revoked_at IS NULL
+      AND expires_at > ?
+  `).bind(refreshHash, nowISO).first<{ id: string; user_id: string }>();
+
+  if (!session) {
+    const reused = await env.DB.prepare(`
+      SELECT user_id FROM sessions
+      WHERE previous_refresh_token_hash = ? AND revoked_at IS NULL
+    `).bind(refreshHash).first<{ user_id: string }>();
+    if (reused) {
+      await env.DB.prepare(`
+        UPDATE sessions SET revoked_at = ?
+        WHERE user_id = ? AND revoked_at IS NULL
+      `).bind(nowISO, reused.user_id).run();
+      logOperational("warn", "auth.refresh_reuse", {
+        requestID: requestIdentifier(request),
+        userID: reused.user_id,
+        category: "session-revoked",
+      });
+    }
+    return jsonError("This session is no longer valid. Sign in again.", 401);
+  }
+
+  const tokens = sessionTokens(now);
+  const result = await env.DB.prepare(`
+    UPDATE sessions
+    SET token_hash = ?,
+        previous_refresh_token_hash = refresh_token_hash,
+        refresh_token_hash = ?,
+        access_expires_at = ?,
+        last_used_at = ?
+    WHERE id = ?
+      AND refresh_token_hash = ?
+      AND revoked_at IS NULL
+      AND expires_at > ?
+  `).bind(
+    await sha256(tokens.accessToken),
+    await sha256(tokens.refreshToken),
+    tokens.accessExpiresAt,
+    nowISO,
+    session.id,
+    refreshHash,
+    nowISO,
+  ).run();
+
+  if ((result.meta.changes ?? 0) !== 1) {
+    await env.DB.prepare(`
+      UPDATE sessions SET revoked_at = ?
+      WHERE user_id = ? AND revoked_at IS NULL
+    `).bind(nowISO, session.user_id).run();
+    return jsonError("This session is no longer valid. Sign in again.", 401);
+  }
+
+  return Response.json(tokens, { headers: { "cache-control": "no-store" } });
 }
 
 export async function accountSummary(db: D1Database, userID: string): Promise<{
@@ -207,6 +288,14 @@ export async function revokeSessionByID(
   return (result.meta.changes ?? 0) > 0;
 }
 
+export async function revokeAllSessions(db: D1Database, userID: string): Promise<number> {
+  const result = await db.prepare(`
+    UPDATE sessions SET revoked_at = ?
+    WHERE user_id = ? AND revoked_at IS NULL
+  `).bind(new Date().toISOString(), userID).run();
+  return result.meta.changes ?? 0;
+}
+
 export async function deleteAccount(
   request: Request,
   env: Env,
@@ -242,6 +331,20 @@ export async function sha256(value: string): Promise<string> {
 export function randomToken(byteCount: number): string {
   const bytes = crypto.getRandomValues(new Uint8Array(byteCount));
   return base64URL(bytes);
+}
+
+function sessionTokens(now: Date): {
+  accessToken: string;
+  refreshToken: string;
+  accessExpiresAt: string;
+  sessionExpiresAt: string;
+} {
+  return {
+    accessToken: randomToken(32),
+    refreshToken: randomToken(48),
+    accessExpiresAt: new Date(now.getTime() + ACCESS_TOKEN_LIFETIME_MS).toISOString(),
+    sessionExpiresAt: new Date(now.getTime() + SESSION_LIFETIME_MS).toISOString(),
+  };
 }
 
 export async function verifyAppleIdentityToken(

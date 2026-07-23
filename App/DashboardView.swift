@@ -344,7 +344,7 @@ struct DashboardView: View {
                 if SyncCredentials.isConfigured {
                     serverData = try await TaliAccountService.exportData(
                         endpoint: SyncCredentials.endpoint,
-                        token: SyncCredentials.token()
+                        token: try await SyncCredentials.validAccessToken()
                     )
                 } else {
                     serverData = nil

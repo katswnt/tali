@@ -6,9 +6,18 @@ struct TaliAccountSummary: Codable, Equatable, Sendable {
 }
 
 struct TaliSignInResult: Sendable {
-    let token: String
-    let expiresAt: String
+    let accessToken: String
+    let refreshToken: String
+    let accessExpiresAt: String
+    let sessionExpiresAt: String
     let account: TaliAccountSummary
+}
+
+struct TaliSessionTokens: Sendable {
+    let accessToken: String
+    let refreshToken: String
+    let accessExpiresAt: String
+    let sessionExpiresAt: String
 }
 
 struct TaliPairingCode: Sendable {
@@ -65,9 +74,29 @@ enum TaliAccountService {
         ))
         let response: SignInResponse = try await send(request, session: session)
         return TaliSignInResult(
-            token: response.token,
-            expiresAt: response.expiresAt,
+            accessToken: response.accessToken ?? response.token,
+            refreshToken: response.refreshToken ?? "",
+            accessExpiresAt: response.accessExpiresAt ?? response.expiresAt,
+            sessionExpiresAt: response.sessionExpiresAt ?? response.expiresAt,
             account: response.account
+        )
+    }
+
+    static func refresh(
+        endpoint: String,
+        refreshToken: String,
+        session: URLSession = .shared
+    ) async throws -> TaliSessionTokens {
+        var request = URLRequest(url: try route("v1/auth/refresh", endpoint: endpoint))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(RefreshRequest(refreshToken: refreshToken))
+        let response: RefreshResponse = try await send(request, session: session)
+        return TaliSessionTokens(
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            accessExpiresAt: response.accessExpiresAt,
+            sessionExpiresAt: response.sessionExpiresAt
         )
     }
 
@@ -112,6 +141,17 @@ enum TaliAccountService {
         session: URLSession = .shared
     ) async throws {
         var request = URLRequest(url: try route("v1/sessions/\(id)", endpoint: endpoint))
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        try await sendEmpty(request, session: session)
+    }
+
+    static func revokeAllSessions(
+        endpoint: String,
+        token: String,
+        session: URLSession = .shared
+    ) async throws {
+        var request = URLRequest(url: try route("v1/sessions", endpoint: endpoint))
         request.httpMethod = "DELETE"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         try await sendEmpty(request, session: session)
@@ -230,7 +270,22 @@ private struct SignInRequest: Encodable {
 private struct SignInResponse: Decodable {
     let token: String
     let expiresAt: String
+    let accessToken: String?
+    let refreshToken: String?
+    let accessExpiresAt: String?
+    let sessionExpiresAt: String?
     let account: TaliAccountSummary
+}
+
+private struct RefreshRequest: Encodable {
+    let refreshToken: String
+}
+
+private struct RefreshResponse: Decodable {
+    let accessToken: String
+    let refreshToken: String
+    let accessExpiresAt: String
+    let sessionExpiresAt: String
 }
 
 private struct AccountResponse: Decodable {

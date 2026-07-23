@@ -3,6 +3,8 @@ import {
   authenticateRequest,
   deleteAccount,
   listSessions,
+  refreshSession,
+  revokeAllSessions,
   revokeSession,
   revokeSessionByID,
   signInWithApple,
@@ -55,6 +57,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     return signInWithApple(request, env);
   }
 
+  if (request.method === "POST" && url.pathname === "/v1/auth/refresh") {
+    const limit = await consumeRateLimit(env.DB, "refresh-ip", clientIP(request), 30, 10 * 60);
+    if (!limit.allowed) return rateLimitedJSON(limit);
+    return refreshSession(request, env);
+  }
+
   if (request.method === "GET" && url.pathname === "/v1/account") {
     const user = await authenticateRequest(request, env);
     if (!user) return jsonError("Unauthorized", 401);
@@ -94,6 +102,15 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     return Response.json({
       sessions: await listSessions(env.DB, user.id, user.sessionID),
     });
+  }
+
+  if (request.method === "DELETE" && url.pathname === "/v1/sessions") {
+    const user = await authenticateRequest(request, env);
+    if (!user || user.authentication !== "session") {
+      return jsonError("Sign in with Apple to manage devices.", 401);
+    }
+    await revokeAllSessions(env.DB, user.id);
+    return new Response(null, { status: 204 });
   }
 
   const sessionMatch = /^\/v1\/sessions\/([0-9a-f-]{36})$/i.exec(url.pathname);

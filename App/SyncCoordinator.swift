@@ -38,7 +38,7 @@ enum SyncCoordinator {
                 _ = try await TaliSyncService.sync(
                     context: context,
                     endpoint: SyncCredentials.endpoint,
-                    token: SyncCredentials.token()
+                    token: try await SyncCredentials.validAccessToken()
                 )
                 recordSuccess()
             } catch {

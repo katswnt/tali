@@ -30,6 +30,43 @@ enum SyncCredentials {
     }
 
     static func token() -> String {
+        credentialEnvelope()?.accessToken ?? storedCredential()
+    }
+
+    static func validAccessToken(session: URLSession = .shared) async throws -> String {
+        let accessToken = token()
+        guard authenticationMethod == .apple,
+              let envelope = credentialEnvelope(),
+              !envelope.refreshToken.isEmpty else {
+            return accessToken
+        }
+
+        if let expiration = try? Date(envelope.accessExpiresAt, strategy: .iso8601),
+           expiration.timeIntervalSinceNow > 60 {
+            return accessToken
+        }
+
+        let refreshed = try await TaliAccountService.refresh(
+            endpoint: endpoint,
+            refreshToken: envelope.refreshToken,
+            session: session
+        )
+        try save(
+            endpoint: endpoint,
+            token: refreshed.accessToken,
+            refreshToken: refreshed.refreshToken,
+            accessExpiresAt: refreshed.accessExpiresAt,
+            sessionExpiresAt: refreshed.sessionExpiresAt,
+            method: .apple
+        )
+        return refreshed.accessToken
+    }
+
+    static func refreshToken() -> String {
+        credentialEnvelope()?.refreshToken ?? ""
+    }
+
+    private static func storedCredential() -> String {
         var query = baseQuery
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
@@ -47,9 +84,23 @@ enum SyncCredentials {
     static func save(
         endpoint: String,
         token: String,
+        refreshToken: String? = nil,
+        accessExpiresAt: String? = nil,
+        sessionExpiresAt: String? = nil,
         method: AuthenticationMethod = .privateKey
     ) throws {
-        let data = Data(token.trimmingCharacters(in: .whitespacesAndNewlines).utf8)
+        let cleanedToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        let data: Data
+        if method == .apple, let refreshToken, let accessExpiresAt, let sessionExpiresAt {
+            data = try JSONEncoder().encode(CredentialEnvelope(
+                accessToken: cleanedToken,
+                refreshToken: refreshToken,
+                accessExpiresAt: accessExpiresAt,
+                sessionExpiresAt: sessionExpiresAt
+            ))
+        } else {
+            data = Data(cleanedToken.utf8)
+        }
         let attributes = [kSecValueData as String: data]
         var status = SecItemUpdate(baseQuery as CFDictionary, attributes as CFDictionary)
         if status == errSecItemNotFound {
@@ -86,6 +137,12 @@ enum SyncCredentials {
     }
 
     private static let defaults = UserDefaults(suiteName: PersistenceController.appGroupIdentifier) ?? .standard
+
+    private static func credentialEnvelope() -> CredentialEnvelope? {
+        guard let data = storedCredential().data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(CredentialEnvelope.self, from: data)
+    }
+
     private static var baseQuery: [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
@@ -93,4 +150,11 @@ enum SyncCredentials {
             kSecAttrAccount as String: tokenAccount
         ]
     }
+}
+
+private struct CredentialEnvelope: Codable {
+    let accessToken: String
+    let refreshToken: String
+    let accessExpiresAt: String
+    let sessionExpiresAt: String
 }

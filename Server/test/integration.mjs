@@ -18,6 +18,10 @@ const secondSessionID = "44444444-4444-4444-8444-444444444444";
 const otherSessionID = "77777777-7777-4777-8777-777777777777";
 const claimToken = "legacy-claim-test-token";
 const claimCode = "PAIR2345";
+const rotationUserID = "88888888-8888-4888-8888-888888888888";
+const rotationSessionID = "99999999-9999-4999-8999-999999999999";
+const rotationAccessToken = "rotation-access-token";
+const rotationRefreshToken = "rotation-refresh-token";
 
 const health = await fetch(`${baseURL}/health`).then((response) => response.json());
 assert.equal(health.ok, true);
@@ -128,6 +132,33 @@ const secondFinal = await sync({ habits: [], events: [] }, secondToken);
 assert.equal(secondFinal.events.some((event) => event.habitId === secondHabitID && event.source === "sms"), true);
 const legacyFinal = await sync({ habits: [], events: [] });
 assert.equal(legacyFinal.events.some((event) => event.habitId === secondHabitID), false);
+
+seedRotatingSession();
+const refreshedResponse = await fetch(`${baseURL}/v1/auth/refresh`, {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ refreshToken: rotationRefreshToken }),
+});
+assert.equal(refreshedResponse.status, 200);
+const refreshed = await refreshedResponse.json();
+assert.equal(typeof refreshed.accessToken, "string");
+assert.equal(typeof refreshed.refreshToken, "string");
+assert.equal((await fetch(`${baseURL}/v1/account`, {
+  headers: { authorization: `Bearer ${rotationAccessToken}` },
+})).status, 401);
+assert.equal((await fetch(`${baseURL}/v1/account`, {
+  headers: { authorization: `Bearer ${refreshed.accessToken}` },
+})).status, 200);
+
+const reuseResponse = await fetch(`${baseURL}/v1/auth/refresh`, {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ refreshToken: rotationRefreshToken }),
+});
+assert.equal(reuseResponse.status, 401);
+assert.equal((await fetch(`${baseURL}/v1/account`, {
+  headers: { authorization: `Bearer ${refreshed.accessToken}` },
+})).status, 401);
 
 const sessionsBeforeRevoke = await authorizedJSON("/v1/sessions", secondToken);
 assert.equal(sessionsBeforeRevoke.sessions.some((session) =>
@@ -283,6 +314,32 @@ function seedLegacyClaim() {
     VALUES ('66666666-6666-4666-8666-666666666666', '${temporaryUserID}', '${tokenHash}', '${now}', '${future}', NULL);
     INSERT INTO pairing_codes (code_hash, user_id, created_at, expires_at, used_at)
     VALUES ('${codeHash}', '${temporaryUserID}', '${now}', '${future}', NULL);
+  `;
+  execFileSync("npx", ["wrangler", "d1", "execute", "tali", "--local", "--command", sql], {
+    cwd: new URL("..", import.meta.url),
+    stdio: "ignore",
+  });
+}
+
+function seedRotatingSession() {
+  const now = new Date().toISOString();
+  const accessFuture = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  const sessionFuture = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const accessHash = createHash("sha256").update(rotationAccessToken).digest("hex");
+  const refreshHash = createHash("sha256").update(rotationRefreshToken).digest("hex");
+  const sql = `
+    DELETE FROM sessions WHERE user_id = '${rotationUserID}';
+    DELETE FROM users WHERE id = '${rotationUserID}';
+    INSERT INTO users (id, apple_subject, time_zone, created_at, updated_at)
+    VALUES ('${rotationUserID}', 'integration-rotation-user', 'UTC', '${now}', '${now}');
+    INSERT INTO sessions (
+      id, user_id, token_hash, refresh_token_hash, device_name, created_at,
+      last_used_at, access_expires_at, expires_at, revoked_at
+    )
+    VALUES (
+      '${rotationSessionID}', '${rotationUserID}', '${accessHash}', '${refreshHash}',
+      'Rotation test', '${now}', '${now}', '${accessFuture}', '${sessionFuture}', NULL
+    );
   `;
   execFileSync("npx", ["wrangler", "d1", "execute", "tali", "--local", "--command", sql], {
     cwd: new URL("..", import.meta.url),
