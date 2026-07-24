@@ -10,7 +10,7 @@ the current branch has been deployed.
 | Check | State | Evidence |
 | --- | --- | --- |
 | Staging D1 database | Exists | `tali-staging` resolves through the checked-in staging binding |
-| Staging migrations | Not applied | Wrangler lists `0001` through `0007` as pending |
+| Staging migrations | Not applied | Wrangler listed `0001` through `0007` as pending at audit time; `0008` was added afterward and is also unapplied |
 | Staging Worker | Does not exist | Wrangler reports `tali-sms-staging` not found |
 | Staging secrets | Cannot exist yet | Cloudflare accepts environment secrets only after the Worker exists |
 | Production secret names | Complete | `OWNER_PHONE`, `SYNC_TOKEN`, and `TWILIO_AUTH_TOKEN` are configured; values were not read |
@@ -25,7 +25,7 @@ recovery tests against production.
 Run these only when a staging deployment is explicitly approved:
 
 1. Review the branch diff and confirm the staging D1 ID in `Server/wrangler.jsonc`.
-2. Run `./scripts/deploy-worker.sh staging`. The script tests the Worker, applies all seven
+2. Run `./scripts/deploy-worker.sh staging`. The script tests the Worker, applies all eight
    migrations to `tali-staging`, and creates `tali-sms-staging`.
 3. Immediately add staging-specific `TWILIO_AUTH_TOKEN`, `OWNER_PHONE`, and `SYNC_TOKEN` secrets.
    Never paste their values into this repo, shell arguments, screenshots, or issue comments.

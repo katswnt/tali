@@ -18,8 +18,10 @@ describe("public SMS compliance pages", () => {
     const content = await privacyPage().text();
     expect(content).toContain("not sold, rented");
     expect(content).toContain("marketing or promotional purposes");
-    expect(content).toContain("contents are removed after 30 days");
-    expect(content).toContain("export or delete their server data");
+    expect(content).toContain("D1 copies of SMS delivery");
+    expect(content).toContain("removed after 30 days");
+    expect(content).toContain("Twilio separately processes");
+    expect(content).toContain("export or delete their Tali server data");
     expect(content).toContain("remain on the device");
     expect(content).toContain("does not request the user's name or email address");
   });

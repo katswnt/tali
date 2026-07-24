@@ -74,6 +74,8 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (request.method === "GET" && url.pathname === "/v1/account/export") {
     const user = await authenticateRequest(request, env);
     if (!user) return jsonError("Unauthorized", 401);
+    const limit = await consumeRateLimit(env.DB, "export-user", user.id, 10, 10 * 60);
+    if (!limit.allowed) return rateLimitedJSON(limit);
     const filename = `tali-server-data-${new Date().toISOString().slice(0, 10)}.json`;
     return new Response(JSON.stringify(
       await readAccountExport(env.DB, user.id, user.sessionID),
@@ -150,6 +152,8 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (request.method === "POST" && url.pathname === "/v1/sync") {
     const user = await authenticateRequest(request, env);
     if (!user) return jsonError("Unauthorized", 401);
+    const limit = await consumeRateLimit(env.DB, "sync-user", user.id, 120, 10 * 60);
+    if (!limit.allowed) return rateLimitedJSON(limit);
     try {
       const snapshot = await parseSyncRequest(request);
       return Response.json(await mergeSnapshot(env.DB, user.id, snapshot));
@@ -170,6 +174,8 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (request.method === "POST" && url.pathname === "/v2/sync") {
     const user = await authenticateRequest(request, env);
     if (!user) return jsonError("Unauthorized", 401);
+    const limit = await consumeRateLimit(env.DB, "sync-user", user.id, 120, 10 * 60);
+    if (!limit.allowed) return rateLimitedJSON(limit);
     try {
       const input = await parseVersionedSyncRequest(request);
       return versionedSync(env.DB, user.id, input);

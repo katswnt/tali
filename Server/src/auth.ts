@@ -1,11 +1,14 @@
 import { LEGACY_USER_ID } from "./types";
 import type { AuthenticatedUser, Env } from "./types";
 import { logOperational, requestIdentifier } from "./observability";
+import { parseJSONRecord, SyncPayloadError } from "./validation";
 
 const APPLE_ISSUER = "https://appleid.apple.com";
 const APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys";
 const ACCESS_TOKEN_LIFETIME_MS = 15 * 60 * 1_000;
 const SESSION_LIFETIME_MS = 90 * 24 * 60 * 60 * 1_000;
+const MAX_AUTH_BODY_BYTES = 16_384;
+const APPLE_KEY_STALE_IF_ERROR_MS = 24 * 60 * 60 * 1_000;
 
 interface AppleClaims {
   iss?: unknown;
@@ -44,7 +47,11 @@ export interface SessionSummary {
   current: boolean;
 }
 
-let appleKeyCache: { expiresAt: number; keys: AppleJsonWebKey[] } | undefined;
+let appleKeyCache: {
+  expiresAt: number;
+  staleUntil: number;
+  keys: AppleJsonWebKey[];
+} | undefined;
 
 export async function authenticateRequest(request: Request, env: Env): Promise<AuthenticatedUser | null> {
   const authorization = request.headers.get("authorization") ?? "";
@@ -84,9 +91,9 @@ export async function authenticateRequest(request: Request, env: Env): Promise<A
 export async function signInWithApple(request: Request, env: Env): Promise<Response> {
   let input: Record<string, unknown>;
   try {
-    input = await request.json<Record<string, unknown>>();
-  } catch {
-    return jsonError("The sign-in request must be valid JSON.", 400);
+    input = await parseJSONRecord(request, MAX_AUTH_BODY_BYTES);
+  } catch (error) {
+    return invalidJSONResponse(error, "The sign-in request must be valid JSON.");
   }
 
   const identityToken = stringValue(input.identityToken);
@@ -159,9 +166,9 @@ export async function signInWithApple(request: Request, env: Env): Promise<Respo
 export async function refreshSession(request: Request, env: Env): Promise<Response> {
   let input: Record<string, unknown>;
   try {
-    input = await request.json<Record<string, unknown>>();
-  } catch {
-    return jsonError("The refresh request must be valid JSON.", 400);
+    input = await parseJSONRecord(request, MAX_AUTH_BODY_BYTES);
+  } catch (error) {
+    return invalidJSONResponse(error, "The refresh request must be valid JSON.");
   }
   const refreshToken = stringValue(input.refreshToken);
   if (!refreshToken) return jsonError("A refresh token is required.", 400);
@@ -170,55 +177,55 @@ export async function refreshSession(request: Request, env: Env): Promise<Respon
   const now = new Date();
   const nowISO = now.toISOString();
   const session = await env.DB.prepare(`
-    SELECT id, user_id
+    SELECT id, user_id, expires_at
     FROM sessions
     WHERE refresh_token_hash = ?
       AND revoked_at IS NULL
       AND expires_at > ?
-  `).bind(refreshHash, nowISO).first<{ id: string; user_id: string }>();
+  `).bind(refreshHash, nowISO).first<{ id: string; user_id: string; expires_at: string }>();
 
   if (!session) {
-    const reused = await env.DB.prepare(`
-      SELECT user_id FROM sessions
-      WHERE previous_refresh_token_hash = ? AND revoked_at IS NULL
-    `).bind(refreshHash).first<{ user_id: string }>();
-    if (reused) {
-      await env.DB.prepare(`
-        UPDATE sessions SET revoked_at = ?
-        WHERE user_id = ? AND revoked_at IS NULL
-      `).bind(nowISO, reused.user_id).run();
-      logOperational("warn", "auth.refresh_reuse", {
-        requestID: requestIdentifier(request),
-        userID: reused.user_id,
-        category: "session-revoked",
-      });
-    }
+    await revokeRefreshFamilyIfSpent(request, env.DB, refreshHash, nowISO);
     return jsonError("This session is no longer valid. Sign in again.", 401);
   }
 
   const tokens = sessionTokens(now);
-  const result = await env.DB.prepare(`
-    UPDATE sessions
-    SET token_hash = ?,
-        previous_refresh_token_hash = refresh_token_hash,
-        refresh_token_hash = ?,
-        access_expires_at = ?,
-        last_used_at = ?
-    WHERE id = ?
-      AND refresh_token_hash = ?
-      AND revoked_at IS NULL
-      AND expires_at > ?
-  `).bind(
-    await sha256(tokens.accessToken),
-    await sha256(tokens.refreshToken),
-    tokens.accessExpiresAt,
-    nowISO,
-    session.id,
-    refreshHash,
-    nowISO,
-  ).run();
+  let results: D1Result[];
+  try {
+    results = await env.DB.batch([
+      env.DB.prepare(`
+        INSERT INTO spent_refresh_tokens (token_hash, user_id, session_id, spent_at, expires_at)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(refreshHash, session.user_id, session.id, nowISO, session.expires_at),
+      env.DB.prepare(`
+        UPDATE sessions
+        SET token_hash = ?,
+            previous_refresh_token_hash = refresh_token_hash,
+            refresh_token_hash = ?,
+            access_expires_at = ?,
+            last_used_at = ?
+        WHERE id = ?
+          AND refresh_token_hash = ?
+          AND revoked_at IS NULL
+          AND expires_at > ?
+      `).bind(
+        await sha256(tokens.accessToken),
+        await sha256(tokens.refreshToken),
+        tokens.accessExpiresAt,
+        nowISO,
+        session.id,
+        refreshHash,
+        nowISO,
+      ),
+    ]);
+  } catch (error) {
+    if (await revokeRefreshFamilyIfSpent(request, env.DB, refreshHash, nowISO)) {
+      return jsonError("This session is no longer valid. Sign in again.", 401);
+    }
+    throw error;
+  }
 
-  if ((result.meta.changes ?? 0) !== 1) {
+  if ((results[1]?.meta.changes ?? 0) !== 1) {
     await env.DB.prepare(`
       UPDATE sessions SET revoked_at = ?
       WHERE user_id = ? AND revoked_at IS NULL
@@ -303,9 +310,9 @@ export async function deleteAccount(
 ): Promise<Response> {
   let input: Record<string, unknown>;
   try {
-    input = await request.json<Record<string, unknown>>();
-  } catch {
-    return jsonError("Confirm account deletion with valid JSON.", 400);
+    input = await parseJSONRecord(request, MAX_AUTH_BODY_BYTES);
+  } catch (error) {
+    return invalidJSONResponse(error, "Confirm account deletion with valid JSON.");
   }
   if (input.confirmation !== "DELETE") {
     return jsonError("Type DELETE to confirm account deletion.", 400);
@@ -317,6 +324,7 @@ export async function deleteAccount(
     env.DB.prepare("DELETE FROM habits WHERE user_id = ?").bind(userID),
     env.DB.prepare("DELETE FROM phone_numbers WHERE user_id = ?").bind(userID),
     env.DB.prepare("DELETE FROM pairing_codes WHERE user_id = ?").bind(userID),
+    env.DB.prepare("DELETE FROM spent_refresh_tokens WHERE user_id = ?").bind(userID),
     env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userID),
     env.DB.prepare("DELETE FROM users WHERE id = ?").bind(userID),
   ]);
@@ -401,15 +409,19 @@ async function appleKeys(forceRefresh = false): Promise<AppleJsonWebKey[]> {
     if (!response.ok) throw new Error(`Apple keys returned HTTP ${response.status}`);
     const body = await response.json<AppleKeySet>();
     if (!Array.isArray(body.keys) || !body.keys.length) throw new Error("Apple returned no signing keys");
+    const expiresAt = Date.now() + cacheLifetimeMilliseconds(response.headers.get("cache-control"));
     appleKeyCache = {
       keys: body.keys,
-      expiresAt: Date.now() + cacheLifetimeMilliseconds(response.headers.get("cache-control")),
+      expiresAt,
+      staleUntil: expiresAt + APPLE_KEY_STALE_IF_ERROR_MS,
     };
     return body.keys;
   } catch (error) {
-    // A previously fetched public key remains safe for signature verification and
-    // avoids turning a transient Apple outage into an outage for existing keys.
-    if (appleKeyCache?.keys.length) return appleKeyCache.keys;
+    // A bounded stale window avoids turning a brief Apple outage into a sign-in
+    // outage without trusting a removed signing key indefinitely.
+    if (appleKeyCache?.keys.length && appleKeyCache.staleUntil > Date.now()) {
+      return appleKeyCache.keys;
+    }
     throw error;
   }
 }
@@ -477,6 +489,44 @@ function timingSafeEqual(left: string, right: string): boolean {
   return mismatch === 0;
 }
 
+async function revokeRefreshFamilyIfSpent(
+  request: Request,
+  db: D1Database,
+  refreshHash: string,
+  nowISO: string,
+): Promise<boolean> {
+  const reused = await db.prepare(`
+    SELECT user_id FROM spent_refresh_tokens
+    WHERE token_hash = ? AND expires_at > ?
+    UNION ALL
+    SELECT user_id FROM sessions
+    WHERE previous_refresh_token_hash = ? AND revoked_at IS NULL
+    LIMIT 1
+  `).bind(refreshHash, nowISO, refreshHash).first<{ user_id: string }>();
+  if (!reused) return false;
+
+  await db.prepare(`
+    UPDATE sessions SET revoked_at = ?
+    WHERE user_id = ? AND revoked_at IS NULL
+  `).bind(nowISO, reused.user_id).run();
+  logOperational("warn", "auth.refresh_reuse", {
+    requestID: requestIdentifier(request),
+    userID: reused.user_id,
+    category: "session-family-revoked",
+  });
+  return true;
+}
+
+function invalidJSONResponse(error: unknown, fallback: string): Response {
+  if (error instanceof SyncPayloadError) {
+    return jsonError(error.status === 413 ? error.message : fallback, error.status);
+  }
+  return jsonError(fallback, 400);
+}
+
 function jsonError(message: string, status: number): Response {
-  return Response.json({ error: message }, { status });
+  return Response.json({ error: message }, {
+    status,
+    headers: { "cache-control": "no-store" },
+  });
 }

@@ -93,10 +93,11 @@ export function privacyPage(): Response {
         troubleshoot service problems.
       `)}
       ${section("Retention and deletion", `
-        Habit records remain until the user deletes the account. SMS delivery receipts and message
-        contents are removed after 30 days, expired pairing-code history after one day, and old
-        revoked or expired sessions after 30 days. Users can export or delete their server data
-        from Tali's Texting settings.
+        Habit records remain until the user deletes the account. Tali's D1 copies of SMS delivery
+        receipts and message contents are removed after 30 days, expired pairing-code history after
+        one day, and old revoked or expired sessions after 30 days. Twilio separately processes and
+        retains transport records under Tali's provider settings and Twilio's legal obligations.
+        Users can export or delete their Tali server data from Texting settings.
       `)}
       ${section("Mobile information and sharing", `
         Mobile information, including phone numbers and SMS consent records, is not sold, rented,

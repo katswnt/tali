@@ -174,6 +174,22 @@ assert.equal((await fetch(`${baseURL}/v1/account`, {
   headers: { authorization: `Bearer ${refreshed.accessToken}` },
 })).status, 200);
 
+const secondRefreshResponse = await fetch(`${baseURL}/v1/auth/refresh`, {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ refreshToken: refreshed.refreshToken }),
+});
+assert.equal(secondRefreshResponse.status, 200);
+const secondRefresh = await secondRefreshResponse.json();
+assert.equal((await fetch(`${baseURL}/v1/account`, {
+  headers: { authorization: `Bearer ${refreshed.accessToken}` },
+})).status, 401);
+assert.equal((await fetch(`${baseURL}/v1/account`, {
+  headers: { authorization: `Bearer ${secondRefresh.accessToken}` },
+})).status, 200);
+
+// The original token is now two rotations old. Reusing any spent token,
+// not only the immediately previous one, revokes the account's session family.
 const reuseResponse = await fetch(`${baseURL}/v1/auth/refresh`, {
   method: "POST",
   headers: { "content-type": "application/json" },
@@ -181,7 +197,7 @@ const reuseResponse = await fetch(`${baseURL}/v1/auth/refresh`, {
 });
 assert.equal(reuseResponse.status, 401);
 assert.equal((await fetch(`${baseURL}/v1/account`, {
-  headers: { authorization: `Bearer ${refreshed.accessToken}` },
+  headers: { authorization: `Bearer ${secondRefresh.accessToken}` },
 })).status, 401);
 
 const sessionsBeforeRevoke = await authorizedJSON("/v1/sessions", secondToken);

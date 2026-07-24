@@ -4,7 +4,7 @@
 
 - [x] Run `./scripts/release-check.sh`
 - [x] Confirm it regenerates the Xcode project without a diff
-- [x] Confirm all 20 Swift tests and all 43 Worker tests pass
+- [x] Confirm all 20 Swift tests and all 45 Worker tests pass
 - [x] Confirm the npm audit reports no high or critical advisories
 - [x] Confirm the managed local Worker/D1 test passes revisioned sync, SMS, tenant isolation, rotating-session lifecycle, rate limits, and retention
 - [x] Confirm the `Tali` app and embedded Messages extension build without source warnings
@@ -51,6 +51,7 @@
 - [ ] A2P campaign status is Verified
 - [ ] Tali's number is in the `Tali SMS` Messaging Service sender pool
 - [ ] Advanced Opt-Out is enabled and matches the registered messages
+- [ ] Message-body redaction and Twilio retention settings match the deployed privacy policy
 - [ ] Incoming webhook is `https://tali-sms.katswint.workers.dev/twilio/incoming` using HTTP POST
 - [ ] Text `START`, `HELP`, a configured habit, `HABITS`, `UNDO`, and `STOP`
 - [ ] Confirm Twilio logs contain no 11200, 30034, or signature failures

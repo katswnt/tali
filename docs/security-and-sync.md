@@ -24,6 +24,8 @@ This document describes Tali’s current trust boundaries, synchronization behav
 - Twilio receives SMS phone numbers and message contents as the transport provider.
 - The Worker verifies `X-Twilio-Signature` before processing a webhook.
 - Twilio Advanced Opt-Out is authoritative for carrier-level START, HELP, and STOP handling.
+- Tali's 30-day D1 retention does not delete Twilio's provider copy. Message-body redaction and
+  provider retention settings are separate launch configuration.
 
 ## Authentication
 
@@ -34,10 +36,12 @@ This document describes Tali’s current trust boundaries, synchronization behav
 5. The app stores both in Keychain.
 6. D1 stores only SHA-256 hashes and expirations.
 
-Access tokens last 15 minutes. Refresh sessions last 90 days and rotate on every use. Reusing a
-superseded refresh token is treated as a possible credential replay and revokes every session for
-that user. The app lists active devices, supports individual revocation, and offers “sign out
-everywhere.” Account deletion removes every session with the account.
+Access tokens last 15 minutes. Refresh sessions last 90 days and rotate on every use. Hashes of
+spent refresh tokens remain only until their session expiry so reuse can be detected across more
+than one rotation. Reusing any superseded refresh token is treated as a possible credential replay
+and revokes every session for that user. The app lists active devices, supports individual
+revocation, and offers “sign out everywhere.” Account deletion removes every session and spent
+credential hash with the account.
 
 ## Phone pairing
 
@@ -131,12 +135,20 @@ Those events use generated identifiers and error categories, not habit names, no
 
 Authentication attempts are limited by a hash of Cloudflare’s connection IP, pairing-code creation by generated user ID, and SMS pairing attempts by a hash of the sending number. Raw identifiers are never stored in the rate-limit table.
 
-The scheduled retention job deletes SMS receipts and message contents after 30 days, pairing-code history after one day, and old revoked or expired sessions after 30 days. Habit records remain until the user deletes the account.
+Authenticated sync and account exports also have per-user abuse limits. JSON authentication and
+deletion bodies are capped at 16 KiB before parsing; sync bodies are capped at 2 MB with explicit
+entity-count and field-length limits.
+
+The scheduled retention job deletes SMS receipts and message contents after 30 days, pairing-code
+history after one day, old revoked or expired sessions after 30 days, and spent refresh-token
+hashes at session expiry. Habit records remain until the user deletes the account.
 
 ## Public-launch gates
 
 - A2P campaign approval for the actual onboarding and message flow
+- Twilio message-body redaction and retention settings verified against the public privacy policy
 - Independent signature/JWT test fixtures and security review
 - Physical-device and carrier-path testing
 - A documented backup and restore exercise for production D1 data
 - An account-recovery decision before supporting non-Apple clients
+- Legacy `SYNC_TOKEN` retired after the existing owner data is claimed by a verified Apple session

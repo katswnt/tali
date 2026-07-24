@@ -36,6 +36,7 @@ export async function enforceRetention(db: D1Database, now = new Date()): Promis
     `).bind(cutoffs.session, cutoffs.current, cutoffs.session),
     db.prepare("DELETE FROM sms_messages WHERE created_at < ?").bind(cutoffs.sms),
     db.prepare("DELETE FROM rate_limits WHERE expires_at < ?").bind(cutoffs.current),
+    db.prepare("DELETE FROM spent_refresh_tokens WHERE expires_at < ?").bind(cutoffs.current),
   ]);
 
   logOperational("info", "retention.completed", {
@@ -43,5 +44,6 @@ export async function enforceRetention(db: D1Database, now = new Date()): Promis
     sessionsDeleted: results[1]?.meta.changes ?? 0,
     smsReceiptsDeleted: results[2]?.meta.changes ?? 0,
     rateLimitsDeleted: results[3]?.meta.changes ?? 0,
+    spentRefreshTokensDeleted: results[4]?.meta.changes ?? 0,
   });
 }

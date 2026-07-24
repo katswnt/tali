@@ -4,6 +4,10 @@ This Cloudflare Worker turns a Twilio phone number into a multi-user text interf
 
 ## Routes
 
+- `GET /sms` — SMS program and consent disclosures
+- `GET /privacy` — app and connected-service privacy policy
+- `GET /terms` — transactional SMS terms
+- `GET /support` — support, contact, export, deletion, and messaging help
 - `GET /health` — deployment health check
 - `POST /v1/auth/apple` — verify an Apple identity token and issue a device session
 - `GET /v1/account` — return masked phone-pairing status

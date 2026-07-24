@@ -16,6 +16,13 @@ export async function parseSyncRequest(request: Request): Promise<SyncSnapshot> 
   return parseSyncSnapshot(await parseJSONBody(request));
 }
 
+export async function parseJSONRecord(
+  request: Request,
+  maximumBytes: number,
+): Promise<Record<string, unknown>> {
+  return record(await parseJSONBody(request, maximumBytes), "Request body");
+}
+
 export async function parseVersionedSyncRequest(request: Request): Promise<{
   baseRevision: number;
   mutationID: string;
@@ -32,13 +39,16 @@ export async function parseVersionedSyncRequest(request: Request): Promise<{
   };
 }
 
-async function parseJSONBody(request: Request): Promise<unknown> {
+async function parseJSONBody(
+  request: Request,
+  maximumBytes = MAX_BODY_BYTES,
+): Promise<unknown> {
   const declaredLength = Number(request.headers.get("content-length") ?? 0);
-  if (declaredLength > MAX_BODY_BYTES) throw new SyncPayloadError("Sync payload is too large.", 413);
+  if (declaredLength > maximumBytes) throw new SyncPayloadError("Request body is too large.", 413);
 
   const text = await request.text();
-  if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) {
-    throw new SyncPayloadError("Sync payload is too large.", 413);
+  if (new TextEncoder().encode(text).byteLength > maximumBytes) {
+    throw new SyncPayloadError("Request body is too large.", 413);
   }
 
   let input: unknown;

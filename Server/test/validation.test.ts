@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   parseSyncRequest,
+  parseJSONRecord,
   parseSyncSnapshot,
   parseVersionedSyncRequest,
   SyncPayloadError,
@@ -52,6 +53,14 @@ describe("sync payload validation", () => {
       body: "{}",
     });
     await expect(parseSyncRequest(request)).rejects.toMatchObject({ status: 413 });
+  });
+
+  it("applies a smaller body limit to authentication requests", async () => {
+    const request = new Request("https://example.com/v1/auth/refresh", {
+      method: "POST",
+      body: JSON.stringify({ refreshToken: "x".repeat(200) }),
+    });
+    await expect(parseJSONRecord(request, 100)).rejects.toMatchObject({ status: 413 });
   });
 
   it("validates and canonicalizes the revisioned sync envelope", async () => {

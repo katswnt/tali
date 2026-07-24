@@ -127,9 +127,9 @@ revisit triggers for product, platform, data, backend, and development-process c
 | Product judgment | [Product principles](docs/product-principles.md), elapsed-time controls, binary heatmap, empty-state behavior, and the [case study](docs/portfolio-case-study.md) |
 | Domain modeling | [`HabitModels`](Shared/HabitModels.swift), append-only event behavior in [`HabitEngine`](Shared/HabitEngine.swift), and Swift tests |
 | Native iOS breadth | SwiftUI app, App Group Messages extension, App Intents, Keychain, SwiftData migration, privacy manifest, and generated Xcode project |
-| Backend and security | User-scoped D1 migrations, cryptographic Apple JWT verification, rotating hashed sessions, one-time pairing, signed webhooks, retention, and [trust-boundary documentation](docs/security-and-sync.md) |
+| Backend and security | User-scoped D1 migrations, cryptographic Apple JWT verification, rotating hashed sessions with replay-family revocation, one-time pairing, signed webhooks, retention, [trust-boundary documentation](docs/security-and-sync.md), and a candid [security self-review](docs/security-review.md) |
 | Distributed-data reasoning | Server revisions, mutation idempotency, UUID reconciliation, normalized-name duplicate repair, idempotent Twilio receipts, managed integration tests, and documented last-write-wins limits |
-| Quality discipline | CI, 63 domain and Worker tests, three deterministic UI journeys, a managed Worker/D1 integration, isolated demo data, and a one-command release check |
+| Quality discipline | CI, 65 domain and Worker tests, three deterministic UI journeys, a managed Worker/D1 integration, isolated demo data, and a one-command release check |
 | Operational judgment | Separate staging database/Worker, explicit production confirmation, backup and recovery runbook, rollback policy, privacy-safe observability, and load thresholds |
 | Product learning | A consent-first five-person [research protocol](docs/research-plan.md) and [field kit](docs/research-kit.md) with falsifiable comprehension, neutrality, trust, and export gates |
 | Learning from failure | SwiftData startup recovery, weekday-parser regression, duplicate reconciliation, A2P launch gating, and webhook delivery checks in the [case study](docs/portfolio-case-study.md) |
@@ -137,7 +137,7 @@ revisit triggers for product, platform, data, backend, and development-process c
 ## Reliability and tests
 
 - **20 Swift tests** cover parsing, aliases, backdating, logging, undo, archive/restore, export, time-since visibility, schema migration, and duplicate consolidation.
-- **43 Worker tests** cover the shared SMS grammar, payload envelopes, Apple-token cryptography and claims, time zones, compliance pages and copy, Twilio signatures, XML escaping, pairing-code parsing, rotating-session replay, hashed rate limits, retention, and privacy-safe logging.
+- **45 Worker tests** cover the shared SMS grammar, bounded payload envelopes, Apple-token cryptography and claims, time zones, compliance pages and copy, Twilio signatures, XML escaping, pairing-code parsing, rotating-session replay, hashed rate limits, retention, and privacy-safe logging.
 - **Three UI smoke journeys** cover first launch and logging, backdated detail/history, and elapsed-time visibility using an isolated in-memory launch mode.
 - A managed local Worker/D1 integration test exercises revision conflicts and retry idempotency, rotating sessions, round-trip sync, two-user isolation, deliberate duplicate creation, event remapping, webhook idempotency, SMS logging, and legacy-account migration.
 - The Xcode scheme gathers coverage for the shared framework.
