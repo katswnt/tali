@@ -62,7 +62,10 @@ final class TaliUITests: XCTestCase {
             .firstMatch
         XCTAssertTrue(heatmap.exists)
         XCTAssertTrue(app.staticTexts["History"].exists)
-        XCTAssertTrue(app.staticTexts["Hips felt better"].exists)
+        XCTAssertTrue(
+            scrollToExistence(app.staticTexts["Hips felt better"]),
+            "The saved history note should remain discoverable below the activity chart."
+        )
 
         app.buttons["habit.actions"].tap()
         let timeSinceToggle = app.descendants(matching: .any)
@@ -96,5 +99,24 @@ final class TaliUITests: XCTestCase {
         app.buttons["habit.add.confirm"].tap()
         XCTAssertTrue(app.navigationBars["Tali"].waitForExistence(timeout: 3))
         XCTAssertTrue(app.buttons["dashboard.habit.yoga"].exists)
+    }
+
+    @MainActor
+    private func scrollToExistence(
+        _ element: XCUIElement,
+        maximumSwipes: Int = 3
+    ) -> Bool {
+        if element.waitForExistence(timeout: 1) {
+            return true
+        }
+
+        for _ in 0..<maximumSwipes {
+            app.swipeUp()
+            if element.waitForExistence(timeout: 1) {
+                return true
+            }
+        }
+
+        return false
     }
 }
