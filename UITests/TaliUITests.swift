@@ -113,8 +113,16 @@ final class TaliUITests: XCTestCase {
             return true
         }
 
+        let scrollContainer = app.descendants(matching: .any)
+            .matching(identifier: "habit.detail.list")
+            .firstMatch
+
         for _ in 0..<maximumSwipes {
-            app.swipeUp()
+            if scrollContainer.exists {
+                scrollContainer.swipeUp()
+            } else {
+                app.swipeUp()
+            }
             if element.waitForExistence(timeout: 1) {
                 return true
             }

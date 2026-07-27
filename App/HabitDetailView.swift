@@ -89,6 +89,7 @@ struct HabitDetailView: View {
                 }
             }
         }
+        .accessibilityIdentifier("habit.detail.list")
         .navigationTitle(habit.name)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
