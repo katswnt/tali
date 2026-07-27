@@ -61,7 +61,10 @@ final class TaliUITests: XCTestCase {
             .matching(identifier: "activity.heatmap")
             .firstMatch
         XCTAssertTrue(heatmap.exists)
-        XCTAssertTrue(app.staticTexts["History"].exists)
+        XCTAssertTrue(
+            scrollToExistence(app.staticTexts["History"]),
+            "The history section should remain discoverable below the activity chart."
+        )
         XCTAssertTrue(
             scrollToExistence(app.staticTexts["Hips felt better"]),
             "The saved history note should remain discoverable below the activity chart."
