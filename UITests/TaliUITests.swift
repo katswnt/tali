@@ -61,14 +61,14 @@ final class TaliUITests: XCTestCase {
             .matching(identifier: "activity.heatmap")
             .firstMatch
         XCTAssertTrue(heatmap.exists)
+        let savedNote = app.descendants(matching: .any)
+            .matching(identifier: "habit.event.note")
+            .firstMatch
         XCTAssertTrue(
-            scrollToExistence(app.staticTexts["History"]),
-            "The history section should remain discoverable below the activity chart."
-        )
-        XCTAssertTrue(
-            scrollToExistence(app.staticTexts["Hips felt better"]),
+            scrollToExistence(savedNote),
             "The saved history note should remain discoverable below the activity chart."
         )
+        XCTAssertEqual(savedNote.label, "Hips felt better")
 
         app.buttons["habit.actions"].tap()
         let timeSinceToggle = app.descendants(matching: .any)

@@ -78,6 +78,7 @@ struct HabitDetailView: View {
                                 Text(note)
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
+                                    .accessibilityIdentifier("habit.event.note")
                             }
                         }
                         .swipeActions {
