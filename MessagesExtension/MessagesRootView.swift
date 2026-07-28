@@ -150,7 +150,7 @@ struct MessagesRootView: View {
     }
 
     private var helpText: some View {
-        Text("Try “time since yoga,” “history yoga,” “habits,” or “undo.” Add a note after --")
+        Text("Try “add habit yoga,” “time since yoga,” “habits,” or “undo.” Add a note after --")
             .font(.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
@@ -191,6 +191,8 @@ struct MessagesRootView: View {
                 return "Logged \(result.habit.name). Previous: \(gap)."
             }
             return "Logged \(result.habit.name). No earlier entries."
+        case .added(let habit):
+            return "Added \(habit.name). Text “\(habit.name)” anytime to log it."
         case .since(let habit, let event):
             guard let event else { return "\(habit.name) has never been logged." }
             return "\(habit.name): \(HabitFormatting.elapsed(from: event.occurredAt))."

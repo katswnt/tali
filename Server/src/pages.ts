@@ -37,7 +37,7 @@ export function smsProgramPage(): Response {
         </p>
         <ol class="list-decimal space-y-3 pl-6 text-pretty text-stone-700">
           <li>Text <strong>START</strong> to +1 (445) 545-2123 to opt in.</li>
-          <li>Text a configured habit name or command to use Tali.</li>
+          <li>Text <strong>ADD HABIT YOGA</strong> to create a habit, then text its name to log it.</li>
           <li>Reply <strong>STOP</strong> to unsubscribe or <strong>HELP</strong> for assistance.</li>
         </ol>
       </section>

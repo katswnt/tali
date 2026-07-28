@@ -62,6 +62,51 @@ export async function executeSMSCommand(
     return commit(`Save Tali to your contacts again: ${contactCardURL}`);
   }
 
+  if (command.type === "add") {
+    const name = command.habit.trim();
+    if (!name || name.length > 80) {
+      return commit("Habit names must be between 1 and 80 characters.");
+    }
+    if (!isLoggableHabitName(name)) {
+      return commit(`'${name}' conflicts with a Tali command. Choose another habit name.`);
+    }
+
+    const habits = await loadHabits(db, userID, true);
+    const normalized = normalize(name);
+    const exact = habits.filter((habit) => terms(habit).includes(normalized));
+    if (exact.length > 1) {
+      return commit(`'${name}' matches more than one habit. Choose a more specific name.`);
+    }
+    if (exact.length === 1) {
+      const existing = exact[0];
+      if (!existing.is_archived) {
+        return commit(`'${existing.name}' already exists. Text '${existing.name}' to log it.`);
+      }
+      const now = new Date().toISOString();
+      const restore = db.prepare(`
+        UPDATE habits SET is_archived = 0, updated_at = ? WHERE user_id = ? AND id = ?
+      `).bind(now, userID, existing.id);
+      return commit(`Restored ${existing.name}. Text '${existing.name}' anytime to log it.`, [restore]);
+    }
+
+    const suggestion = command.force
+      ? null
+      : suggestedHabit(habits.filter((habit) => !habit.is_archived), name);
+    if (suggestion) {
+      return commit(
+        `Did you mean '${suggestion.name}'? Text '${suggestion.name}' to log it, `
+        + `or 'add habit ${name} anyway' to create a new habit.`,
+      );
+    }
+
+    const now = new Date().toISOString();
+    const insert = db.prepare(`
+      INSERT INTO habits (id, user_id, name, normalized_name, aliases_json, created_at, updated_at, is_archived)
+      VALUES (?, ?, ?, ?, '[]', ?, ?, 0)
+    `).bind(crypto.randomUUID(), userID, name, normalized, now, now);
+    return commit(`Added ${name}. Text '${name}' anytime to log it.`, [insert]);
+  }
+
   if (command.type === "list") {
     const result = await db.prepare(`
       SELECT name FROM habits WHERE user_id = ? AND is_archived = 0 ORDER BY name
@@ -85,8 +130,14 @@ export async function executeSMSCommand(
     return commit(`Undid ${event.habit_name}.`, [mutation]);
   }
 
-  const habit = await resolveHabit(db, userID, command.habit);
-  if (!habit) return commit(`I couldn't find '${command.habit}'. Add it in Tali first.`);
+  const habits = await loadHabits(db, userID);
+  const habit = resolveHabit(habits, command.habit);
+  if (!habit) {
+    const suggestion = suggestedHabit(habits, command.habit);
+    return commit(suggestion
+      ? `Did you mean '${suggestion.name}'?`
+      : `I couldn't find '${command.habit}'. To create it, text 'add habit ${command.habit}'.`);
+  }
 
   if (command.type === "since") {
     const event = await latestEvent(db, userID, habit.id);
@@ -139,30 +190,95 @@ export function complianceResponse(body: string): string | null {
 export function commandHelpResponse(): string {
   return [
     "Tali by Kathryn Swint:",
-    "To log a habit: yoga",
-    "To backdate a habit: yoga yesterday 7pm",
-    "To add a note: yoga -- note",
-    "To see time since: time since yoga",
-    "To see history: history yoga",
-    "To list habits: habits",
-    "To undo the last log: undo",
-    "To reshare Tali's contact: reshare contact",
+    "To log: yoga",
+    "To add habit: add habit yoga",
+    "To backdate: yoga yesterday 7pm",
+    "To add note: yoga -- note",
+    "Time since: time since yoga",
+    "History: history yoga",
+    "List habits: habits",
+    "Undo last log: undo",
+    "Reshare contact: reshare contact",
     "Msg & data rates may apply. STOP to unsubscribe.",
   ].join("\n");
 }
 
-async function resolveHabit(db: D1Database, userID: string, query: string): Promise<HabitRow | null> {
-  const result = await db.prepare("SELECT * FROM habits WHERE user_id = ? AND is_archived = 0")
-    .bind(userID)
+async function loadHabits(
+  db: D1Database,
+  userID: string,
+  includeArchived = false,
+): Promise<HabitRow[]> {
+  const result = await db.prepare(`
+    SELECT * FROM habits WHERE user_id = ? AND (? = 1 OR is_archived = 0)
+  `)
+    .bind(userID, includeArchived ? 1 : 0)
     .all<HabitRow>();
+  return result.results;
+}
+
+function resolveHabit(habits: HabitRow[], query: string): HabitRow | null {
   const normalized = normalize(query);
-  const exact = result.results.filter((habit) => terms(habit).includes(normalized));
+  const exact = habits.filter((habit) => terms(habit).includes(normalized));
   if (exact.length === 1) return exact[0];
   if (exact.length > 1) return null;
-  const partial = result.results.filter((habit) =>
+  const partial = habits.filter((habit) =>
     terms(habit).some((term) => term.startsWith(normalized) || normalized.startsWith(term)),
   );
   return partial.length === 1 ? partial[0] : null;
+}
+
+export function suggestedHabit(habits: HabitRow[], query: string): HabitRow | null {
+  const normalized = normalize(query);
+  if (normalized.length < 3) return null;
+  const maximumDistance = normalized.length <= 4 ? 1 : normalized.length <= 8 ? 2 : 3;
+  const ranked = habits
+    .map((habit) => ({
+      habit,
+      distance: Math.min(...terms(habit).map((term) => editDistance(normalized, term))),
+    }))
+    .filter((candidate) => candidate.distance <= maximumDistance)
+    .sort((left, right) => left.distance - right.distance);
+  if (!ranked.length) return null;
+  if (ranked[1]?.distance === ranked[0].distance) return null;
+  return ranked[0].habit;
+}
+
+function isLoggableHabitName(name: string): boolean {
+  const parsed = parseCommand(name);
+  return parsed.type === "log"
+    && normalize(parsed.habit) === normalize(name)
+    && parsed.occurredAt === undefined
+    && parsed.note === undefined;
+}
+
+function editDistance(left: string, right: string): number {
+  const source = Array.from(left);
+  const target = Array.from(right);
+  const matrix = Array.from(
+    { length: source.length + 1 },
+    (_, row) => Array.from({ length: target.length + 1 }, (_, column) => row ? 0 : column),
+  );
+  for (let row = 1; row <= source.length; row += 1) {
+    matrix[row][0] = row;
+    for (let column = 1; column <= target.length; column += 1) {
+      const substitution = matrix[row - 1][column - 1]
+        + (source[row - 1] === target[column - 1] ? 0 : 1);
+      matrix[row][column] = Math.min(
+        matrix[row - 1][column] + 1,
+        matrix[row][column - 1] + 1,
+        substitution,
+      );
+      if (
+        row > 1
+        && column > 1
+        && source[row - 1] === target[column - 2]
+        && source[row - 2] === target[column - 1]
+      ) {
+        matrix[row][column] = Math.min(matrix[row][column], matrix[row - 2][column - 2] + 1);
+      }
+    }
+  }
+  return matrix[source.length][target.length];
 }
 
 function terms(habit: HabitRow): string[] {

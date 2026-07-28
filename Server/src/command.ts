@@ -1,5 +1,6 @@
 export type Command =
   | { type: "log"; habit: string; occurredAt?: string; note?: string }
+  | { type: "add"; habit: string; force: boolean }
   | { type: "since"; habit: string }
   | { type: "history"; habit: string }
   | { type: "undo" }
@@ -46,6 +47,17 @@ export function parseCommand(
   }
   if (["reshare contact", "share contact", "resend contact", "send contact"].includes(value)) {
     return { type: "contact" };
+  }
+
+  const addMatch = trimmed.match(/^(?:add|create|new)\s+habit(?:\s+(.*))?$/i);
+  if (addMatch) {
+    const requested = (addMatch[1] ?? "").trim();
+    if (!requested) return { type: "help" };
+    const forceMatch = requested.match(/^(.*?)\s+anyway$/i);
+    const habit = (forceMatch?.[1] ?? requested).trim();
+    return habit
+      ? { type: "add", habit, force: Boolean(forceMatch) }
+      : { type: "help" };
   }
 
   const since = afterPrefix(value, [

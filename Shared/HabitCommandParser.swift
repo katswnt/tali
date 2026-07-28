@@ -2,6 +2,7 @@ import Foundation
 
 public enum HabitCommand: Equatable {
     case log(habit: String, occurredAt: Date?, note: String?)
+    case add(habit: String, force: Bool)
     case since(habit: String)
     case history(habit: String)
     case undo
@@ -37,6 +38,24 @@ public struct HabitCommandParser {
             return .contact
         default:
             break
+        }
+
+        if let match = trimmed.firstMatch(
+            pattern: #"^(?:add|create|new)\s+habit(?:\s+(.*))?$"#,
+            options: .caseInsensitive
+        ) {
+            let requested = match.capture(1, in: trimmed)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !requested.isEmpty else { return .help }
+            if let forceMatch = requested.firstMatch(
+                pattern: #"^(.*?)\s+anyway$"#,
+                options: .caseInsensitive
+            ) {
+                let habit = forceMatch.capture(1, in: requested)?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                return habit.isEmpty ? .help : .add(habit: habit, force: true)
+            }
+            return .add(habit: requested, force: false)
         }
 
         if let value = value(
@@ -169,5 +188,28 @@ public struct HabitCommandParser {
             }
         }
         return nil
+    }
+}
+
+private extension String {
+    func firstMatch(
+        pattern: String,
+        options: NSRegularExpression.Options = []
+    ) -> NSTextCheckingResult? {
+        guard let expression = try? NSRegularExpression(pattern: pattern, options: options) else {
+            return nil
+        }
+        let range = NSRange(startIndex..<endIndex, in: self)
+        return expression.firstMatch(in: self, range: range)
+    }
+}
+
+private extension NSTextCheckingResult {
+    func capture(_ index: Int, in value: String) -> String? {
+        guard range(at: index).location != NSNotFound,
+              let range = Range(range(at: index), in: value) else {
+            return nil
+        }
+        return String(value[range])
     }
 }

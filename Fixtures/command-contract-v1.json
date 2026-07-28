@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "cases": [
     {
       "name": "bare habit preserves user spelling",
@@ -187,6 +187,28 @@
       "timeZone": "America/Los_Angeles",
       "expected": {
         "type": "list"
+      }
+    },
+    {
+      "name": "add habit",
+      "input": "Add habit Yoga",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "add",
+        "habit": "Yoga",
+        "force": false
+      }
+    },
+    {
+      "name": "force add similar habit",
+      "input": "Add habit Uoga anyway",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "add",
+        "habit": "Uoga",
+        "force": true
       }
     },
     {

@@ -37,6 +37,20 @@ describe("parseCommand", () => {
     }
   });
 
+  it("parses explicit habit creation and its typo override", () => {
+    expect(parseCommand("add habit Yoga", { now })).toEqual({
+      type: "add",
+      habit: "Yoga",
+      force: false,
+    });
+    expect(parseCommand("create habit Uoga anyway", { now })).toEqual({
+      type: "add",
+      habit: "Uoga",
+      force: true,
+    });
+    expect(parseCommand("add habit", { now })).toEqual({ type: "help" });
+  });
+
   it("resolves yesterday in the owner's time zone", () => {
     expect(parseCommand("yoga yesterday at 7pm", {
       now,
@@ -87,7 +101,7 @@ describe("parseCommand", () => {
         expected: Record<string, unknown>;
       }>;
     };
-    expect(contract.version).toBe(2);
+    expect(contract.version).toBe(3);
 
     for (const testCase of contract.cases) {
       const command = parseCommand(testCase.input, {

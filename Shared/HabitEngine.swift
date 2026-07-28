@@ -12,6 +12,7 @@ public enum HabitEngineError: LocalizedError, Equatable {
     case habitAlreadyExists(String)
     case habitNotFound(String)
     case ambiguousHabit(String)
+    case typoSuggestion(query: String, suggestion: String, canCreate: Bool)
     case noEventToUndo
     case unsupportedCommand
 
@@ -22,9 +23,15 @@ public enum HabitEngineError: LocalizedError, Equatable {
         case .habitAlreadyExists(let name):
             return "“\(name)” already uses that name or alias."
         case .habitNotFound(let query):
-            return "I couldn't find “\(query)”. Add it in Tali first."
+            return "I couldn't find “\(query)”. To create it, text “add habit \(query)”."
         case .ambiguousHabit(let query):
             return "“\(query)” matches more than one habit. Try the full name."
+        case .typoSuggestion(let query, let suggestion, let canCreate):
+            if canCreate {
+                return "Did you mean “\(suggestion)”? Text “\(suggestion)” to log it, "
+                    + "or “add habit \(query) anyway” to create a new habit."
+            }
+            return "Did you mean “\(suggestion)”?"
         case .noEventToUndo:
             return "There isn't a recent log to undo."
         case .unsupportedCommand:
@@ -83,6 +90,13 @@ public struct HabitEngine {
         }
         if partial.count == 1, let match = partial.first { return match }
         if partial.count > 1 { throw HabitEngineError.ambiguousHabit(query) }
+        if let suggestion = suggestedHabit(for: query, among: available) {
+            throw HabitEngineError.typoSuggestion(
+                query: query,
+                suggestion: suggestion.name,
+                canCreate: false
+            )
+        }
         throw HabitEngineError.habitNotFound(query)
     }
 
@@ -134,6 +148,15 @@ public struct HabitEngine {
             let habit = try resolveHabit(query)
             let result = try log(habit: habit, at: date ?? defaultDate, source: source, note: note)
             return .logged(result)
+        case .add(let name, let force):
+            if !force, let suggestion = suggestedHabit(for: name, among: try habits()) {
+                throw HabitEngineError.typoSuggestion(
+                    query: name,
+                    suggestion: suggestion.name,
+                    canCreate: true
+                )
+            }
+            return .added(try addHabit(name: name))
         case .since(let query):
             let habit = try resolveHabit(query)
             return .since(habit: habit, event: latestEvent(for: habit))
@@ -159,10 +182,58 @@ public struct HabitEngine {
         }
         if let conflict { throw HabitEngineError.habitAlreadyExists(conflict.name) }
     }
+
+    private func suggestedHabit(for query: String, among habits: [Habit]) -> Habit? {
+        let normalized = Habit.normalize(query)
+        guard normalized.count >= 3 else { return nil }
+        let maximumDistance = normalized.count <= 4 ? 1 : normalized.count <= 8 ? 2 : 3
+        let ranked = habits.compactMap { habit -> (habit: Habit, distance: Int)? in
+            let distance = habit.searchTerms
+                .map { editDistance(normalized, $0) }
+                .min() ?? Int.max
+            guard distance > 0, distance <= maximumDistance else { return nil }
+            return (habit, distance)
+        }
+        .sorted { $0.distance < $1.distance }
+        guard let first = ranked.first else { return nil }
+        guard ranked.dropFirst().first?.distance != first.distance else { return nil }
+        return first.habit
+    }
+
+    private func editDistance(_ left: String, _ right: String) -> Int {
+        let source = Array(left)
+        let target = Array(right)
+        var matrix = (0...source.count).map { row in
+            (0...target.count).map { column in row == 0 ? column : 0 }
+        }
+        for row in 1...source.count {
+            matrix[row][0] = row
+            for column in 1...target.count {
+                let substitution = matrix[row - 1][column - 1]
+                    + (source[row - 1] == target[column - 1] ? 0 : 1)
+                matrix[row][column] = min(
+                    matrix[row - 1][column] + 1,
+                    matrix[row][column - 1] + 1,
+                    substitution
+                )
+                if row > 1,
+                   column > 1,
+                   source[row - 1] == target[column - 2],
+                   source[row - 2] == target[column - 1] {
+                    matrix[row][column] = min(
+                        matrix[row][column],
+                        matrix[row - 2][column - 2] + 1
+                    )
+                }
+            }
+        }
+        return matrix[source.count][target.count]
+    }
 }
 
 public enum HabitResponse {
     case logged(HabitLogResult)
+    case added(Habit)
     case since(habit: Habit, event: HabitEvent?)
     case history(habit: Habit, events: [HabitEvent])
     case undone(HabitEvent)

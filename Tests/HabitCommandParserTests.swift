@@ -83,6 +83,8 @@ struct HabitCommandParserTests {
         #expect(parser.parse("habits") == .list)
         #expect(parser.parse("reshare contact") == .contact)
         #expect(parser.parse("what can you do") == .help)
+        #expect(parser.parse("add habit Yoga") == .add(habit: "Yoga", force: false))
+        #expect(parser.parse("add habit Uoga anyway") == .add(habit: "Uoga", force: true))
     }
 
     @Test("Swift parser satisfies the shared app and SMS command contract")
@@ -91,7 +93,7 @@ struct HabitCommandParserTests {
             CommandContract.self,
             from: Data(contentsOf: contractURL)
         )
-        #expect(contract.version == 2)
+        #expect(contract.version == 3)
 
         for testCase in contract.cases {
             var calendar = Calendar(identifier: .gregorian)
@@ -122,6 +124,8 @@ struct HabitCommandParserTests {
                 occurredAt: occurredAt.map { iso8601Formatter().string(from: $0) },
                 note: note
             )
+        case .add(let habit, let force):
+            return ContractCommand(type: "add", habit: habit, force: force)
         case .since(let habit):
             return ContractCommand(type: "since", habit: habit)
         case .history(let habit):
@@ -162,11 +166,19 @@ private struct ContractCommand: Codable, Equatable {
     var habit: String?
     var occurredAt: String?
     var note: String?
+    var force: Bool?
 
-    init(type: String, habit: String? = nil, occurredAt: String? = nil, note: String? = nil) {
+    init(
+        type: String,
+        habit: String? = nil,
+        occurredAt: String? = nil,
+        note: String? = nil,
+        force: Bool? = nil
+    ) {
         self.type = type
         self.habit = habit
         self.occurredAt = occurredAt
         self.note = note
+        self.force = force
     }
 }

@@ -25,6 +25,8 @@ This Cloudflare Worker turns a Twilio phone number into a multi-user text interf
 The SMS parser accepts the same core commands as the native app:
 
 - `yoga`
+- `add habit yoga`
+- `add habit uoga anyway` — explicitly create a close match after a typo warning
 - `I did physical therapy`
 - `yoga yesterday at 7pm`
 - `yoga -- hips felt better`
@@ -34,6 +36,10 @@ The SMS parser accepts the same core commands as the native app:
 - `undo`
 - `reshare contact`
 - `help`, `commands`, `command list`, `menu`, `options`, or `what can you do`
+
+Unknown habit names receive a deterministic typo suggestion when one existing habit is a unique
+close match. New habits are created only by the explicit `add habit …` command, so a misspelled
+bare log never silently creates data.
 
 The Worker also returns the branded compliance responses registered with carriers:
 

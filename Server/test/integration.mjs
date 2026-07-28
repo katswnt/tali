@@ -22,6 +22,11 @@ const rotationUserID = "88888888-8888-4888-8888-888888888888";
 const rotationSessionID = "99999999-9999-4999-8999-999999999999";
 const rotationAccessToken = "rotation-access-token";
 const rotationRefreshToken = "rotation-refresh-token";
+const integrationSuffix = crypto.randomUUID().slice(0, 8);
+const typoSourceName = `Yoga ${integrationSuffix}`;
+const typoName = `Uoga ${integrationSuffix}`;
+const typoHabitID = crypto.randomUUID();
+const createdHabitName = `Meditation ${integrationSuffix}`;
 
 const health = await fetch(`${baseURL}/health`).then((response) => response.json());
 assert.equal(health.ok, true);
@@ -32,6 +37,14 @@ const initial = await sync({
       id: yogaID,
       name: "Yoga",
       aliases: ["did yoga"],
+      createdAt,
+      updatedAt: createdAt,
+      isArchived: false,
+    },
+    {
+      id: typoHabitID,
+      name: typoSourceName,
+      aliases: [],
       createdAt,
       updatedAt: createdAt,
       isArchived: false,
@@ -53,6 +66,55 @@ assert.ok(canonicalYoga);
 const appEvent = initial.events.find((event) => event.id === appEventID);
 assert.equal(appEvent?.note, null);
 assert.equal(appEvent?.voidedAt, null);
+
+const typoResponse = await sendSMS(new URLSearchParams({
+  From: "+15555550123",
+  To: "+15555550124",
+  Body: typoName,
+  MessageSid: `SM-TYPO-${crypto.randomUUID()}`,
+}));
+assert.match(typoResponse, /Did you mean/);
+assert.equal(typoResponse.includes(typoSourceName), true);
+assert.equal((await sync({ habits: [], events: [] })).habits.some(
+  (habit) => habit.name === typoName
+), false);
+
+const guardedAddResponse = await sendSMS(new URLSearchParams({
+  From: "+15555550123",
+  To: "+15555550124",
+  Body: `add habit ${typoName}`,
+  MessageSid: `SM-ADD-GUARD-${crypto.randomUUID()}`,
+}));
+assert.match(guardedAddResponse, /Did you mean/);
+assert.equal(guardedAddResponse.includes(typoSourceName), true);
+assert.equal(guardedAddResponse.includes(`add habit ${typoName} anyway`), true);
+
+const forcedAddResponse = await sendSMS(new URLSearchParams({
+  From: "+15555550123",
+  To: "+15555550124",
+  Body: `add habit ${typoName} anyway`,
+  MessageSid: `SM-ADD-FORCE-${crypto.randomUUID()}`,
+}));
+assert.equal(forcedAddResponse.includes(`Added ${typoName}`), true);
+
+const addResponse = await sendSMS(new URLSearchParams({
+  From: "+15555550123",
+  To: "+15555550124",
+  Body: `add habit ${createdHabitName}`,
+  MessageSid: `SM-ADD-${crypto.randomUUID()}`,
+}));
+assert.equal(addResponse.includes(`Added ${createdHabitName}`), true);
+const afterAdd = await sync({ habits: [], events: [] });
+assert.equal(afterAdd.habits.some((habit) => habit.name === createdHabitName), true);
+assert.equal(afterAdd.habits.some((habit) => habit.name === typoName), true);
+
+const conflictingName = await sendSMS(new URLSearchParams({
+  From: "+15555550123",
+  To: "+15555550124",
+  Body: "add habit help",
+  MessageSid: `SM-ADD-CONFLICT-${crypto.randomUUID()}`,
+}));
+assert.match(conflictingName, /conflicts with a Tali command/);
 
 const deduplicated = await sync({
   habits: [

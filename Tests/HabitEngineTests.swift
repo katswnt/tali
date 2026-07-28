@@ -49,6 +49,35 @@ struct HabitEngineTests {
         }
     }
 
+    @Test("Text commands suggest typos and require an explicit override for similar new habits")
+    func guardsTextHabitCreation() throws {
+        let container = try PersistenceController.makeContainer(inMemory: true)
+        let engine = HabitEngine(context: container.mainContext)
+        _ = try engine.addHabit(name: "Yoga")
+
+        #expect(throws: HabitEngineError.typoSuggestion(
+            query: "uoga",
+            suggestion: "Yoga",
+            canCreate: false
+        )) {
+            try engine.resolveHabit("uoga")
+        }
+        #expect(throws: HabitEngineError.typoSuggestion(
+            query: "Uoga",
+            suggestion: "Yoga",
+            canCreate: true
+        )) {
+            try engine.execute(.add(habit: "Uoga", force: false), source: .messages)
+        }
+
+        let response = try engine.execute(.add(habit: "Uoga", force: true), source: .messages)
+        guard case .added(let habit) = response else {
+            Issue.record("Expected an added habit response")
+            return
+        }
+        #expect(habit.name == "Uoga")
+    }
+
     @Test("Duplicate habits consolidate without losing events or aliases")
     func consolidatesDuplicateHabits() throws {
         let container = try PersistenceController.makeContainer(inMemory: true)
