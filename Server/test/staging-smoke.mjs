@@ -23,6 +23,11 @@ for (const path of ["/sms", "/privacy", "/terms", "/support"]) {
   assert.doesNotMatch(page.body, /cdn\.jsdelivr\.net/);
 }
 
+const contact = await get("/contact.vcf");
+assert.equal(contact.response.headers.get("content-type")?.includes("text/vcard"), true);
+assert.match(contact.body, /FN:Tali/);
+assert.match(contact.body, /TEL;TYPE=CELL:\+14455452123/);
+
 console.log(`Read-only staging smoke passed for ${baseURL.origin}.`);
 
 async function get(path) {

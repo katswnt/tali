@@ -4,6 +4,7 @@ export type Command =
   | { type: "history"; habit: string }
   | { type: "undo" }
   | { type: "list" }
+  | { type: "contact" }
   | { type: "help" };
 
 export function normalize(value: string): string {
@@ -30,11 +31,31 @@ export function parseCommand(
   if (["habits", "list", "list habits"].includes(value)) {
     return { type: "list" };
   }
-  if (["help", "?"].includes(value) || !value) {
+  if ([
+    "help",
+    "commands",
+    "command list",
+    "menu",
+    "options",
+    "what can you do",
+    "how do i use tali",
+    "how does this work",
+    "?",
+  ].includes(value) || !value) {
     return { type: "help" };
   }
+  if (["reshare contact", "share contact", "resend contact", "send contact"].includes(value)) {
+    return { type: "contact" };
+  }
 
-  const since = afterPrefix(value, ["since ", "when did i ", "when was ", "last "]);
+  const since = afterPrefix(value, [
+    "time since ",
+    "how long since ",
+    "since ",
+    "when did i ",
+    "when was ",
+    "last ",
+  ]);
   if (since !== undefined) return since ? { type: "since", habit: since } : { type: "help" };
 
   const history = afterPrefix(value, ["history ", "stats "]);

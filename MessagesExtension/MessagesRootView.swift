@@ -150,7 +150,7 @@ struct MessagesRootView: View {
     }
 
     private var helpText: some View {
-        Text("Try “since yoga,” “history yoga,” “habits,” or “undo.” Add a note after --")
+        Text("Try “time since yoga,” “history yoga,” “habits,” or “undo.” Add a note after --")
             .font(.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)

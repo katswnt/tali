@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "cases": [
     {
       "name": "bare habit preserves user spelling",
@@ -142,6 +142,16 @@
       }
     },
     {
+      "name": "time since query",
+      "input": "Time since weed",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "since",
+        "habit": "weed"
+      }
+    },
+    {
       "name": "when did query",
       "input": "When did I Physical Therapy",
       "now": "2026-07-23T01:42:00.000Z",
@@ -177,6 +187,24 @@
       "timeZone": "America/Los_Angeles",
       "expected": {
         "type": "list"
+      }
+    },
+    {
+      "name": "contact reshare",
+      "input": "Reshare contact",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "contact"
+      }
+    },
+    {
+      "name": "natural help synonym",
+      "input": "What can you do",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "help"
       }
     },
     {

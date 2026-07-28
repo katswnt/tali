@@ -6,6 +6,7 @@ public enum HabitCommand: Equatable {
     case history(habit: String)
     case undo
     case list
+    case contact
     case help
     case unknown(String)
 }
@@ -29,13 +30,19 @@ public struct HabitCommandParser {
             return .undo
         case "habits", "list", "list habits":
             return .list
-        case "help", "?":
+        case "help", "commands", "command list", "menu", "options", "what can you do",
+             "how do i use tali", "how does this work", "?":
             return .help
+        case "reshare contact", "share contact", "resend contact", "send contact":
+            return .contact
         default:
             break
         }
 
-        if let value = value(afterAnyPrefix: ["since ", "when did i ", "when was ", "last "], in: normalized) {
+        if let value = value(
+            afterAnyPrefix: ["time since ", "how long since ", "since ", "when did i ", "when was ", "last "],
+            in: normalized
+        ) {
             return value.isEmpty ? .help : .since(habit: value)
         }
 

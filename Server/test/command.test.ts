@@ -21,9 +21,20 @@ describe("parseCommand", () => {
 
   it("parses queries", () => {
     expect(parseCommand("since yoga", { now })).toEqual({ type: "since", habit: "yoga" });
+    expect(parseCommand("time since weed", { now })).toEqual({ type: "since", habit: "weed" });
+    expect(parseCommand("how long since weed", { now })).toEqual({ type: "since", habit: "weed" });
     expect(parseCommand("history yoga", { now })).toEqual({ type: "history", habit: "yoga" });
     expect(parseCommand("habits", { now })).toEqual({ type: "list" });
     expect(parseCommand("undo", { now })).toEqual({ type: "undo" });
+  });
+
+  it("parses help and contact synonyms", () => {
+    for (const input of ["help", "commands", "command list", "menu", "options", "what can you do"]) {
+      expect(parseCommand(input, { now })).toEqual({ type: "help" });
+    }
+    for (const input of ["reshare contact", "share contact", "resend contact", "send contact"]) {
+      expect(parseCommand(input, { now })).toEqual({ type: "contact" });
+    }
   });
 
   it("resolves yesterday in the owner's time zone", () => {
@@ -76,7 +87,7 @@ describe("parseCommand", () => {
         expected: Record<string, unknown>;
       }>;
     };
-    expect(contract.version).toBe(1);
+    expect(contract.version).toBe(2);
 
     for (const testCase of contract.cases) {
       const command = parseCommand(testCase.input, {

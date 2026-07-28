@@ -1,5 +1,26 @@
 const baseURL = "https://tali-sms.katswint.workers.dev";
 
+export function contactCard(): Response {
+  const card = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    "FN:Tali",
+    "N:Tali;;;;",
+    "ORG:Tali",
+    "TEL;TYPE=CELL:+14455452123",
+    `URL:${baseURL}/sms`,
+    "END:VCARD",
+    "",
+  ].join("\r\n");
+  return new Response(card, {
+    headers: {
+      "content-type": "text/vcard; charset=utf-8",
+      "content-disposition": 'attachment; filename="Tali.vcf"',
+      "cache-control": "public, max-age=3600",
+    },
+  });
+}
+
 export function smsProgramPage(): Response {
   return htmlPage(
     "Tali SMS",

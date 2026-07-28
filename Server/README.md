@@ -8,6 +8,7 @@ This Cloudflare Worker turns a Twilio phone number into a multi-user text interf
 - `GET /privacy` — app and connected-service privacy policy
 - `GET /terms` — transactional SMS terms
 - `GET /support` — support, contact, export, deletion, and messaging help
+- `GET /contact.vcf` — downloadable Tali contact card
 - `GET /health` — deployment health check
 - `POST /v1/auth/apple` — verify an Apple identity token and issue a device session
 - `GET /v1/account` — return masked phone-pairing status
@@ -27,10 +28,12 @@ The SMS parser accepts the same core commands as the native app:
 - `I did physical therapy`
 - `yoga yesterday at 7pm`
 - `yoga -- hips felt better`
-- `since yoga`
+- `time since yoga` (or `since yoga`)
 - `history yoga`
 - `habits`
 - `undo`
+- `reshare contact`
+- `help`, `commands`, `command list`, `menu`, `options`, or `what can you do`
 
 The Worker also returns the branded compliance responses registered with carriers:
 

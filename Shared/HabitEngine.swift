@@ -28,7 +28,7 @@ public enum HabitEngineError: LocalizedError, Equatable {
         case .noEventToUndo:
             return "There isn't a recent log to undo."
         case .unsupportedCommand:
-            return "Try a habit name, “since yoga,” “habits,” or “undo.”"
+            return "Try a habit name, “time since yoga,” “habits,” or “undo.”"
         }
     }
 }
@@ -144,7 +144,7 @@ public struct HabitEngine {
             return .undone(try undoLatest())
         case .list:
             return .habits(try habits())
-        case .help, .unknown:
+        case .contact, .help, .unknown:
             throw HabitEngineError.unsupportedCommand
         }
     }

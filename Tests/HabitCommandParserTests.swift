@@ -77,9 +77,12 @@ struct HabitCommandParserTests {
     @Test("Query commands are distinguished from logs")
     func parsesQueries() {
         #expect(parser.parse("since yoga") == .since(habit: "yoga"))
+        #expect(parser.parse("time since weed") == .since(habit: "weed"))
         #expect(parser.parse("history meditation") == .history(habit: "meditation"))
         #expect(parser.parse("undo") == .undo)
         #expect(parser.parse("habits") == .list)
+        #expect(parser.parse("reshare contact") == .contact)
+        #expect(parser.parse("what can you do") == .help)
     }
 
     @Test("Swift parser satisfies the shared app and SMS command contract")
@@ -88,7 +91,7 @@ struct HabitCommandParserTests {
             CommandContract.self,
             from: Data(contentsOf: contractURL)
         )
-        #expect(contract.version == 1)
+        #expect(contract.version == 2)
 
         for testCase in contract.cases {
             var calendar = Calendar(identifier: .gregorian)
@@ -127,6 +130,8 @@ struct HabitCommandParserTests {
             return ContractCommand(type: "undo")
         case .list:
             return ContractCommand(type: "list")
+        case .contact:
+            return ContractCommand(type: "contact")
         case .help, .unknown:
             return ContractCommand(type: "help")
         }

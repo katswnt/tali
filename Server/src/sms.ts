@@ -2,6 +2,8 @@ import { normalize, parseCommand } from "./command";
 import { bumpSyncRevisionStatement } from "./database";
 import type { EventRow, HabitRow } from "./types";
 
+const contactCardURL = "https://tali-sms.katswint.workers.dev/contact.vcf";
+
 interface SMSReceipt {
   sid: string;
   from: string;
@@ -53,7 +55,11 @@ export async function executeSMSCommand(
   const command = parseCommand(body, { timeZone });
 
   if (command.type === "help") {
-    return commit("Try a habit name, 'since yoga', 'habits', or 'undo'. Add a note after --");
+    return commit(commandHelpResponse());
+  }
+
+  if (command.type === "contact") {
+    return commit(`Save Tali to your contacts again: ${contactCardURL}`);
   }
 
   if (command.type === "list") {
@@ -125,9 +131,24 @@ export function complianceResponse(body: string): string | null {
     return "Tali by Kathryn Swint: You're unsubscribed and will receive no further messages. Reply START to subscribe again.";
   }
   if (["help", "info"].includes(keyword)) {
-    return "Tali by Kathryn Swint: Text a habit name to log it, HABITS for your list, or UNDO to undo. Message and data rates may apply. Reply STOP to unsubscribe.";
+    return commandHelpResponse();
   }
   return null;
+}
+
+export function commandHelpResponse(): string {
+  return [
+    "Tali by Kathryn Swint commands:",
+    "LOG: yoga",
+    "BACKDATE: yoga yesterday 7pm",
+    "NOTE: yoga -- note",
+    "TIME: time since yoga",
+    "HISTORY: history yoga",
+    "LIST: habits",
+    "UNDO: undo",
+    "CONTACT: reshare contact",
+    "Msg & data rates may apply. STOP to unsubscribe.",
+  ].join("\n");
 }
 
 async function resolveHabit(db: D1Database, userID: string, query: string): Promise<HabitRow | null> {

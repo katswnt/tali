@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { privacyPage, smsProgramPage, supportPage, termsPage } from "../src/pages";
+import { contactCard, privacyPage, smsProgramPage, supportPage, termsPage } from "../src/pages";
 
 describe("public SMS compliance pages", () => {
+  it("serves a downloadable Tali contact card", async () => {
+    const response = contactCard();
+    const content = await response.text();
+    expect(response.headers.get("content-type")).toContain("text/vcard");
+    expect(response.headers.get("content-disposition")).toContain("Tali.vcf");
+    expect(content).toContain("FN:Tali");
+    expect(content).toContain("TEL;TYPE=CELL:+14455452123");
+  });
+
   it("publishes the required program disclosures", async () => {
     const content = await smsProgramPage().text();
     expect(content).toContain("Message frequency varies");
