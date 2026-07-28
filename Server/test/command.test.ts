@@ -63,6 +63,37 @@ describe("parseCommand", () => {
     });
   });
 
+  it("accepts a clock time before today, yesterday, or a weekday", () => {
+    const lateEvening = new Date("2026-07-28T05:51:00.000Z");
+    expect(parseCommand("alcohol 9:30 pm today", {
+      now: lateEvening,
+      timeZone: "America/Los_Angeles",
+    })).toEqual({
+      type: "log",
+      habit: "alcohol",
+      occurredAt: "2026-07-28T04:30:00.000Z",
+      note: undefined,
+    });
+    expect(parseCommand("alcohol 6:30 pm yesterday", {
+      now: lateEvening,
+      timeZone: "America/Los_Angeles",
+    })).toEqual({
+      type: "log",
+      habit: "alcohol",
+      occurredAt: "2026-07-27T01:30:00.000Z",
+      note: undefined,
+    });
+    expect(parseCommand("alcohol 8pm saturday", {
+      now: lateEvening,
+      timeZone: "America/Los_Angeles",
+    })).toEqual({
+      type: "log",
+      habit: "alcohol",
+      occurredAt: "2026-07-26T03:00:00.000Z",
+      note: undefined,
+    });
+  });
+
   it("resolves a weekday and time to its most recent occurrence", () => {
     for (const input of ["weed sunday 2pm", "weed on Sunday at 2pm"]) {
       expect(parseCommand(input, {
@@ -101,7 +132,7 @@ describe("parseCommand", () => {
         expected: Record<string, unknown>;
       }>;
     };
-    expect(contract.version).toBe(3);
+    expect(contract.version).toBe(4);
 
     for (const testCase of contract.cases) {
       const command = parseCommand(testCase.input, {

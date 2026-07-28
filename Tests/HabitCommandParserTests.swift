@@ -68,6 +68,38 @@ struct HabitCommandParserTests {
         #expect(parser.parse("weed wednesday 8pm") == .log(habit: "weed", occurredAt: expected, note: nil))
     }
 
+    @Test("A clock time can appear before today, yesterday, or a weekday")
+    func parsesTimeBeforeDay() throws {
+        let lateEvening = try #require(
+            iso8601Formatter().date(from: "2026-07-28T05:51:00.000Z")
+        )
+        let parser = HabitCommandParser(calendar: calendar, now: { lateEvening })
+        let today = calendar.date(from: DateComponents(
+            year: 2026,
+            month: 7,
+            day: 27,
+            hour: 21,
+            minute: 30
+        ))
+        let yesterday = calendar.date(from: DateComponents(
+            year: 2026,
+            month: 7,
+            day: 26,
+            hour: 18,
+            minute: 30
+        ))
+        let saturday = calendar.date(from: DateComponents(
+            year: 2026,
+            month: 7,
+            day: 25,
+            hour: 20
+        ))
+
+        #expect(parser.parse("alcohol 9:30 pm today") == .log(habit: "alcohol", occurredAt: today, note: nil))
+        #expect(parser.parse("alcohol 6:30 pm yesterday") == .log(habit: "alcohol", occurredAt: yesterday, note: nil))
+        #expect(parser.parse("alcohol 8pm saturday") == .log(habit: "alcohol", occurredAt: saturday, note: nil))
+    }
+
     @Test("Notes follow a double dash")
     func parsesNote() {
         let command = parser.parse("yoga -- hips felt better")
@@ -93,7 +125,7 @@ struct HabitCommandParserTests {
             CommandContract.self,
             from: Data(contentsOf: contractURL)
         )
-        #expect(contract.version == 3)
+        #expect(contract.version == 4)
 
         for testCase in contract.cases {
             var calendar = Calendar(identifier: .gregorian)

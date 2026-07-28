@@ -104,28 +104,50 @@ public struct HabitCommandParser {
 
     private func extractDate(from input: String) -> (habit: String, date: Date?) {
         let weekdays = "sunday|monday|tuesday|wednesday|thursday|friday|saturday"
-        let pattern = #"\s+(?:on\s+)?(?:(last)\s+)?(today|yesterday|"#
-            + weekdays
-            + #")(?:\s+(?:at\s+)?([0-9]{1,2}(?::[0-9]{2})?\s*(?:am|pm)?))?$"#
-        guard let expression = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
-            return (input, nil)
+        let days = "today|yesterday|" + weekdays
+        let clock = #"[0-9]{1,2}(?::[0-9]{2})?\s*(?:am|pm)?"#
+        let dayFirstPattern = #"\s+(?:on\s+)?(?:(last)\s+)?("#
+            + days
+            + #")(?:\s+(?:at\s+)?("#
+            + clock
+            + #"))?$"#
+        let timeFirstPattern = #"\s+(?:at\s+)?("#
+            + clock
+            + #")\s+(?:on\s+)?(?:(last)\s+)?("#
+            + days
+            + #")$"#
+
+        let match: NSTextCheckingResult
+        let lastCapture: Int
+        let dayCapture: Int
+        let timeCapture: Int
+        if let timeFirst = input.firstMatch(pattern: timeFirstPattern, options: .caseInsensitive) {
+            match = timeFirst
+            timeCapture = 1
+            lastCapture = 2
+            dayCapture = 3
+        } else if let dayFirst = input.firstMatch(pattern: dayFirstPattern, options: .caseInsensitive) {
+            match = dayFirst
+            lastCapture = 1
+            dayCapture = 2
+            timeCapture = 3
+        } else {
+            return (input.trimmingCharacters(in: .whitespaces), nil)
         }
 
-        let range = NSRange(input.startIndex..<input.endIndex, in: input)
-        guard let match = expression.firstMatch(in: input, range: range),
-              let fullRange = Range(match.range(at: 0), in: input),
-              let dayRange = Range(match.range(at: 2), in: input) else {
+        guard let fullRange = Range(match.range(at: 0), in: input),
+              let dayRange = Range(match.range(at: dayCapture), in: input) else {
             return (input.trimmingCharacters(in: .whitespaces), nil)
         }
 
         let habit = String(input[..<fullRange.lowerBound]).trimmingCharacters(in: .whitespaces)
         let dayWord = String(input[dayRange]).lowercased()
         let reference = now()
-        let explicitlyLast = match.range(at: 1).location != NSNotFound
+        let explicitlyLast = match.range(at: lastCapture).location != NSNotFound
         let base = resolvedDay(dayWord, explicitlyLast: explicitlyLast, reference: reference)
 
-        guard match.range(at: 3).location != NSNotFound,
-              let timeRange = Range(match.range(at: 3), in: input),
+        guard match.range(at: timeCapture).location != NSNotFound,
+              let timeRange = Range(match.range(at: timeCapture), in: input),
               let time = parsedTime(String(input[timeRange])) else {
             return (habit, calendar.startOfDay(for: base))
         }

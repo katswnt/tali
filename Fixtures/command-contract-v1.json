@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "cases": [
     {
       "name": "bare habit preserves user spelling",
@@ -85,6 +85,39 @@
         "type": "log",
         "habit": "weed",
         "occurredAt": "2026-07-19T21:00:00.000Z"
+      }
+    },
+    {
+      "name": "time before today",
+      "input": "alcohol 9:30 pm today",
+      "now": "2026-07-28T05:51:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "alcohol",
+        "occurredAt": "2026-07-28T04:30:00.000Z"
+      }
+    },
+    {
+      "name": "time before yesterday",
+      "input": "alcohol 6:30 pm yesterday",
+      "now": "2026-07-28T05:51:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "alcohol",
+        "occurredAt": "2026-07-27T01:30:00.000Z"
+      }
+    },
+    {
+      "name": "time before weekday",
+      "input": "alcohol 8pm saturday",
+      "now": "2026-07-28T05:51:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "alcohol",
+        "occurredAt": "2026-07-26T03:00:00.000Z"
       }
     },
     {

@@ -87,12 +87,29 @@ function afterPrefix(value: string, prefixes: string[]): string | undefined {
 }
 
 function extractDate(value: string, now: Date, timeZone: string): { habit: string; occurredAt?: string } {
-  const match = value.match(/\s+(?:on\s+)?(?:(last)\s+)?(today|yesterday|sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:\s+(?:at\s+)?([0-9]{1,2}(?::[0-9]{2})?\s*(?:am|pm)?))?$/i);
-  if (!match || match.index === undefined) return { habit: value.trim() };
+  const days = "today|yesterday|sunday|monday|tuesday|wednesday|thursday|friday|saturday";
+  const clock = "[0-9]{1,2}(?::[0-9]{2})?\\s*(?:am|pm)?";
+  let match = value.match(new RegExp(
+    `\\s+(?:at\\s+)?(${clock})\\s+(?:on\\s+)?(?:(last)\\s+)?(${days})$`,
+    "i",
+  ));
+  let explicitlyLast = Boolean(match?.[2]);
+  let dayWord = match?.[3]?.toLowerCase();
+  let clockValue = match?.[1];
 
-  const explicitlyLast = Boolean(match[1]);
-  const dayWord = match[2].toLowerCase();
-  const time = parseTime(match[3]);
+  if (!match) {
+    match = value.match(new RegExp(
+      `\\s+(?:on\\s+)?(?:(last)\\s+)?(${days})(?:\\s+(?:at\\s+)?(${clock}))?$`,
+      "i",
+    ));
+    explicitlyLast = Boolean(match?.[1]);
+    dayWord = match?.[2]?.toLowerCase();
+    clockValue = match?.[3];
+  }
+
+  if (!match || match.index === undefined || !dayWord) return { habit: value.trim() };
+
+  const time = parseTime(clockValue);
   const dayOffset = offsetForDay(dayWord, now, timeZone, explicitlyLast);
   let occurredAt = dateInTimeZone(now, timeZone, dayOffset, time.hour, time.minute);
   if (weekdayNumber(dayWord) !== null && !explicitlyLast && occurredAt > now) {
