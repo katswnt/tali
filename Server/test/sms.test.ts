@@ -14,8 +14,8 @@ describe("SMS compliance keywords", () => {
   it("provides branded help and opt-out instructions", () => {
     const response = complianceResponse("HELP");
     expect(response).toContain("Tali by Kathryn Swint");
-    expect(response).toContain("Text an example");
-    expect(response).toContain("Log now: yoga");
+    expect(response).toContain("To log a habit: yoga");
+    expect(response).toContain("To backdate a habit: yoga yesterday 7pm");
     expect(response).not.toContain("LOG:");
     expect(response).toContain("time since yoga");
     expect(response).toContain("reshare contact");
