@@ -138,15 +138,15 @@ export function complianceResponse(body: string): string | null {
 
 export function commandHelpResponse(): string {
   return [
-    "Tali by Kathryn Swint commands:",
-    "LOG: yoga",
-    "BACKDATE: yoga yesterday 7pm",
-    "NOTE: yoga -- note",
-    "TIME: time since yoga",
-    "HISTORY: history yoga",
-    "LIST: habits",
-    "UNDO: undo",
-    "CONTACT: reshare contact",
+    "Tali by Kathryn Swint. Text an example:",
+    "Log now: yoga",
+    "Backdate: yoga yesterday 7pm",
+    "Add note: yoga -- note",
+    "Time since: time since yoga",
+    "History: history yoga",
+    "List habits: habits",
+    "Undo last log: undo",
+    "Reshare contact: reshare contact",
     "Msg & data rates may apply. STOP to unsubscribe.",
   ].join("\n");
 }
