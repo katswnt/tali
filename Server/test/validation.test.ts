@@ -46,6 +46,42 @@ describe("sync payload validation", () => {
       .toThrow("Each habit ID must be unique");
   });
 
+  it("rejects reserved terms, duplicate aliases, and values beyond shared limits", () => {
+    expect(() => parseSyncSnapshot({
+      habits: [{ ...habit, name: "STOP" }],
+      events: [],
+    })).toThrow("reserved");
+    expect(() => parseSyncSnapshot({
+      habits: [{ ...habit, aliases: ["stretch", " Stretch "] }],
+      events: [],
+    })).toThrow("must not contain duplicates");
+    expect(() => parseSyncSnapshot({
+      habits: [{ ...habit, name: "x".repeat(81) }],
+      events: [],
+    })).toThrow("1–80 characters");
+    expect(() => parseSyncSnapshot({
+      habits: [{ ...habit, aliases: ["did yoga"] }],
+      events: [],
+    })).not.toThrow();
+  });
+
+  it("rejects future events and oversized notes", () => {
+    const event = {
+      id: "22222222-2222-4222-8222-222222222222",
+      habitId: habit.id,
+      occurredAt: new Date(Date.now() + 10 * 60_000).toISOString(),
+      createdAt: habit.createdAt,
+      updatedAt: habit.updatedAt,
+      source: "app",
+    };
+    expect(() => parseSyncSnapshot({ habits: [habit], events: [event] }))
+      .toThrow("cannot be in the future");
+    expect(() => parseSyncSnapshot({
+      habits: [habit],
+      events: [{ ...event, occurredAt: habit.createdAt, note: "x".repeat(1_001) }],
+    })).toThrow("at most 1000 characters");
+  });
+
   it("rejects oversized request bodies before parsing", async () => {
     const request = new Request("https://example.com/v1/sync", {
       method: "POST",

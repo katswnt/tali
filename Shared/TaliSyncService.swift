@@ -47,6 +47,7 @@ public enum TaliSyncService {
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue(TimeZone.current.identifier, forHTTPHeaderField: "X-Tali-Time-Zone")
             request.httpBody = try encoder.encode(VersionedSyncRequest(
                 baseRevision: baseRevision,
                 mutationId: mutationID,
@@ -106,6 +107,7 @@ public enum TaliSyncService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue(TimeZone.current.identifier, forHTTPHeaderField: "X-Tali-Time-Zone")
         request.httpBody = try encoder.encode(snapshot)
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {

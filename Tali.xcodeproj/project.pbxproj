@@ -41,6 +41,7 @@
 		E758FD44FDCD4B1D9F4AD383 /* ActivityHeatmapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BEA5B87B53E196BE66C3529 /* ActivityHeatmapView.swift */; };
 		E78A8B86307538E77F2FA390 /* TaliAccountService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34E1217C6B4B9B1D4438C38E /* TaliAccountService.swift */; };
 		E7A2EB04E9633AE3259BE8A4 /* SyncCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 086273D3B516E832414C063F /* SyncCredentials.swift */; };
+		FE1B2BAEF268A298BE3E5C10 /* HabitInputRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BC111F9CF2AB30D1023CA1B /* HabitInputRules.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,6 +111,7 @@
 		4E3A3D6BE8A5C313DB5D3FA9 /* HabitCommandParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitCommandParser.swift; sourceTree = "<group>"; };
 		51B5FD73ACD5A4B4BB5D965A /* HabitVisibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitVisibility.swift; sourceTree = "<group>"; };
 		531179A52020C16ED4512E07 /* TaliAppleSignInButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliAppleSignInButton.swift; sourceTree = "<group>"; };
+		5BC111F9CF2AB30D1023CA1B /* HabitInputRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitInputRules.swift; sourceTree = "<group>"; };
 		5CF7D8D20E1C7DF3FE9EDD9F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6104DF09743E127AECBA3589 /* TaliMessages.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TaliMessages.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		684F4D15294AAF584FBBD3E8 /* HabitEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitEngineTests.swift; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 				4E3A3D6BE8A5C313DB5D3FA9 /* HabitCommandParser.swift */,
 				B9EBE6A0D868F67593CA0FD9 /* HabitEngine.swift */,
 				45064815F2459CB6ABF71D25 /* HabitFormatting.swift */,
+				5BC111F9CF2AB30D1023CA1B /* HabitInputRules.swift */,
 				EF389CE303C4B24EA6FF3EFE /* HabitModels.swift */,
 				51B5FD73ACD5A4B4BB5D965A /* HabitVisibility.swift */,
 				8142FB09CBF41BA6788C29FE /* PersistenceController.swift */,
@@ -457,6 +460,7 @@
 				D46F6756E6C0A127424B9CEA /* HabitCommandParser.swift in Sources */,
 				D8F603DE3050823C58F1B799 /* HabitEngine.swift in Sources */,
 				9D2E21A707E712C4F7BE1070 /* HabitFormatting.swift in Sources */,
+				FE1B2BAEF268A298BE3E5C10 /* HabitInputRules.swift in Sources */,
 				853F125D7A4BF5367BD04EDB /* HabitModels.swift in Sources */,
 				A900E398FFB872C2DB1A21D5 /* HabitVisibility.swift in Sources */,
 				D46363AE989B63F289E421D4 /* PersistenceController.swift in Sources */,

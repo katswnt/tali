@@ -164,7 +164,37 @@ struct MessagesRootView: View {
         guard !commandIsEmpty else { return }
         do {
             let engine = HabitEngine(context: modelContext)
-            let parsed = HabitCommandParser().parse(command)
+            let againMatch = command.range(
+                of: #"\s+again\s*$"#,
+                options: [.regularExpression, .caseInsensitive]
+            )
+            let allowsDuplicate = againMatch != nil
+            let commandText = againMatch.map { String(command[..<$0.lowerBound]) } ?? command
+            let parsed = HabitCommandParser().parse(commandText)
+            if allowsDuplicate, case .log = parsed {
+                // The explicit override intentionally bypasses the duplicate checks below.
+            } else if allowsDuplicate {
+                throw HabitEngineError.invalidHabitTerm(
+                    "“again” can only follow a habit log, such as “yoga again”."
+                )
+            } else if case .log(let query, let date, _) = parsed {
+                let habit = try engine.resolveHabit(query)
+                let active = engine.activeEvents(for: habit)
+                if let date, active.contains(where: { $0.occurredAt == date }) {
+                    throw HabitEngineError.invalidHabitTerm(
+                        "\(habit.name) is already logged for \(HabitFormatting.timestamp(date)). "
+                            + "Enter “\(commandText) again” to log another."
+                    )
+                }
+                if date == nil,
+                   let recent = active.max(by: { $0.createdAt < $1.createdAt }),
+                   Date.now.timeIntervalSince(recent.createdAt) < 5 * 60,
+                   abs(Date.now.timeIntervalSince(recent.occurredAt)) < 5 * 60 {
+                    throw HabitEngineError.invalidHabitTerm(
+                        "\(habit.name) was already logged recently. Enter “\(habit.name) again” to log another."
+                    )
+                }
+            }
             let response = try engine.execute(parsed, source: .messages)
             feedback = message(for: response)
             errorMessage = nil
@@ -186,11 +216,12 @@ struct MessagesRootView: View {
     private func message(for response: HabitResponse) -> String {
         switch response {
         case .logged(let result):
+            let timestamp = HabitFormatting.timestamp(result.event.occurredAt)
             if let previous = result.previousEvent {
                 let gap = HabitFormatting.elapsed(from: previous.occurredAt, to: result.event.occurredAt)
-                return "Logged \(result.habit.name). Previous: \(gap)."
+                return "Logged \(result.habit.name) for \(timestamp). Previous: \(gap)."
             }
-            return "Logged \(result.habit.name). No earlier entries."
+            return "Logged \(result.habit.name) for \(timestamp). No earlier entries."
         case .added(let habit):
             return "Added \(habit.name). Text “\(habit.name)” anytime to log it."
         case .since(let habit, let event):
@@ -200,7 +231,7 @@ struct MessagesRootView: View {
             guard let latest = events.first else { return "\(habit.name) has no history yet." }
             return "\(habit.name): \(events.count) recent logs. Latest \(HabitFormatting.relative(latest.occurredAt))."
         case .undone(let event):
-            return "Undid \(event.habit?.name ?? "the latest entry")."
+            return "Undid \(event.habit?.name ?? "the latest entry") from \(HabitFormatting.timestamp(event.occurredAt))."
         case .habits(let habits):
             return habits.map(\.name).joined(separator: ", ")
         }

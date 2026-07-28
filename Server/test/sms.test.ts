@@ -23,6 +23,7 @@ describe("SMS compliance keywords", () => {
     expect(response).toContain("reshare contact");
     expect(response).toContain("STOP to unsubscribe");
     expect(response?.length).toBeLessThanOrEqual(320);
+    expect(complianceResponse("HELP!")).toBe(response);
   });
 
   it("confirms standard opt-out keywords", () => {

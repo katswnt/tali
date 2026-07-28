@@ -3,9 +3,13 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 
 const baseURL = process.env.TALI_BASE_URL ?? "http://127.0.0.1:8787";
+const persistenceArgs = process.env.TALI_PERSIST_TO
+  ? ["--persist-to", process.env.TALI_PERSIST_TO]
+  : [];
 const token = "local-test-token";
 const yogaID = "11111111-1111-4111-8111-111111111111";
 const appEventID = "22222222-2222-4222-8222-222222222222";
+const uppercaseEventID = "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA";
 const createdAt = "2026-07-22T19:00:00.000Z";
 const duplicateHabitID = crypto.randomUUID();
 const duplicateEventID = crypto.randomUUID();
@@ -67,6 +71,25 @@ const appEvent = initial.events.find((event) => event.id === appEventID);
 assert.equal(appEvent?.note, null);
 assert.equal(appEvent?.voidedAt, null);
 
+seedUppercaseEvent(canonicalYoga.id);
+const afterCaseVariantSync = await sync({
+  habits: [],
+  events: [{
+    id: uppercaseEventID.toLowerCase(),
+    habitId: canonicalYoga.id,
+    occurredAt: createdAt,
+    createdAt,
+    updatedAt: "2026-07-22T20:00:00.000Z",
+    source: "app",
+    note: "updated without duplicating",
+  }],
+});
+const caseVariants = afterCaseVariantSync.events.filter(
+  (event) => event.id.toLowerCase() === uppercaseEventID.toLowerCase()
+);
+assert.equal(caseVariants.length, 1);
+assert.equal(caseVariants[0].note, "updated without duplicating");
+
 const typoResponse = await sendSMS(new URLSearchParams({
   From: "+15555550123",
   To: "+15555550124",
@@ -114,7 +137,38 @@ const conflictingName = await sendSMS(new URLSearchParams({
   Body: "add habit help",
   MessageSid: `SM-ADD-CONFLICT-${crypto.randomUUID()}`,
 }));
-assert.match(conflictingName, /conflicts with a Tali command/);
+assert.match(conflictingName, /reserved for a Tali or texting command/);
+
+const reservedName = await sendSMS(new URLSearchParams({
+  From: "+15555550123",
+  To: "+15555550124",
+  Body: "add habit STOP",
+  MessageSid: `SM-ADD-RESERVED-${crypto.randomUUID()}`,
+}));
+assert.match(reservedName, /reserved for a Tali or texting command/);
+
+const beforeRejectedInputs = await sync({ habits: [], events: [] });
+const yogaEventsBeforeRejectedInputs = beforeRejectedInputs.events.filter(
+  (event) => event.habitId === canonicalYoga.id
+).length;
+for (const [body, expected] of [
+  ["yoga today.", /What time today/],
+  ["yoga yesterday 25:99pm", /understand that time/],
+  ["yoga last night", /nothing was logged/],
+  ["yoga extra words", /find/],
+]) {
+  const response = await sendSMS(new URLSearchParams({
+    From: "+15555550123",
+    To: "+15555550124",
+    Body: body,
+    MessageSid: `SM-REJECT-${crypto.randomUUID()}`,
+  }));
+  assert.match(response, expected);
+}
+const afterRejectedInputs = await sync({ habits: [], events: [] });
+assert.equal(afterRejectedInputs.events.filter(
+  (event) => event.habitId === canonicalYoga.id
+).length, yogaEventsBeforeRejectedInputs);
 
 const deduplicated = await sync({
   habits: [
@@ -162,6 +216,32 @@ assert.ok(finalYoga);
 const smsEvents = final.events.filter((event) => event.source === "sms" && event.habitId === finalYoga.id);
 assert.equal(smsEvents.length, 1);
 assert.equal(smsEvents[0].note, "integration test");
+assert.equal(
+  Date.now() - Date.parse(smsEvents[0].createdAt) < 5 * 60_000,
+  true,
+  `Expected recent SMS event, received ${smsEvents[0].createdAt}`,
+);
+
+const guardedDuplicate = await sendSMS(new URLSearchParams({
+  From: "+15555550123",
+  To: "+15555550124",
+  Body: "yoga",
+  MessageSid: `SM-DUPLICATE-GUARD-${crypto.randomUUID()}`,
+}));
+assert.match(guardedDuplicate, /already logged/);
+assert.match(guardedDuplicate, /yoga again/i);
+
+const duplicateOverride = await sendSMS(new URLSearchParams({
+  From: "+15555550123",
+  To: "+15555550124",
+  Body: "yoga again",
+  MessageSid: `SM-DUPLICATE-OVERRIDE-${crypto.randomUUID()}`,
+}));
+assert.match(duplicateOverride, /Logged yoga/i);
+const afterDuplicateOverride = await sync({ habits: [], events: [] });
+assert.equal(afterDuplicateOverride.events.filter(
+  (event) => event.source === "sms" && event.habitId === finalYoga.id
+).length, 2);
 
 seedSecondUser();
 const secondHabitID = crypto.randomUUID();
@@ -176,7 +256,7 @@ const secondSnapshot = await sync({
     isArchived: false,
   }],
   events: [],
-}, secondToken);
+}, secondToken, "America/Chicago");
 assert.equal(secondSnapshot.habits.some((habit) => habit.name === secondHabitName), true);
 assert.equal(secondSnapshot.habits.some((habit) => habit.name.trim().toLowerCase() === "yoga"), false);
 
@@ -186,10 +266,12 @@ assert.equal(legacyAfterSecondSync.habits.some((habit) => habit.name === secondH
 const secondSMS = new URLSearchParams({
   From: secondPhone,
   To: "+15555550124",
-  Body: secondHabitName,
+  Body: `${secondHabitName} yesterday 7pm`,
   MessageSid: `SM-TENANT-${secondHabitID}`,
 });
-assert.match(await sendSMS(secondSMS), new RegExp(`Logged ${secondHabitName}`));
+const secondSMSResponse = await sendSMS(secondSMS);
+assert.match(secondSMSResponse, new RegExp(`Logged ${secondHabitName}`));
+assert.match(secondSMSResponse, /CDT/);
 const secondFinal = await sync({ habits: [], events: [] }, secondToken);
 assert.equal(secondFinal.events.some((event) => event.habitId === secondHabitID && event.source === "sms"), true);
 const legacyFinal = await sync({ habits: [], events: [] });
@@ -348,13 +430,15 @@ assert.equal((await fetch(`${baseURL}/v1/account`, {
 
 console.log(`Local SMS flow and two-user isolation passed: ${final.habits.length} legacy habit(s).`);
 
-async function sync(snapshot, bearerToken = token) {
+async function sync(snapshot, bearerToken = token, timeZone) {
+  const headers = {
+    authorization: `Bearer ${bearerToken}`,
+    "content-type": "application/json",
+  };
+  if (timeZone) headers["x-tali-time-zone"] = timeZone;
   const response = await fetch(`${baseURL}/v1/sync`, {
     method: "POST",
-    headers: {
-      authorization: `Bearer ${bearerToken}`,
-      "content-type": "application/json",
-    },
+    headers,
     body: JSON.stringify(snapshot),
   });
   if (response.status !== 200) {
@@ -404,7 +488,28 @@ function seedSecondUser() {
     INSERT OR REPLACE INTO phone_numbers (phone, user_id, paired_at)
     VALUES ('${secondPhone}', '${secondUserID}', '${now}');
   `;
-  execFileSync("npx", ["wrangler", "d1", "execute", "tali", "--local", "--command", sql], {
+  execFileSync("npx", [
+    "wrangler", "d1", "execute", "tali", "--local", ...persistenceArgs, "--command", sql,
+  ], {
+    cwd: new URL("..", import.meta.url),
+    stdio: "ignore",
+  });
+}
+
+function seedUppercaseEvent(habitID) {
+  const sql = `
+    INSERT INTO events (
+      id, user_id, habit_id, occurred_at, created_at, updated_at, source, note, voided_at
+    )
+    SELECT
+      '${uppercaseEventID}', user_id, id, '${createdAt}', '${createdAt}',
+      '${createdAt}', 'app', NULL, NULL
+    FROM habits
+    WHERE id = '${habitID}';
+  `;
+  execFileSync("npx", [
+    "wrangler", "d1", "execute", "tali", "--local", ...persistenceArgs, "--command", sql,
+  ], {
     cwd: new URL("..", import.meta.url),
     stdio: "ignore",
   });
@@ -430,7 +535,9 @@ function seedLegacyClaim() {
     INSERT INTO pairing_codes (code_hash, user_id, created_at, expires_at, used_at)
     VALUES ('${codeHash}', '${temporaryUserID}', '${now}', '${future}', NULL);
   `;
-  execFileSync("npx", ["wrangler", "d1", "execute", "tali", "--local", "--command", sql], {
+  execFileSync("npx", [
+    "wrangler", "d1", "execute", "tali", "--local", ...persistenceArgs, "--command", sql,
+  ], {
     cwd: new URL("..", import.meta.url),
     stdio: "ignore",
   });
@@ -456,7 +563,9 @@ function seedRotatingSession() {
       'Rotation test', '${now}', '${now}', '${accessFuture}', '${sessionFuture}', NULL
     );
   `;
-  execFileSync("npx", ["wrangler", "d1", "execute", "tali", "--local", "--command", sql], {
+  execFileSync("npx", [
+    "wrangler", "d1", "execute", "tali", "--local", ...persistenceArgs, "--command", sql,
+  ], {
     cwd: new URL("..", import.meta.url),
     stdio: "ignore",
   });

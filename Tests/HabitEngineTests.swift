@@ -49,6 +49,42 @@ struct HabitEngineTests {
         }
     }
 
+    @Test("Habit resolution never executes a longer partial phrase")
+    func rejectsPartialMutationQueries() throws {
+        let container = try PersistenceController.makeContainer(inMemory: true)
+        let engine = HabitEngine(context: container.mainContext)
+        _ = try engine.addHabit(name: "Yoga")
+
+        #expect(throws: HabitEngineError.habitNotFound("Yoga last night")) {
+            try engine.resolveHabit("Yoga last night")
+        }
+    }
+
+    @Test("Shared input limits and reserved texting words are enforced")
+    func validatesSharedInputRules() throws {
+        let container = try PersistenceController.makeContainer(inMemory: true)
+        let engine = HabitEngine(context: container.mainContext)
+
+        #expect(throws: HabitEngineError.self) {
+            try engine.addHabit(name: "STOP")
+        }
+        #expect(throws: HabitEngineError.self) {
+            try engine.addHabit(name: String(repeating: "x", count: 81))
+        }
+        let habit = try engine.addHabit(name: "Read", aliases: ["pages", " Pages ", "did read"])
+        #expect(habit.aliases == ["pages", "did read"])
+        #expect(throws: HabitEngineError.noteTooLong) {
+            try engine.log(
+                habit: habit,
+                source: .app,
+                note: String(repeating: "x", count: 1_001)
+            )
+        }
+        #expect(throws: HabitEngineError.futureEvent) {
+            try engine.log(habit: habit, at: .now.addingTimeInterval(600), source: .shortcut)
+        }
+    }
+
     @Test("Text commands suggest typos and require an explicit override for similar new habits")
     func guardsTextHabitCreation() throws {
         let container = try PersistenceController.makeContainer(inMemory: true)

@@ -1,4 +1,9 @@
-import { normalize, parseCommand } from "./command";
+import {
+  HABIT_NAME_MAX_LENGTH,
+  habitTermValidationError,
+  normalize,
+  parseCommand,
+} from "./command";
 import { bumpSyncRevisionStatement } from "./database";
 import type { EventRow, HabitRow } from "./types";
 
@@ -52,7 +57,18 @@ export async function executeSMSCommand(
   const compliance = complianceResponse(body);
   if (compliance) return commit(compliance);
 
-  const command = parseCommand(body, { timeZone });
+  const againMatch = body.trim().match(/^(.*?)\s+again$/i);
+  const commandText = (againMatch?.[1] ?? body).trim();
+  const duplicateOverride = Boolean(againMatch);
+  const command = parseCommand(commandText, { timeZone });
+
+  if (command.type === "invalid") {
+    return commit(command.message);
+  }
+
+  if (duplicateOverride && command.type !== "log") {
+    return commit("'again' can only follow a habit log, such as 'yoga again'.");
+  }
 
   if (command.type === "help") {
     return commit(commandHelpResponse());
@@ -64,11 +80,12 @@ export async function executeSMSCommand(
 
   if (command.type === "add") {
     const name = command.habit.trim();
-    if (!name || name.length > 80) {
-      return commit("Habit names must be between 1 and 80 characters.");
+    if (!name || Array.from(name).length > HABIT_NAME_MAX_LENGTH) {
+      return commit(`Habit names must be between 1 and ${HABIT_NAME_MAX_LENGTH} characters.`);
     }
-    if (!isLoggableHabitName(name)) {
-      return commit(`'${name}' conflicts with a Tali command. Choose another habit name.`);
+    const validationError = habitTermValidationError(name);
+    if (validationError) {
+      return commit(validationError);
     }
 
     const habits = await loadHabits(db, userID, true);
@@ -127,7 +144,10 @@ export async function executeSMSCommand(
     const now = new Date().toISOString();
     const mutation = db.prepare("UPDATE events SET voided_at = ?, updated_at = ? WHERE user_id = ? AND id = ?")
       .bind(now, now, userID, event.id);
-    return commit(`Undid ${event.habit_name}.`, [mutation]);
+    return commit(
+      `Undid ${event.habit_name} from ${formattedTimestamp(new Date(event.occurred_at), timeZone)}.`,
+      [mutation],
+    );
   }
 
   const habits = await loadHabits(db, userID);
@@ -155,26 +175,61 @@ export async function executeSMSCommand(
       : `${habit.name} has no history yet.`);
   }
 
-  const occurredAt = command.occurredAt ?? new Date().toISOString();
+  const nowDate = new Date();
+  const occurredAt = command.occurredAt ?? nowDate.toISOString();
+  if (!duplicateOverride) {
+    if (command.occurredAt) {
+      const duplicate = await db.prepare(`
+        SELECT id FROM events
+        WHERE user_id = ? AND habit_id = ? AND voided_at IS NULL AND occurred_at = ?
+        LIMIT 1
+      `).bind(userID, habit.id, occurredAt).first<{ id: string }>();
+      if (duplicate) {
+        return commit(
+          `${habit.name} is already logged for ${formattedTimestamp(new Date(occurredAt), timeZone)}. `
+          + `Text '${commandText} again' to log another.`,
+        );
+      }
+    } else {
+      const recent = await db.prepare(`
+        SELECT occurred_at, created_at FROM events
+        WHERE user_id = ? AND habit_id = ? AND voided_at IS NULL
+        ORDER BY created_at DESC LIMIT 1
+      `).bind(userID, habit.id).first<Pick<EventRow, "occurred_at" | "created_at">>();
+      if (
+        recent
+        && nowDate.getTime() - new Date(recent.created_at).getTime() < 5 * 60_000
+        && Math.abs(nowDate.getTime() - new Date(recent.occurred_at).getTime()) < 5 * 60_000
+      ) {
+        return commit(
+          `${habit.name} was already logged ${elapsed(new Date(recent.created_at), nowDate)}. `
+          + `Text '${habit.name} again' to log another.`,
+        );
+      }
+    }
+  }
   const previous = await db.prepare(`
     SELECT * FROM events
     WHERE user_id = ? AND habit_id = ? AND voided_at IS NULL AND occurred_at < ?
     ORDER BY occurred_at DESC LIMIT 1
   `).bind(userID, habit.id, occurredAt).first<EventRow>();
-  const now = new Date().toISOString();
+  const now = nowDate.toISOString();
   const mutation = db.prepare(`
     INSERT INTO events (id, user_id, habit_id, occurred_at, created_at, updated_at, source, note, voided_at)
     VALUES (?, ?, ?, ?, ?, ?, 'sms', ?, NULL)
   `).bind(crypto.randomUUID(), userID, habit.id, occurredAt, now, now, command.note ?? null);
 
+  const interpreted = command.occurredAt
+    ? ` for ${formattedTimestamp(new Date(occurredAt), timeZone)}`
+    : "";
   const response = previous
-    ? `Logged ${habit.name}. Previous: ${elapsed(new Date(previous.occurred_at), new Date(occurredAt))}.`
-    : `Logged ${habit.name}. No earlier entries.`;
+    ? `Logged ${habit.name}${interpreted}. Previous: ${elapsed(new Date(previous.occurred_at), new Date(occurredAt))}.`
+    : `Logged ${habit.name}${interpreted}. No earlier entries.`;
   return commit(response, [mutation]);
 }
 
 export function complianceResponse(body: string): string | null {
-  const keyword = normalize(body);
+  const keyword = normalize(body).replace(/[.!?]+$/, "").trim();
   if (["start", "yes", "unstop"].includes(keyword)) {
     return "Tali by Kathryn Swint: You're opted in to personal habit-tracking messages. Message frequency varies. Message and data rates may apply. Reply HELP for help or STOP to unsubscribe.";
   }
@@ -220,11 +275,7 @@ function resolveHabit(habits: HabitRow[], query: string): HabitRow | null {
   const normalized = normalize(query);
   const exact = habits.filter((habit) => terms(habit).includes(normalized));
   if (exact.length === 1) return exact[0];
-  if (exact.length > 1) return null;
-  const partial = habits.filter((habit) =>
-    terms(habit).some((term) => term.startsWith(normalized) || normalized.startsWith(term)),
-  );
-  return partial.length === 1 ? partial[0] : null;
+  return null;
 }
 
 export function suggestedHabit(habits: HabitRow[], query: string): HabitRow | null {
@@ -236,19 +287,11 @@ export function suggestedHabit(habits: HabitRow[], query: string): HabitRow | nu
       habit,
       distance: Math.min(...terms(habit).map((term) => editDistance(normalized, term))),
     }))
-    .filter((candidate) => candidate.distance <= maximumDistance)
+    .filter((candidate) => candidate.distance > 0 && candidate.distance <= maximumDistance)
     .sort((left, right) => left.distance - right.distance);
   if (!ranked.length) return null;
   if (ranked[1]?.distance === ranked[0].distance) return null;
   return ranked[0].habit;
-}
-
-function isLoggableHabitName(name: string): boolean {
-  const parsed = parseCommand(name);
-  return parsed.type === "log"
-    && normalize(parsed.habit) === normalize(name)
-    && parsed.occurredAt === undefined
-    && parsed.note === undefined;
 }
 
 function editDistance(left: string, right: string): number {
@@ -301,4 +344,16 @@ function elapsed(start: Date, end = new Date()): string {
   const days = Math.floor(hours / 24);
   const remainder = hours % 24;
   return remainder ? `${days}d ${remainder}h ago` : `${days} ${days === 1 ? "day" : "days"} ago`;
+}
+
+function formattedTimestamp(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
 }

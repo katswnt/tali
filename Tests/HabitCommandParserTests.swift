@@ -125,7 +125,7 @@ struct HabitCommandParserTests {
             CommandContract.self,
             from: Data(contentsOf: contractURL)
         )
-        #expect(contract.version == 4)
+        #expect(contract.version == 6)
 
         for testCase in contract.cases {
             var calendar = Calendar(identifier: .gregorian)
@@ -168,8 +168,10 @@ struct HabitCommandParserTests {
             return ContractCommand(type: "list")
         case .contact:
             return ContractCommand(type: "contact")
-        case .help, .unknown:
+        case .help:
             return ContractCommand(type: "help")
+        case .invalid(let message):
+            return ContractCommand(type: "invalid", message: message)
         }
     }
 
@@ -199,18 +201,21 @@ private struct ContractCommand: Codable, Equatable {
     var occurredAt: String?
     var note: String?
     var force: Bool?
+    var message: String?
 
     init(
         type: String,
         habit: String? = nil,
         occurredAt: String? = nil,
         note: String? = nil,
-        force: Bool? = nil
+        force: Bool? = nil,
+        message: String? = nil
     ) {
         self.type = type
         self.habit = habit
         self.occurredAt = occurredAt
         self.note = note
         self.force = force
+        self.message = message
     }
 }

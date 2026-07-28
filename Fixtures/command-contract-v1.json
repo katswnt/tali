@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 6,
   "cases": [
     {
       "name": "bare habit preserves user spelling",
@@ -60,9 +60,8 @@
       "now": "2026-07-23T01:42:00.000Z",
       "timeZone": "America/Los_Angeles",
       "expected": {
-        "type": "log",
-        "habit": "Medication",
-        "occurredAt": "2026-07-23T06:15:00.000Z"
+        "type": "invalid",
+        "message": "That time is in the future, so nothing was logged."
       }
     },
     {
@@ -129,6 +128,78 @@
         "type": "log",
         "habit": "weed",
         "occurredAt": "2026-07-16T03:00:00.000Z"
+      }
+    },
+    {
+      "name": "day without a time is rejected",
+      "input": "Yoga yesterday",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "invalid",
+        "message": "What time yesterday? Example: Yoga yesterday 7pm."
+      }
+    },
+    {
+      "name": "ambiguous twelve hour clock is rejected",
+      "input": "Yoga yesterday 7",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "invalid",
+        "message": "Include AM or PM for times from 1–12. Example: yoga yesterday 7pm."
+      }
+    },
+    {
+      "name": "impossible clock is rejected",
+      "input": "Yoga yesterday 25:99pm",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "invalid",
+        "message": "I couldn't understand that time. Try a time like 7pm or 19:00."
+      }
+    },
+    {
+      "name": "relative ago time",
+      "input": "Yoga 2 hours ago",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "Yoga",
+        "occurredAt": "2026-07-22T23:42:00.000Z"
+      }
+    },
+    {
+      "name": "punctuated meridiem",
+      "input": "Yoga yesterday at 7 p.m.",
+      "now": "2026-07-23T01:42:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "log",
+        "habit": "Yoga",
+        "occurredAt": "2026-07-22T02:00:00.000Z"
+      }
+    },
+    {
+      "name": "unsupported absolute date does not fall through to time only",
+      "input": "Yoga July 25 at 8pm",
+      "now": "2026-07-28T05:51:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "invalid",
+        "message": "I couldn't understand that date or time, so nothing was logged. Try: yoga yesterday 7pm."
+      }
+    },
+    {
+      "name": "nonexistent daylight saving time is rejected",
+      "input": "Yoga today 2:30am",
+      "now": "2026-03-08T12:00:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "expected": {
+        "type": "invalid",
+        "message": "That local time doesn't exist because of a daylight-saving change."
       }
     },
     {

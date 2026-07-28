@@ -156,6 +156,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     const limit = await consumeRateLimit(env.DB, "sync-user", user.id, 120, 10 * 60);
     if (!limit.allowed) return rateLimitedJSON(limit);
     try {
+      await refreshUserTimeZone(request, env.DB, user.id);
       const snapshot = await parseSyncRequest(request);
       return Response.json(await mergeSnapshot(env.DB, user.id, snapshot));
     } catch (error) {
@@ -178,6 +179,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     const limit = await consumeRateLimit(env.DB, "sync-user", user.id, 120, 10 * 60);
     if (!limit.allowed) return rateLimitedJSON(limit);
     try {
+      await refreshUserTimeZone(request, env.DB, user.id);
       const input = await parseVersionedSyncRequest(request);
       return versionedSync(env.DB, user.id, input);
     } catch (error) {
@@ -272,4 +274,21 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
 function jsonError(message: string, status: number): Response {
   return Response.json({ error: message }, { status });
+}
+
+async function refreshUserTimeZone(
+  request: Request,
+  db: D1Database,
+  userID: string,
+): Promise<void> {
+  const value = request.headers.get("X-Tali-Time-Zone")?.trim();
+  if (!value || value.length > 100) return;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
+  } catch {
+    return;
+  }
+  await db.prepare(`
+    UPDATE users SET time_zone = ?, updated_at = ? WHERE id = ?
+  `).bind(value, new Date().toISOString(), userID).run();
 }

@@ -9,6 +9,10 @@ public struct HabitLogResult {
 
 public enum HabitEngineError: LocalizedError, Equatable {
     case invalidHabitName
+    case invalidHabitTerm(String)
+    case tooManyAliases
+    case noteTooLong
+    case futureEvent
     case habitAlreadyExists(String)
     case habitNotFound(String)
     case ambiguousHabit(String)
@@ -20,6 +24,14 @@ public enum HabitEngineError: LocalizedError, Equatable {
         switch self {
         case .invalidHabitName:
             return "Enter a habit name."
+        case .invalidHabitTerm(let message):
+            return message
+        case .tooManyAliases:
+            return "Use no more than \(HabitInputRules.maximumAliasCount) aliases."
+        case .noteTooLong:
+            return "Notes must be \(HabitInputRules.maximumNoteLength) characters or fewer."
+        case .futureEvent:
+            return "That time is in the future, so nothing was logged."
         case .habitAlreadyExists(let name):
             return "“\(name)” already uses that name or alias."
         case .habitNotFound(let query):
@@ -56,18 +68,20 @@ public struct HabitEngine {
 
     @discardableResult
     public func addHabit(name: String, aliases: [String] = []) throws -> Habit {
-        try validate(name: name, aliases: aliases)
-        let habit = Habit(name: name, aliases: aliases)
+        let cleanedAliases = HabitInputRules.normalizedUniqueAliases(aliases)
+        try validate(name: name, aliases: cleanedAliases)
+        let habit = Habit(name: name, aliases: cleanedAliases)
         context.insert(habit)
         try context.save()
         return habit
     }
 
     public func updateHabit(_ habit: Habit, name: String, aliases: [String]) throws {
-        try validate(name: name, aliases: aliases, excluding: habit)
+        let cleanedAliases = HabitInputRules.normalizedUniqueAliases(aliases)
+        try validate(name: name, aliases: cleanedAliases, excluding: habit)
         habit.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         habit.normalizedName = Habit.normalize(name)
-        habit.aliases = aliases
+        habit.aliases = cleanedAliases
         habit.updatedAt = .now
         try context.save()
     }
@@ -84,12 +98,6 @@ public struct HabitEngine {
         let exact = available.filter { $0.searchTerms.contains(normalized) }
         if exact.count == 1, let match = exact.first { return match }
         if exact.count > 1 { throw HabitEngineError.ambiguousHabit(query) }
-
-        let partial = available.filter { habit in
-            habit.searchTerms.contains { $0.hasPrefix(normalized) || normalized.hasPrefix($0) }
-        }
-        if partial.count == 1, let match = partial.first { return match }
-        if partial.count > 1 { throw HabitEngineError.ambiguousHabit(query) }
         if let suggestion = suggestedHabit(for: query, among: available) {
             throw HabitEngineError.typoSuggestion(
                 query: query,
@@ -107,8 +115,20 @@ public struct HabitEngine {
         source: HabitEventSource,
         note: String? = nil
     ) throws -> HabitLogResult {
+        guard date.timeIntervalSinceNow <= 5 * 60 else {
+            throw HabitEngineError.futureEvent
+        }
+        let trimmedNote = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard (trimmedNote?.count ?? 0) <= HabitInputRules.maximumNoteLength else {
+            throw HabitEngineError.noteTooLong
+        }
         let previous = activeEvents(for: habit, before: date).first
-        let event = HabitEvent(occurredAt: date, source: source, note: note, habit: habit)
+        let event = HabitEvent(
+            occurredAt: date,
+            source: source,
+            note: trimmedNote?.isEmpty == false ? trimmedNote : nil,
+            habit: habit
+        )
         context.insert(event)
         try context.save()
         return HabitLogResult(habit: habit, event: event, previousEvent: previous)
@@ -167,7 +187,9 @@ public struct HabitEngine {
             return .undone(try undoLatest())
         case .list:
             return .habits(try habits())
-        case .contact, .help, .unknown:
+        case .invalid(let message):
+            throw HabitEngineError.invalidHabitTerm(message)
+        case .contact, .help:
             throw HabitEngineError.unsupportedCommand
         }
     }
@@ -175,8 +197,30 @@ public struct HabitEngine {
     private func validate(name: String, aliases: [String], excluding excludedHabit: Habit? = nil) throws {
         let normalizedName = Habit.normalize(name)
         guard !normalizedName.isEmpty else { throw HabitEngineError.invalidHabitName }
+        if let message = HabitInputRules.validationMessage(for: name, label: "Habit names") {
+            throw HabitEngineError.invalidHabitTerm(message)
+        }
+        guard aliases.count <= HabitInputRules.maximumAliasCount else {
+            throw HabitEngineError.tooManyAliases
+        }
+        let uniqueAliases = HabitInputRules.normalizedUniqueAliases(aliases)
+        let allowedLogTargets = Set([normalizedName] + uniqueAliases.map(Habit.normalize))
+        for alias in uniqueAliases {
+            if let message = HabitInputRules.validationMessage(
+                for: alias,
+                label: "Aliases",
+                allowedLogTargets: allowedLogTargets
+            ) {
+                throw HabitEngineError.invalidHabitTerm(message)
+            }
+            guard alias.count <= HabitInputRules.maximumAliasLength else {
+                throw HabitEngineError.invalidHabitTerm(
+                    "Aliases must be \(HabitInputRules.maximumAliasLength) characters or fewer."
+                )
+            }
+        }
 
-        let candidateTerms = Set(([normalizedName] + aliases.map(Habit.normalize)).filter { !$0.isEmpty })
+        let candidateTerms = Set(([normalizedName] + uniqueAliases.map(Habit.normalize)).filter { !$0.isEmpty })
         let conflict = try habits(includeArchived: true).first { habit in
             habit.id != excludedHabit?.id && !candidateTerms.isDisjoint(with: Set(habit.searchTerms))
         }

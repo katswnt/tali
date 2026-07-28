@@ -1,19 +1,27 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
 import { spawn, spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 const npx = process.platform === "win32" ? "npx.cmd" : "npx";
 const port = process.env.TALI_INTEGRATION_PORT ?? "8791";
 const baseURL = `http://127.0.0.1:${port}`;
 const workerOutput = [];
+const persistenceDirectory = mkdtempSync(join(tmpdir(), "tali-integration-"));
 
 const migration = spawnSync(
   npx,
-  ["wrangler", "d1", "migrations", "apply", "tali", "--local"],
+  [
+    "wrangler", "d1", "migrations", "apply", "tali", "--local",
+    "--persist-to", persistenceDirectory,
+  ],
   { stdio: "inherit" },
 );
 if (migration.status !== 0) {
+  rmSync(persistenceDirectory, { recursive: true, force: true });
   throw new Error(`Local D1 migration failed with status ${migration.status ?? "unknown"}.`);
 }
 
@@ -23,6 +31,8 @@ const worker = spawn(
     "wrangler",
     "dev",
     "--local",
+    "--persist-to",
+    persistenceDirectory,
     "--port",
     port,
     "--test-scheduled",
@@ -61,7 +71,11 @@ try {
     process.execPath,
     ["test/integration.mjs"],
     {
-      env: { ...process.env, TALI_BASE_URL: baseURL },
+      env: {
+        ...process.env,
+        TALI_BASE_URL: baseURL,
+        TALI_PERSIST_TO: persistenceDirectory,
+      },
       stdio: "inherit",
     },
   );
@@ -81,6 +95,7 @@ try {
   throw error;
 } finally {
   await stopWorker();
+  rmSync(persistenceDirectory, { recursive: true, force: true });
 }
 
 async function waitForHealth() {

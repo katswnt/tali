@@ -39,6 +39,9 @@ struct LogHabitView: View {
                     TextField("Optional", text: $note, axis: .vertical)
                         .lineLimit(2...5)
                         .accessibilityIdentifier("entry.note")
+                    Text("\(note.count)/\(HabitInputRules.maximumNoteLength)")
+                        .font(.caption)
+                        .foregroundStyle(note.count > HabitInputRules.maximumNoteLength ? .red : .secondary)
                 }
 
                 if let errorMessage {
@@ -58,7 +61,7 @@ struct LogHabitView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Log") { save() }
-                        .disabled(selectedHabit == nil)
+                        .disabled(selectedHabit == nil || note.count > HabitInputRules.maximumNoteLength)
                         .accessibilityIdentifier("entry.confirm")
                 }
             }
