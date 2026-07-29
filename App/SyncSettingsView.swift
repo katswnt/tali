@@ -294,30 +294,16 @@ struct SyncSettingsView: View {
                 Label("1. Text START to opt in", systemImage: "message")
             }
 
-            if let pairingCode {
-                LabeledContent("Pairing code") {
-                    Text(pairingCode.code)
-                        .font(.body.monospaced().weight(.semibold))
-                        .textSelection(.enabled)
+            Button {
+                createAndOpenPairingText()
+            } label: {
+                HStack {
+                    Label("2. Pair this phone", systemImage: "link")
+                    Spacer()
+                    if isWorking { ProgressView() }
                 }
-
-                Button {
-                    openURL(messageURL(body: "PAIR \(pairingCode.code)"))
-                } label: {
-                    Label("2. Text pairing code", systemImage: "link")
-                }
-            } else {
-                Button {
-                    createPairingCode()
-                } label: {
-                    HStack {
-                        Label("2. Create pairing code", systemImage: "link")
-                        Spacer()
-                        if isWorking { ProgressView() }
-                    }
-                }
-                .disabled(isWorking)
             }
+            .disabled(isWorking)
 
             Button("3. Check connection") {
                 Task { await refreshAccount(showResult: true) }
@@ -326,7 +312,7 @@ struct SyncSettingsView: View {
 
             statusRows
         } footer: {
-            Text("The pairing code expires after 10 minutes. Carrier review must be complete before Tali can send SMS replies.")
+            Text("No reply to START is normal unless texts were previously stopped. Pair this phone opens a prefilled, one-time message; tap Send to finish.")
         }
     }
 
@@ -407,16 +393,18 @@ struct SyncSettingsView: View {
         }
     }
 
-    private func createPairingCode() {
+    private func createAndOpenPairingText() {
         isWorking = true
         clearStatus()
         Task {
             do {
-                pairingCode = try await TaliAccountService.createPairingCode(
+                let createdPairingCode = try await TaliAccountService.createPairingCode(
                     endpoint: SyncCredentials.endpoint,
                     token: try await SyncCredentials.validAccessToken()
                 )
-                resultMessage = "Pairing code created."
+                pairingCode = createdPairingCode
+                resultMessage = "Pairing text opened. Tap Send in Messages, then check the connection."
+                openURL(messageURL(body: "PAIR \(createdPairingCode.code)"))
             } catch {
                 errorMessage = error.localizedDescription
             }

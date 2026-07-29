@@ -5,16 +5,18 @@ import SwiftUI
 
 @MainActor
 final class MessagesViewController: MSMessagesAppViewController {
-    private let container: ModelContainer
+    private var container: ModelContainer?
+    private var storeErrorMessage: String?
     private var hostingController: UIHostingController<AnyView>?
 
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        openStore()
+    }
+
     required init?(coder: NSCoder) {
-        do {
-            container = try PersistenceController.makeContainer()
-        } catch {
-            return nil
-        }
         super.init(coder: coder)
+        openStore()
     }
 
     override func viewDidLoad() {
@@ -28,12 +30,24 @@ final class MessagesViewController: MSMessagesAppViewController {
     }
 
     private func installRootView() {
-        let rootView = AnyView(
-            MessagesRootView { [weak self] receipt in
-                self?.insert(receipt: receipt)
-            }
-            .modelContainer(container)
-        )
+        let rootView: AnyView
+        if let container {
+            rootView = AnyView(
+                MessagesRootView { [weak self] receipt in
+                    self?.insert(receipt: receipt)
+                }
+                .modelContainer(container)
+            )
+        } else {
+            rootView = AnyView(
+                MessagesStoreUnavailableView(
+                    message: storeErrorMessage ?? "Tali couldn’t open its shared habit data."
+                ) { [weak self] in
+                    self?.openStore()
+                    self?.installRootView()
+                }
+            )
+        }
 
         if let hostingController {
             hostingController.rootView = rootView
@@ -52,6 +66,16 @@ final class MessagesViewController: MSMessagesAppViewController {
         ])
         controller.didMove(toParent: self)
         hostingController = controller
+    }
+
+    private func openStore() {
+        do {
+            container = try PersistenceController.makeContainer()
+            storeErrorMessage = nil
+        } catch {
+            container = nil
+            storeErrorMessage = error.localizedDescription
+        }
     }
 
     private func insert(receipt: HabitReceipt) {
@@ -79,6 +103,22 @@ final class MessagesViewController: MSMessagesAppViewController {
             Task { @MainActor in
                 self?.requestPresentationStyle(.compact)
             }
+        }
+    }
+}
+
+private struct MessagesStoreUnavailableView: View {
+    let message: String
+    let retry: () -> Void
+
+    var body: some View {
+        ContentUnavailableView {
+            Label("Tali couldn’t open your habits", systemImage: "externaldrive.badge.exclamationmark")
+        } description: {
+            Text(message)
+        } actions: {
+            Button("Try again", action: retry)
+                .buttonStyle(.borderedProminent)
         }
     }
 }
