@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { parseSyncRequest, parseSyncSnapshot, SyncPayloadError } from "../src/validation";
+import {
+  parseSyncRequest,
+  parseJSONRecord,
+  parseSyncSnapshot,
+  parseVersionedSyncRequest,
+  SyncPayloadError,
+} from "../src/validation";
 
 const habit = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -40,6 +46,42 @@ describe("sync payload validation", () => {
       .toThrow("Each habit ID must be unique");
   });
 
+  it("rejects reserved terms, duplicate aliases, and values beyond shared limits", () => {
+    expect(() => parseSyncSnapshot({
+      habits: [{ ...habit, name: "STOP" }],
+      events: [],
+    })).toThrow("reserved");
+    expect(() => parseSyncSnapshot({
+      habits: [{ ...habit, aliases: ["stretch", " Stretch "] }],
+      events: [],
+    })).toThrow("must not contain duplicates");
+    expect(() => parseSyncSnapshot({
+      habits: [{ ...habit, name: "x".repeat(81) }],
+      events: [],
+    })).toThrow("1–80 characters");
+    expect(() => parseSyncSnapshot({
+      habits: [{ ...habit, aliases: ["did yoga"] }],
+      events: [],
+    })).not.toThrow();
+  });
+
+  it("rejects future events and oversized notes", () => {
+    const event = {
+      id: "22222222-2222-4222-8222-222222222222",
+      habitId: habit.id,
+      occurredAt: new Date(Date.now() + 10 * 60_000).toISOString(),
+      createdAt: habit.createdAt,
+      updatedAt: habit.updatedAt,
+      source: "app",
+    };
+    expect(() => parseSyncSnapshot({ habits: [habit], events: [event] }))
+      .toThrow("cannot be in the future");
+    expect(() => parseSyncSnapshot({
+      habits: [habit],
+      events: [{ ...event, occurredAt: habit.createdAt, note: "x".repeat(1_001) }],
+    })).toThrow("at most 1000 characters");
+  });
+
   it("rejects oversized request bodies before parsing", async () => {
     const request = new Request("https://example.com/v1/sync", {
       method: "POST",
@@ -47,5 +89,54 @@ describe("sync payload validation", () => {
       body: "{}",
     });
     await expect(parseSyncRequest(request)).rejects.toMatchObject({ status: 413 });
+  });
+
+  it("applies a smaller body limit to authentication requests", async () => {
+    const request = new Request("https://example.com/v1/auth/refresh", {
+      method: "POST",
+      body: JSON.stringify({ refreshToken: "x".repeat(200) }),
+    });
+    await expect(parseJSONRecord(request, 100)).rejects.toMatchObject({ status: 413 });
+  });
+
+  it("validates and canonicalizes the revisioned sync envelope", async () => {
+    const request = new Request("https://example.com/v2/sync", {
+      method: "POST",
+      body: JSON.stringify({
+        baseRevision: 4,
+        mutationId: "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+        snapshot: { habits: [habit], events: [] },
+      }),
+    });
+
+    await expect(parseVersionedSyncRequest(request)).resolves.toMatchObject({
+      baseRevision: 4,
+      mutationID: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      snapshot: {
+        habits: [{ createdAt: "2026-07-22T20:34:56.000Z" }],
+        events: [],
+      },
+    });
+  });
+
+  it("rejects invalid revision cursors and mutation IDs", async () => {
+    const payload = {
+      baseRevision: -1,
+      mutationId: "not-a-uuid",
+      snapshot: { habits: [habit], events: [] },
+    };
+    const invalidRevision = new Request("https://example.com/v2/sync", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    await expect(parseVersionedSyncRequest(invalidRevision))
+      .rejects.toThrow("baseRevision must be a non-negative integer");
+
+    const invalidMutation = new Request("https://example.com/v2/sync", {
+      method: "POST",
+      body: JSON.stringify({ ...payload, baseRevision: 0 }),
+    });
+    await expect(parseVersionedSyncRequest(invalidMutation))
+      .rejects.toThrow("mutationId must be a UUID");
   });
 });

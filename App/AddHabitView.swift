@@ -10,8 +10,17 @@ struct AddHabitView: View {
     @State private var aliases = ""
     @State private var errorMessage: String?
 
+    private var aliasValues: [String] {
+        aliases
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    }
+
     private var canSave: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && name.count <= HabitInputRules.maximumNameLength
+            && aliasValues.count <= HabitInputRules.maximumAliasCount
+            && aliasValues.allSatisfy { $0.count <= HabitInputRules.maximumAliasLength }
     }
 
     var body: some View {
@@ -20,19 +29,21 @@ struct AddHabitView: View {
                 Section {
                     TextField("Habit name", text: $name)
                         .textInputAutocapitalization(.sentences)
+                        .accessibilityIdentifier("habit.add.name")
                 } header: {
                     Text("Habit")
                 } footer: {
-                    Text("Name anything you want to observe over time.")
+                    Text("Name anything you want to observe over time. \(name.count)/\(HabitInputRules.maximumNameLength)")
                 }
 
                 Section {
                     TextField("pt, exercises", text: $aliases, axis: .vertical)
                         .textInputAutocapitalization(.never)
+                        .accessibilityIdentifier("habit.add.aliases")
                 } header: {
                     Text("Aliases")
                 } footer: {
-                    Text("Optional comma-separated phrases you might type in Messages.")
+                    Text("Optional comma-separated phrases you might type in Messages. \(aliasValues.count)/\(HabitInputRules.maximumAliasCount) aliases.")
                 }
 
                 if let errorMessage {
@@ -40,6 +51,7 @@ struct AddHabitView: View {
                         Text(errorMessage)
                             .foregroundStyle(.red)
                             .accessibilityLabel("Error: \(errorMessage)")
+                            .accessibilityAddTraits(.updatesFrequently)
                     }
                 }
             }
@@ -52,6 +64,7 @@ struct AddHabitView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") { save() }
                         .disabled(!canSave)
+                        .accessibilityIdentifier("habit.add.confirm")
                 }
             }
         }
@@ -59,10 +72,7 @@ struct AddHabitView: View {
 
     private func save() {
         do {
-            let values = aliases
-                .split(separator: ",")
-                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            try HabitEngine(context: modelContext).addHabit(name: name, aliases: values)
+            try HabitEngine(context: modelContext).addHabit(name: name, aliases: aliasValues)
             dismiss()
             Task { await SyncCoordinator.syncIfConfigured(context: modelContext) }
         } catch {

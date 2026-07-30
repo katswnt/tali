@@ -9,3 +9,9 @@ xcuserdata/
 Server/node_modules/
 Server/.wrangler/
 Server/.dev.vars
+Server/.dev.vars.*
+!Server/.dev.vars.example
+Server/.env
+Server/.env.*
+!Server/.env.example
+Server/backups/

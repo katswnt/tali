@@ -63,6 +63,20 @@
                ReferencedContainer = "container:Tali.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "40E4A077AF0CA5AA6962649C"
+               BuildableName = "TaliUITests.xctest"
+               BlueprintName = "TaliUITests"
+               ReferencedContainer = "container:Tali.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -90,6 +104,17 @@
                BlueprintIdentifier = "9AF0B59E2B245492C116239D"
                BuildableName = "TaliTests.xctest"
                BlueprintName = "TaliTests"
+               ReferencedContainer = "container:Tali.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "40E4A077AF0CA5AA6962649C"
+               BuildableName = "TaliUITests.xctest"
+               BlueprintName = "TaliUITests"
                ReferencedContainer = "container:Tali.xcodeproj">
             </BuildableReference>
          </TestableReference>

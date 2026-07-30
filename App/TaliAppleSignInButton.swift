@@ -37,9 +37,10 @@ struct TaliAppleSignInButton: View {
         .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
         .frame(height: 50)
         .clipShape(RoundedRectangle(cornerRadius: 10))
-        .allowsHitTesting(!isWorking)
+        .disabled(isWorking)
         .opacity(isWorking ? 0.6 : 1)
         .accessibilityLabel("Continue with Apple")
+        .accessibilityValue(isWorking ? "In progress" : "")
     }
 
     private func sha256(_ value: String) -> String {

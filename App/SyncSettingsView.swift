@@ -1,6 +1,7 @@
 import HabitCore
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct SyncSettingsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -13,8 +14,14 @@ struct SyncSettingsView: View {
     @State private var authenticationMethod = SyncCredentials.AuthenticationMethod.privateKey
     @State private var account: TaliAccountSummary?
     @State private var pairingCode: TaliPairingCode?
+    @State private var sessions: [TaliSessionSummary] = []
     @State private var isWorking = false
     @State private var showingDisconnectAlert = false
+    @State private var showingSignOutEverywhereAlert = false
+    @State private var showingDeleteAccountAlert = false
+    @State private var isSavingContact = false
+    @State private var contactMessage: String?
+    @State private var contactError: String?
     @State private var resultMessage: String?
     @State private var errorMessage: String?
 
@@ -66,21 +73,32 @@ struct SyncSettingsView: View {
             } message: {
                 Text("Habit data stays on this device, but texts will not sync until you reconnect.")
             }
+            .alert("Delete account and server data?", isPresented: $showingDeleteAccountAlert) {
+                Button("Delete Account", role: .destructive) {
+                    deleteAccount()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This permanently deletes the server copy of your habits, entries, texts, pairings, and sessions. Data saved on this device remains available locally.")
+            }
+            .alert("Sign out everywhere?", isPresented: $showingSignOutEverywhereAlert) {
+                Button("Sign Out Everywhere", role: .destructive) {
+                    signOutEverywhere()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Every device connected to this Tali account, including this one, will need to sign in again.")
+            }
         }
     }
 
     @ViewBuilder
     private var setupContent: some View {
         Section {
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Connect Tali to texting", systemImage: "message.badge.waveform.fill")
-                    .font(.headline)
-                    .foregroundStyle(.blue)
-                Text("Sign in to keep your data separate, then pair the phone number you’ll use to text Tali.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.vertical, 6)
+            TextingConnectionHeader(
+                title: "Connect Tali to texting",
+                detail: "Sign in to keep your data separate, then pair the phone number you’ll use to text Tali."
+            )
 
             TaliAppleSignInButton(isWorking: isWorking) { identityToken, nonce in
                 signIn(identityToken: identityToken, nonce: nonce)
@@ -137,18 +155,11 @@ struct SyncSettingsView: View {
     @ViewBuilder
     private var connectedContent: some View {
         Section {
-            VStack(alignment: .leading, spacing: 8) {
-                Label(
-                    authenticationMethod == .apple ? "Tali account connected" : "Texting is connected",
-                    systemImage: "link.circle.fill"
-                )
-                .font(.headline)
-                .foregroundStyle(.blue)
-                Text("Incoming habit messages appear after Tali syncs.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.vertical, 6)
+            TextingConnectionHeader(
+                title: authenticationMethod == .apple ? "Tali account connected" : "Texting is connected",
+                detail: "Incoming habit messages appear after Tali syncs.",
+                connected: true
+            )
         }
 
         if authenticationMethod == .apple && account?.paired != true {
@@ -164,6 +175,29 @@ struct SyncSettingsView: View {
                     openURL(messageURL())
                 } label: {
                     Label("Open Messages", systemImage: "message.fill")
+                }
+
+                Button {
+                    saveTaliContact()
+                } label: {
+                    HStack {
+                        Label("Save Tali to Contacts", systemImage: "person.crop.circle.badge.plus")
+                        Spacer()
+                        if isSavingContact { ProgressView() }
+                    }
+                }
+                .disabled(isSavingContact)
+                .accessibilityIdentifier("texting.saveContact")
+
+                if let contactMessage {
+                    Label(contactMessage, systemImage: "checkmark.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.accentColor)
+                }
+                if let contactError {
+                    Label(contactError, systemImage: "exclamationmark.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.red)
                 }
             }
         }
@@ -196,6 +230,61 @@ struct SyncSettingsView: View {
                 showingDisconnectAlert = true
             }
         }
+
+        if authenticationMethod == .apple {
+            sessionsSection
+
+            Section {
+                Button("Delete account and server data", role: .destructive) {
+                    showingDeleteAccountAlert = true
+                }
+                .disabled(isWorking)
+            } footer: {
+                Text("This cannot be undone. Your on-device Tali data is not deleted.")
+            }
+        }
+    }
+
+    private var sessionsSection: some View {
+        Section("Devices") {
+            if sessions.isEmpty {
+                Text("No active sessions found.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(sessions) { session in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(session.deviceName)
+                            Spacer()
+                            if session.current {
+                                Text("This device")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Button("Sign Out", role: .destructive) {
+                                    revoke(session)
+                                }
+                                .disabled(isWorking)
+                            }
+                        }
+                        Text("Last used \(formattedSessionDate(session.lastUsedAt))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .contain)
+                }
+            }
+
+            Button("Refresh devices") {
+                Task { await refreshSessions() }
+            }
+            .disabled(isWorking)
+
+            Button("Sign out everywhere", role: .destructive) {
+                showingSignOutEverywhereAlert = true
+            }
+            .disabled(isWorking)
+        }
     }
 
     private var pairingSection: some View {
@@ -215,30 +304,16 @@ struct SyncSettingsView: View {
                 Label("1. Text START to opt in", systemImage: "message")
             }
 
-            if let pairingCode {
-                LabeledContent("Pairing code") {
-                    Text(pairingCode.code)
-                        .font(.body.monospaced().weight(.semibold))
-                        .textSelection(.enabled)
+            Button {
+                createAndOpenPairingText()
+            } label: {
+                HStack {
+                    Label("2. Pair this phone", systemImage: "link")
+                    Spacer()
+                    if isWorking { ProgressView() }
                 }
-
-                Button {
-                    openURL(messageURL(body: "PAIR \(pairingCode.code)"))
-                } label: {
-                    Label("2. Text pairing code", systemImage: "link")
-                }
-            } else {
-                Button {
-                    createPairingCode()
-                } label: {
-                    HStack {
-                        Label("2. Create pairing code", systemImage: "link")
-                        Spacer()
-                        if isWorking { ProgressView() }
-                    }
-                }
-                .disabled(isWorking)
             }
+            .disabled(isWorking)
 
             Button("3. Check connection") {
                 Task { await refreshAccount(showResult: true) }
@@ -247,22 +322,13 @@ struct SyncSettingsView: View {
 
             statusRows
         } footer: {
-            Text("The pairing code expires after 10 minutes. Carrier review must be complete before Tali can send SMS replies.")
+            Text("No reply to START is normal unless texts were previously stopped. Pair this phone opens a prefilled, one-time message; tap Send to finish.")
         }
     }
 
     @ViewBuilder
     private var statusRows: some View {
-        if let resultMessage {
-            Label(resultMessage, systemImage: "arrow.triangle.2.circlepath.circle.fill")
-                .foregroundStyle(.blue)
-                .accessibilityLabel("Complete: \(resultMessage)")
-        }
-        if let errorMessage {
-            Label(errorMessage, systemImage: "exclamationmark.circle.fill")
-                .foregroundStyle(.red)
-                .accessibilityLabel("Error: \(errorMessage)")
-        }
+        TextingStatusRows(resultMessage: resultMessage, errorMessage: errorMessage)
     }
 
     private var serverName: String {
@@ -277,9 +343,17 @@ struct SyncSettingsView: View {
                 let result = try await TaliAccountService.signIn(
                     endpoint: endpoint,
                     identityToken: identityToken,
-                    nonce: nonce
+                    nonce: nonce,
+                    deviceName: UIDevice.current.name
                 )
-                try SyncCredentials.save(endpoint: endpoint, token: result.token, method: .apple)
+                try SyncCredentials.save(
+                    endpoint: endpoint,
+                    token: result.accessToken,
+                    refreshToken: result.refreshToken,
+                    accessExpiresAt: result.accessExpiresAt,
+                    sessionExpiresAt: result.sessionExpiresAt,
+                    method: .apple
+                )
                 authenticationMethod = .apple
                 account = result.account
                 isConnected = true
@@ -287,13 +361,14 @@ struct SyncSettingsView: View {
                     let report = try await TaliSyncService.sync(
                         context: modelContext,
                         endpoint: SyncCredentials.endpoint,
-                        token: result.token
+                        token: result.accessToken
                     )
                     SyncCoordinator.recordSuccess()
                     resultMessage = "Synced \(report.habitCount) habits and \(report.eventCount) entries."
                 } else {
                     resultMessage = "Signed in. Pair your phone to finish connecting texting."
                 }
+                await refreshSessions()
             } catch {
                 SyncCoordinator.recordFailure(error)
                 errorMessage = error.localizedDescription
@@ -328,16 +403,18 @@ struct SyncSettingsView: View {
         }
     }
 
-    private func createPairingCode() {
+    private func createAndOpenPairingText() {
         isWorking = true
         clearStatus()
         Task {
             do {
-                pairingCode = try await TaliAccountService.createPairingCode(
+                let createdPairingCode = try await TaliAccountService.createPairingCode(
                     endpoint: SyncCredentials.endpoint,
-                    token: SyncCredentials.token()
+                    token: try await SyncCredentials.validAccessToken()
                 )
-                resultMessage = "Pairing code created."
+                pairingCode = createdPairingCode
+                resultMessage = "Pairing text opened. Tap Send in Messages, then check the connection."
+                openURL(messageURL(body: "PAIR \(createdPairingCode.code)"))
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -352,15 +429,16 @@ struct SyncSettingsView: View {
         do {
             account = try await TaliAccountService.account(
                 endpoint: SyncCredentials.endpoint,
-                token: SyncCredentials.token()
+                token: try await SyncCredentials.validAccessToken()
             )
+            await refreshSessions()
             if account?.paired == true {
                 pairingCode = nil
                 if showResult {
                     let report = try await TaliSyncService.sync(
                         context: modelContext,
                         endpoint: SyncCredentials.endpoint,
-                        token: SyncCredentials.token()
+                        token: try await SyncCredentials.validAccessToken()
                     )
                     SyncCoordinator.recordSuccess()
                     resultMessage = "Phone connected. Synced \(report.habitCount) habits and \(report.eventCount) entries."
@@ -382,7 +460,7 @@ struct SyncSettingsView: View {
                 let report = try await TaliSyncService.sync(
                     context: modelContext,
                     endpoint: SyncCredentials.endpoint,
-                    token: SyncCredentials.token()
+                    token: try await SyncCredentials.validAccessToken()
                 )
                 SyncCoordinator.recordSuccess()
                 resultMessage = "Synced \(report.habitCount) habits and \(report.eventCount) entries."
@@ -391,6 +469,23 @@ struct SyncSettingsView: View {
                 errorMessage = error.localizedDescription
             }
             isWorking = false
+        }
+    }
+
+    private func saveTaliContact() {
+        isSavingContact = true
+        contactMessage = nil
+        contactError = nil
+        Task {
+            do {
+                let updated = try await TaliContactService.save()
+                contactMessage = updated
+                    ? "Tali’s name and green photo were updated."
+                    : "Tali was saved with her green photo."
+            } catch {
+                contactError = error.localizedDescription
+            }
+            isSavingContact = false
         }
     }
 
@@ -404,6 +499,7 @@ struct SyncSettingsView: View {
             privateKey = ""
             account = nil
             pairingCode = nil
+            sessions = []
             clearStatus()
             isConnected = false
             authenticationMethod = .privateKey
@@ -413,6 +509,91 @@ struct SyncSettingsView: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func refreshSessions() async {
+        guard authenticationMethod == .apple, SyncCredentials.isConfigured else { return }
+        do {
+            sessions = try await TaliAccountService.sessions(
+                endpoint: SyncCredentials.endpoint,
+                token: try await SyncCredentials.validAccessToken()
+            )
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func revoke(_ session: TaliSessionSummary) {
+        isWorking = true
+        clearStatus()
+        Task {
+            do {
+                try await TaliAccountService.revokeSession(
+                    id: session.id,
+                    endpoint: SyncCredentials.endpoint,
+                    token: try await SyncCredentials.validAccessToken()
+                )
+                await refreshSessions()
+                resultMessage = "Signed out \(session.deviceName)."
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isWorking = false
+        }
+    }
+
+    private func deleteAccount() {
+        isWorking = true
+        clearStatus()
+        let endpoint = SyncCredentials.endpoint
+        Task {
+            do {
+                let token = try await SyncCredentials.validAccessToken()
+                try await TaliAccountService.deleteAccount(endpoint: endpoint, token: token)
+                try SyncCredentials.clear()
+                self.endpoint = SyncCredentials.defaultEndpoint
+                isConnected = false
+                authenticationMethod = .privateKey
+                account = nil
+                pairingCode = nil
+                sessions = []
+                resultMessage = "Account and server data deleted. Local data remains on this device."
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isWorking = false
+        }
+    }
+
+    private func signOutEverywhere() {
+        isWorking = true
+        clearStatus()
+        let connectedEndpoint = SyncCredentials.endpoint
+        Task {
+            do {
+                let token = try await SyncCredentials.validAccessToken()
+                try await TaliAccountService.revokeAllSessions(
+                    endpoint: connectedEndpoint,
+                    token: token
+                )
+                try SyncCredentials.clear()
+                endpoint = SyncCredentials.defaultEndpoint
+                isConnected = false
+                authenticationMethod = .privateKey
+                account = nil
+                pairingCode = nil
+                sessions = []
+                resultMessage = "Signed out on every device. Local data remains available."
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isWorking = false
+        }
+    }
+
+    private func formattedSessionDate(_ value: String) -> String {
+        guard let date = try? Date(value, strategy: .iso8601) else { return value }
+        return date.formatted(date: .abbreviated, time: .shortened)
     }
 
     private func clearStatus() {

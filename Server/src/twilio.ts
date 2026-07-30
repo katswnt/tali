@@ -27,8 +27,11 @@ export async function validateTwilioRequest(
   return timingSafeEqual(expected, signature);
 }
 
-export function twiml(message: string): Response {
-  const contents = message ? `<Message>${escapeXML(message)}</Message>` : "";
+export function twiml(message: string, statusCallback?: string): Response {
+  const callback = statusCallback
+    ? ` statusCallback="${escapeXML(statusCallback)}"`
+    : "";
+  const contents = message ? `<Message${callback}>${escapeXML(message)}</Message>` : "";
   const xml = `<?xml version="1.0" encoding="UTF-8"?><Response>${contents}</Response>`;
   return new Response(xml, { status: 200, headers: { "content-type": "text/xml; charset=utf-8" } });
 }

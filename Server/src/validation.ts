@@ -1,4 +1,12 @@
 import type { EventDTO, HabitDTO, SyncSnapshot } from "./types";
+import {
+  HABIT_ALIAS_MAX_COUNT,
+  HABIT_ALIAS_MAX_LENGTH,
+  HABIT_NAME_MAX_LENGTH,
+  NOTE_MAX_LENGTH,
+  habitTermValidationError,
+  normalize,
+} from "./command";
 
 const MAX_BODY_BYTES = 2_000_000;
 const MAX_HABITS = 1_000;
@@ -13,12 +21,42 @@ export class SyncPayloadError extends Error {
 }
 
 export async function parseSyncRequest(request: Request): Promise<SyncSnapshot> {
+  return parseSyncSnapshot(await parseJSONBody(request));
+}
+
+export async function parseJSONRecord(
+  request: Request,
+  maximumBytes: number,
+): Promise<Record<string, unknown>> {
+  return record(await parseJSONBody(request, maximumBytes), "Request body");
+}
+
+export async function parseVersionedSyncRequest(request: Request): Promise<{
+  baseRevision: number;
+  mutationID: string;
+  snapshot: SyncSnapshot;
+}> {
+  const root = record(await parseJSONBody(request), "Versioned sync payload");
+  if (!Number.isSafeInteger(root.baseRevision) || (root.baseRevision as number) < 0) {
+    throw new SyncPayloadError("baseRevision must be a non-negative integer.");
+  }
+  return {
+    baseRevision: root.baseRevision as number,
+    mutationID: uuid(root.mutationId, "mutationId"),
+    snapshot: parseSyncSnapshot(root.snapshot),
+  };
+}
+
+async function parseJSONBody(
+  request: Request,
+  maximumBytes = MAX_BODY_BYTES,
+): Promise<unknown> {
   const declaredLength = Number(request.headers.get("content-length") ?? 0);
-  if (declaredLength > MAX_BODY_BYTES) throw new SyncPayloadError("Sync payload is too large.", 413);
+  if (declaredLength > maximumBytes) throw new SyncPayloadError("Request body is too large.", 413);
 
   const text = await request.text();
-  if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) {
-    throw new SyncPayloadError("Sync payload is too large.", 413);
+  if (new TextEncoder().encode(text).byteLength > maximumBytes) {
+    throw new SyncPayloadError("Request body is too large.", 413);
   }
 
   let input: unknown;
@@ -27,7 +65,7 @@ export async function parseSyncRequest(request: Request): Promise<SyncSnapshot> 
   } catch {
     throw new SyncPayloadError("Sync payload must be valid JSON.");
   }
-  return parseSyncSnapshot(input);
+  return input;
 }
 
 export function parseSyncSnapshot(input: unknown): SyncSnapshot {
@@ -44,12 +82,25 @@ export function parseSyncSnapshot(input: unknown): SyncSnapshot {
 
 function habit(input: unknown, index: number): HabitDTO {
   const value = record(input, `habits[${index}]`);
-  const aliases = array(value.aliases, `habits[${index}].aliases`, 20).map((alias, aliasIndex) =>
-    boundedString(alias, `habits[${index}].aliases[${aliasIndex}]`, 100),
+  const name = boundedString(value.name, `habits[${index}].name`, HABIT_NAME_MAX_LENGTH);
+  const aliases = array(value.aliases, `habits[${index}].aliases`, HABIT_ALIAS_MAX_COUNT).map((alias, aliasIndex) =>
+    boundedString(alias, `habits[${index}].aliases[${aliasIndex}]`, HABIT_ALIAS_MAX_LENGTH),
   );
+  const allowedLogTargets = new Set([name, ...aliases].map(normalize));
+  const invalidName = habitTermValidationError(name);
+  if (invalidName) throw new SyncPayloadError(invalidName);
+  const invalidAlias = aliases.find((term) => habitTermValidationError(term, allowedLogTargets));
+  if (invalidAlias) {
+    throw new SyncPayloadError(
+      habitTermValidationError(invalidAlias, allowedLogTargets) ?? "Habit alias is invalid.",
+    );
+  }
+  if (new Set(aliases.map(normalize)).size !== aliases.length) {
+    throw new SyncPayloadError(`habits[${index}].aliases must not contain duplicates.`);
+  }
   return {
     id: uuid(value.id, `habits[${index}].id`),
-    name: boundedString(value.name, `habits[${index}].name`, 100),
+    name,
     aliases,
     createdAt: timestamp(value.createdAt, `habits[${index}].createdAt`),
     updatedAt: timestamp(value.updatedAt, `habits[${index}].updatedAt`),
@@ -61,14 +112,18 @@ function event(input: unknown, index: number): EventDTO {
   const value = record(input, `events[${index}]`);
   const source = boundedString(value.source, `events[${index}].source`, 20);
   if (!EVENT_SOURCES.has(source)) throw new SyncPayloadError(`events[${index}].source is invalid.`);
+  const occurredAt = timestamp(value.occurredAt, `events[${index}].occurredAt`);
+  if (Date.parse(occurredAt) > Date.now() + 5 * 60_000) {
+    throw new SyncPayloadError(`events[${index}].occurredAt cannot be in the future.`);
+  }
   return {
     id: uuid(value.id, `events[${index}].id`),
     habitId: uuid(value.habitId, `events[${index}].habitId`),
-    occurredAt: timestamp(value.occurredAt, `events[${index}].occurredAt`),
+    occurredAt,
     createdAt: timestamp(value.createdAt, `events[${index}].createdAt`),
     updatedAt: timestamp(value.updatedAt, `events[${index}].updatedAt`),
     source,
-    note: nullableString(value.note, `events[${index}].note`, 1_000),
+    note: nullableString(value.note, `events[${index}].note`, NOTE_MAX_LENGTH),
     voidedAt: nullableTimestamp(value.voidedAt, `events[${index}].voidedAt`),
   };
 }

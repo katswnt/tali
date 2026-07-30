@@ -22,13 +22,35 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Show Swift version
         run: swift --version
 
       - name: Run Swift tests
         run: swift test --scratch-path .build-spm
+
+  ui:
+    name: iOS UI smoke tests
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Boot test simulator
+        run: |
+          xcrun simctl boot "iPhone 16 Pro"
+          xcrun simctl bootstatus "iPhone 16 Pro" -b
+
+      - name: Run critical UI journeys
+        env:
+          TALI_UI_DESTINATION: platform=iOS Simulator,name=iPhone 16 Pro
+        run: ./scripts/ui-smoke.sh
 
   worker:
     name: Worker checks
@@ -40,10 +62,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -57,3 +79,6 @@ jobs:
 
       - name: Run Worker tests
         run: npm test
+
+      - name: Run local Worker and D1 integration
+        run: npm run test:integration:managed

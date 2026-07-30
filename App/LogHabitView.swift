@@ -30,12 +30,18 @@ struct LogHabitView: View {
                             Text(habit.name).tag(Optional(habit.id))
                         }
                     }
+                    .accessibilityIdentifier("entry.habit")
                     DatePicker("When", selection: $occurredAt, in: ...Date.now)
+                        .accessibilityIdentifier("entry.when")
                 }
 
                 Section("Note") {
                     TextField("Optional", text: $note, axis: .vertical)
                         .lineLimit(2...5)
+                        .accessibilityIdentifier("entry.note")
+                    Text("\(note.count)/\(HabitInputRules.maximumNoteLength)")
+                        .font(.caption)
+                        .foregroundStyle(note.count > HabitInputRules.maximumNoteLength ? .red : .secondary)
                 }
 
                 if let errorMessage {
@@ -43,6 +49,7 @@ struct LogHabitView: View {
                         Text(errorMessage)
                             .foregroundStyle(.red)
                             .accessibilityLabel("Error: \(errorMessage)")
+                            .accessibilityAddTraits(.updatesFrequently)
                     }
                 }
             }
@@ -54,7 +61,8 @@ struct LogHabitView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Log") { save() }
-                        .disabled(selectedHabit == nil)
+                        .disabled(selectedHabit == nil || note.count > HabitInputRules.maximumNoteLength)
+                        .accessibilityIdentifier("entry.confirm")
                 }
             }
         }

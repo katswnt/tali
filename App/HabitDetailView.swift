@@ -33,6 +33,7 @@ struct HabitDetailView: View {
                         .padding(.vertical, 4)
                 }
                 .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("habit.addEntry")
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20))
             }
@@ -77,6 +78,7 @@ struct HabitDetailView: View {
                                 Text(note)
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
+                                    .accessibilityIdentifier("habit.event.note")
                             }
                         }
                         .swipeActions {
@@ -88,6 +90,7 @@ struct HabitDetailView: View {
                 }
             }
         }
+        .accessibilityIdentifier("habit.detail.list")
         .navigationTitle(habit.name)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -96,6 +99,7 @@ struct HabitDetailView: View {
                         Toggle(isOn: habitTimeSinceBinding) {
                             Label("Show time since for this habit", systemImage: "timer")
                         }
+                        .accessibilityIdentifier("habit.timeSinceToggle")
                         .disabled(!showsTimeSince)
                     }
 
@@ -113,6 +117,7 @@ struct HabitDetailView: View {
                 } label: {
                     Label("Habit actions", systemImage: "ellipsis.circle")
                 }
+                .accessibilityIdentifier("habit.actions")
             }
         }
         .sheet(isPresented: $showingLog) {
@@ -215,8 +220,17 @@ private struct EditHabitView: View {
         _aliases = State(initialValue: habit.aliases.joined(separator: ", "))
     }
 
+    private var aliasValues: [String] {
+        aliases
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    }
+
     private var canSave: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && name.count <= HabitInputRules.maximumNameLength
+            && aliasValues.count <= HabitInputRules.maximumAliasCount
+            && aliasValues.allSatisfy { $0.count <= HabitInputRules.maximumAliasLength }
     }
 
     var body: some View {
@@ -228,7 +242,7 @@ private struct EditHabitView: View {
                 } header: {
                     Text("Habit")
                 } footer: {
-                    Text("Name anything you want to observe over time.")
+                    Text("Name anything you want to observe over time. \(name.count)/\(HabitInputRules.maximumNameLength)")
                 }
 
                 Section {
@@ -238,7 +252,7 @@ private struct EditHabitView: View {
                 } header: {
                     Text("Aliases")
                 } footer: {
-                    Text("Optional comma-separated phrases you might text to Tali.")
+                    Text("Optional comma-separated phrases you might text to Tali. \(aliasValues.count)/\(HabitInputRules.maximumAliasCount) aliases.")
                 }
 
                 if let errorMessage {
@@ -246,6 +260,7 @@ private struct EditHabitView: View {
                         Label(errorMessage, systemImage: "exclamationmark.circle.fill")
                             .foregroundStyle(.red)
                             .accessibilityLabel("Error: \(errorMessage)")
+                            .accessibilityAddTraits(.updatesFrequently)
                     }
                 }
             }
@@ -265,10 +280,7 @@ private struct EditHabitView: View {
 
     private func save() {
         do {
-            let values = aliases
-                .split(separator: ",")
-                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            try HabitEngine(context: modelContext).updateHabit(habit, name: name, aliases: values)
+            try HabitEngine(context: modelContext).updateHabit(habit, name: name, aliases: aliasValues)
             dismiss()
             Task { await SyncCoordinator.syncIfConfigured(context: modelContext) }
         } catch {

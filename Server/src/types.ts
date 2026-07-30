@@ -14,6 +14,7 @@ export interface AuthenticatedUser {
   id: string;
   timeZone: string;
   authentication: "legacy" | "session";
+  sessionID?: string;
 }
 
 export interface HabitDTO {

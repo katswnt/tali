@@ -4,14 +4,23 @@ export async function mergeSnapshot(
   db: D1Database,
   userID: string,
   snapshot: SyncSnapshot,
+  options: { bumpRevision?: boolean } = {},
 ): Promise<SyncSnapshot> {
-  const existing = await db.prepare("SELECT * FROM habits WHERE user_id = ? ORDER BY created_at, id")
-    .bind(userID)
-    .all<HabitRow>();
+  const [existing, existingEvents] = await Promise.all([
+    db.prepare("SELECT * FROM habits WHERE user_id = ? ORDER BY created_at, id")
+      .bind(userID)
+      .all<HabitRow>(),
+    db.prepare("SELECT id FROM events WHERE user_id = ?")
+      .bind(userID)
+      .all<{ id: string }>(),
+  ]);
   const habitsByID = new Map<string, HabitRow>();
   const habitsByName = new Map<string, HabitRow>();
   const canonicalHabitID = new Map<string, string>();
   const cleanup: D1PreparedStatement[] = [];
+  const eventIDByNormalizedID = new Map(
+    existingEvents.results.map((event) => [event.id.toLowerCase(), event.id]),
+  );
 
   // Older builds seeded a fresh set of defaults before the first server sync. Consolidate
   // same-name rows in place and move their events to the earliest canonical habit.
@@ -19,13 +28,13 @@ export async function mergeSnapshot(
     const key = normalize(row.name);
     const canonical = habitsByName.get(key);
     if (!canonical) {
-      habitsByID.set(row.id, row);
+      habitsByID.set(row.id.toLowerCase(), row);
       habitsByName.set(key, row);
-      canonicalHabitID.set(row.id, row.id);
+      canonicalHabitID.set(row.id.toLowerCase(), row.id);
       continue;
     }
 
-    canonicalHabitID.set(row.id, canonical.id);
+    canonicalHabitID.set(row.id.toLowerCase(), canonical.id);
     cleanup.push(
       db.prepare("UPDATE events SET habit_id = ? WHERE user_id = ? AND habit_id = ?")
         .bind(canonical.id, userID, row.id),
@@ -41,21 +50,22 @@ export async function mergeSnapshot(
 
   for (const habit of snapshot.habits) {
     const key = normalize(habit.name);
-    const exact = habitsByID.get(habit.id);
+    const normalizedHabitID = habit.id.toLowerCase();
+    const exact = habitsByID.get(normalizedHabitID);
     const sameName = habitsByName.get(key);
     let target = exact ?? sameName;
 
     if (exact && sameName && exact.id !== sameName.id) {
       target = sameName;
-      canonicalHabitID.set(exact.id, target.id);
+      canonicalHabitID.set(exact.id.toLowerCase(), target.id);
       statements.push(
         db.prepare("UPDATE events SET habit_id = ? WHERE user_id = ? AND habit_id = ?")
           .bind(target.id, userID, exact.id),
         db.prepare("DELETE FROM habits WHERE user_id = ? AND id = ?").bind(userID, exact.id),
       );
       Object.assign(target, mergedDuplicate(target, exact));
-      habitsByID.delete(exact.id);
-      habitsByID.set(target.id, target);
+      habitsByID.delete(exact.id.toLowerCase());
+      habitsByID.set(target.id.toLowerCase(), target);
       if (habitsByName.get(exact.normalized_name)?.id === exact.id) {
         habitsByName.delete(exact.normalized_name);
       }
@@ -64,30 +74,35 @@ export async function mergeSnapshot(
 
     if (!target) {
       const row = rowFromDTO(habit, userID);
-      habitsByID.set(row.id, row);
+      habitsByID.set(row.id.toLowerCase(), row);
       habitsByName.set(row.normalized_name, row);
-      canonicalHabitID.set(row.id, row.id);
+      canonicalHabitID.set(row.id.toLowerCase(), row.id);
       statements.push(insertHabitStatement(db, userID, row));
       continue;
     }
 
-    canonicalHabitID.set(habit.id, target.id);
+    canonicalHabitID.set(normalizedHabitID, target.id);
     const oldKey = target.normalized_name;
     const updated = target.id === habit.id
       ? newerDTO(target, habit, userID)
       : mergedDuplicate(target, rowFromDTO(habit, userID));
     Object.assign(target, updated);
-    habitsByID.set(target.id, target);
+    habitsByID.set(target.id.toLowerCase(), target);
     if (oldKey !== target.normalized_name) habitsByName.delete(oldKey);
     habitsByName.set(target.normalized_name, target);
     statements.push(updateHabitStatement(db, userID, target));
   }
 
   for (const event of snapshot.events) {
-    const habitID = canonicalHabitID.get(event.habitId) ?? event.habitId;
-    if (!habitsByID.has(habitID)) {
+    const normalizedHabitID = event.habitId.toLowerCase();
+    const habitID = canonicalHabitID.get(normalizedHabitID)
+      ?? habitsByID.get(normalizedHabitID)?.id
+      ?? event.habitId;
+    if (!habitsByID.has(habitID.toLowerCase())) {
       throw new Error(`Event ${event.id} references an unknown habit.`);
     }
+    const eventID = eventIDByNormalizedID.get(event.id.toLowerCase()) ?? event.id.toLowerCase();
+    eventIDByNormalizedID.set(event.id.toLowerCase(), eventID);
     statements.push(
       db.prepare(`
         INSERT INTO events (id, user_id, habit_id, occurred_at, created_at, updated_at, source, note, voided_at)
@@ -103,7 +118,7 @@ export async function mergeSnapshot(
         WHERE events.user_id = excluded.user_id
           AND julianday(excluded.updated_at) > julianday(events.updated_at)
       `).bind(
-        event.id,
+        eventID,
         userID,
         habitID,
         event.occurredAt,
@@ -117,8 +132,22 @@ export async function mergeSnapshot(
   }
 
   assertUniqueHabitTerms(habitsByID.values());
-  if (statements.length) await db.batch(statements);
+  if (statements.length) {
+    if (options.bumpRevision !== false) statements.push(bumpSyncRevisionStatement(db, userID));
+    await db.batch(statements);
+  }
   return readSnapshot(db, userID);
+}
+
+export function bumpSyncRevisionStatement(db: D1Database, userID: string): D1PreparedStatement {
+  const now = new Date().toISOString();
+  return db.prepare(`
+    INSERT INTO sync_state (user_id, revision, updated_at)
+    VALUES (?, 1, ?)
+    ON CONFLICT(user_id) DO UPDATE SET
+      revision = sync_state.revision + 1,
+      updated_at = excluded.updated_at
+  `).bind(userID, now);
 }
 
 function rowFromDTO(habit: HabitDTO, userID: string): HabitRow {
@@ -196,6 +225,58 @@ export async function readSnapshot(db: D1Database, userID: string): Promise<Sync
   return {
     habits: habitResult.results.map(habitDTO),
     events: eventResult.results.map(eventDTO),
+  };
+}
+
+export async function readAccountExport(
+  db: D1Database,
+  userID: string,
+  currentSessionID?: string,
+): Promise<Record<string, unknown>> {
+  const [
+    user,
+    sessions,
+    phones,
+    pairingHistory,
+    messages,
+    snapshot,
+  ] = await Promise.all([
+    db.prepare(`
+      SELECT id, apple_subject, time_zone, created_at, updated_at
+      FROM users WHERE id = ?
+    `).bind(userID).first<Record<string, unknown>>(),
+    db.prepare(`
+      SELECT id, device_name, created_at, last_used_at, expires_at, revoked_at
+      FROM sessions WHERE user_id = ? ORDER BY created_at
+    `).bind(userID).all<Record<string, unknown>>(),
+    db.prepare(`
+      SELECT phone, paired_at
+      FROM phone_numbers WHERE user_id = ? ORDER BY paired_at
+    `).bind(userID).all<Record<string, unknown>>(),
+    db.prepare(`
+      SELECT created_at, expires_at, used_at
+      FROM pairing_codes WHERE user_id = ? ORDER BY created_at
+    `).bind(userID).all<Record<string, unknown>>(),
+    db.prepare(`
+      SELECT sid, from_phone, body, response, created_at
+      FROM sms_messages WHERE user_id = ? ORDER BY created_at
+    `).bind(userID).all<Record<string, unknown>>(),
+    readSnapshot(db, userID),
+  ]);
+
+  return {
+    formatVersion: 1,
+    exportedAt: new Date().toISOString(),
+    account: user,
+    sessions: sessions.results.map((session) => ({
+      ...session,
+      current: session.id === currentSessionID,
+    })),
+    phoneNumbers: phones.results,
+    pairingHistory: pairingHistory.results,
+    smsMessages: messages.results,
+    habits: snapshot.habits,
+    events: snapshot.events,
   };
 }
 

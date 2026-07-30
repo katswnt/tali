@@ -4,18 +4,25 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "audit": "npm audit --audit-level=high",
     "check": "tsc --noEmit",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "generate:contact-photo": "node scripts/generate-contact-photo.mjs",
     "db:migrate:local": "wrangler d1 migrations apply tali --local",
     "db:migrate:remote": "wrangler d1 migrations apply tali --remote",
     "test": "vitest run",
-    "test:integration:local": "node test/integration.mjs"
+    "test:integration:local": "node test/integration.mjs",
+    "test:integration:managed": "node test/run-integration.mjs",
+    "test:smoke:staging": "node test/staging-smoke.mjs",
+    "load:smoke": "k6 run load/smoke.js",
+    "test:release": "npm run audit && npm run check && npm test -- --run && npm run test:integration:managed"
   },
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "@cloudflare/workers-types": "latest",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
-    "wrangler": "^4.26.1"
+    "wrangler": "^4.114.0"
   }
 }

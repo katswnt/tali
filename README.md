@@ -6,7 +6,26 @@
 
 Tali records what happened and when. It does not decide whether an activity is good or bad, turn repetition into a streak, or recommend what the user should do next.
 
-The working personal alpha includes a native iPhone app, Messages extension, Siri and Shortcuts actions, and an optional SMS service built with Twilio, Cloudflare Workers, and D1. Public SMS onboarding remains closed while the A2P campaign and production safeguards are completed.
+The working personal alpha includes a native iPhone app, Messages extension, Siri and Shortcuts
+actions, and an optional SMS service built with Twilio, Cloudflare Workers, and D1. It is a portfolio
+project and active product experiment preparing its first TestFlight build. Production SMS is
+working for the founder; broad public onboarding remains deliberately limited during beta.
+
+## Status at a glance
+
+This table separates repository evidence from work that still requires a real platform or user.
+
+| Area | What is verified | What is not yet proven |
+| --- | --- | --- |
+| Product model | Neutrality rules appear in copy, settings, elapsed-time visibility, binary visualization, and tests | Whether the model helps a broader group beyond the founder problem |
+| Native core | Parser, domain engine, migration, export, reconciliation, deterministic UI smoke tests, physical-iPhone launch, Messages extension, SMS pairing, sync, and contact sharing | VoiceOver, Siri/Shortcuts, and TestFlight matrix |
+| Multi-user backend | Managed Worker/D1 integration exercises two-user isolation, account lifecycle, rotating sessions, rate limits, retention, SMS, and revisioned sync | Independent security review, completed staging soak, backup/restore drill, and production load behavior |
+| SMS | Signed webhook, idempotency, compliance copy, carrier status paths, and a production founder round trip | Broader-user beta behavior and continued carrier monitoring |
+| Distribution | App Store Connect record, beta metadata, privacy manifest, demo store, release checklist, and green release checks | Archive validation, TestFlight feedback, and App Store review |
+
+The strongest claim in this repository is not “this has shipped at scale.” It is that one product
+thesis has been translated into consistent interaction rules, data semantics, security boundaries,
+and reproducible tests. The remaining launch work is listed rather than implied away.
 
 ## Product tour
 
@@ -58,6 +77,7 @@ The complete copy and behavior test is documented in [Tali product principles](d
 - Inspect four months of binary activity and tap any date for its exact count.
 - Hide elapsed time globally or for an individual habit.
 - Archive and restore habits without losing history.
+- Save Tali as a contact through Apple’s prefilled confirmation sheet; Tali never silently edits contacts.
 - Export active, archived, and voided data as CSV or JSON.
 
 ## Architecture
@@ -66,58 +86,60 @@ The complete copy and behavior test is documented in [Tali product principles](d
 Messages extension ─┐
 iPhone app ─────────┼─> SwiftData in an App Group ─┐
 Siri + Shortcuts ───┘                              │
-                                                  ├─> UUID + updatedAt reconciliation
-Sign in with Apple ─> hashed device session ──────┤
+                                                  ├─> revision + UUID reconciliation
+Sign in with Apple ─> rotating device session ───┤
 SMS -> Twilio -> signed Worker webhook -> D1 ─────┘
 ```
 
 The native surfaces share a static `HabitCore` framework and one SwiftData schema. Local capture works without an account or network connection.
 
-The optional SMS path verifies Twilio signatures, resolves the sender to an authenticated user, scopes every database operation to that user, and records each Twilio `MessageSid` once. Sign in with Apple sessions are stored in Keychain on-device and only hashed session tokens are stored in D1.
+The optional SMS path verifies Twilio signatures, resolves the sender to an authenticated user,
+scopes every database operation to that user, and records each Twilio `MessageSid` once. Sign in
+with Apple access and rotating refresh tokens are stored in Keychain on-device; D1 stores only
+their hashes. Server revisions expose stale snapshots, and mutation UUIDs make sync retries
+idempotent.
 
 See [Security and sync](docs/security-and-sync.md) for the trust boundaries, conflict model, accepted alpha constraints, and production gates.
 
-## Decisions and tradeoffs
+## Decisions, costs, and change conditions
 
-| Decision | Why | Cost accepted at this stage |
-| --- | --- | --- |
-| Deterministic local parser | Private, fast, inexpensive, predictable, and testable | Smaller grammar than an open-ended language model |
-| Local-first capture | Network failure never blocks the core action | SMS updates are synchronized rather than instantly pushed |
-| Append-only events | Preserves provenance and makes undo and sync easier to reason about | Queries must consistently exclude voided entries |
-| Archive instead of delete | Preserves history and makes the action reversible | True deletion still needs a separate account-data workflow |
-| Binary heatmap | Shows occurrence without implying that more is better | Density is available on inspection rather than encoded as intensity |
-| Snapshot sync with UUIDs and timestamps | Simple enough to validate the personal alpha across capture surfaces | Last-write-wins depends on client clocks and is not the final large-scale conflict model |
-| Sign in with Apple only | Minimizes identity collection and fits the native product | Couples multi-user SMS accounts to Apple identity |
-| Native platform controls | Dynamic Type, accessibility behavior, and familiarity come largely for free | The visual system is intentionally quieter than a highly branded custom UI |
+A tradeoff is only useful if it includes the condition that would make it obsolete.
 
-## What this project demonstrates
+| Decision | Why now | Accepted cost | Trigger to revisit |
+| --- | --- | --- | --- |
+| Deterministic parser | Private, fast, predictable, and testable for a small command domain | Explicit grammar rather than arbitrary language | Opt-in research shows common intent cannot fit the grammar |
+| Local-first, account optional | Identity or network failure never blocks capture | SMS changes require foreground or manual sync | Multi-device expectations outweigh account-free use |
+| Append-only events and archive | Correction and sync retain provenance; actions are reversible | Queries need explicit active/voided semantics | Users demonstrate a need for per-record permanent erasure |
+| Binary heatmap | Shows occurrence without rewarding volume | Repeated entries require date inspection | A validated analytical question needs count comparison |
+| Revisioned snapshot sync | Small enough to inspect; stale state and retries are explicit | Full transfer, timestamp field resolution, no field merge | Conflict reports or measured size/latency budgets are reached |
+| Sign in with Apple and phone pairing | Minimal identity collection with no passwords | Apple coupling and refresh-session lifecycle complexity | Non-Apple clients or recovery failures are validated needs |
+| Confirmed contact creation | Prefilled native sheet is familiar and avoids broad Contacts access | One intentional user tap; no silent sender branding | Research shows the step is confusing or an opt-in vCard is preferable |
+| No behavioral analytics | Sensitive history does not justify passive collection in a personal alpha | No passive funnel or retention evidence | External testing begins with a written, opt-in data budget |
+| Native platform controls | Familiar behavior and accessibility come largely for free | Quieter visual identity | Testing identifies a comprehension problem custom UI solves |
 
-### Product
+The full [decision register](docs/decision-register.md) documents alternatives, costs, and explicit
+revisit triggers for product, platform, data, backend, and development-process choices.
 
-- Reframing habit tracking around observation rather than behavior change
-- Turning a qualitative user discomfort into concrete copy, visualization, and settings rules
-- Separating the core interaction from optional infrastructure
-- Treating carrier registration, consent, and opt-out behavior as product requirements
-- Sequencing a personal alpha before a public multi-user rollout
+## Evidence map
 
-### Engineering
-
-- Swift 6, SwiftUI, SwiftData, schema migration, and App Group persistence
-- Messages extensions, App Intents, Siri, Shortcuts, and Keychain
-- Natural-language date parsing without external AI services
-- Cloudflare Workers, D1 migrations, and Twilio webhooks
-- Sign in with Apple JWT verification and revocable hashed sessions
-- Multi-tenant query scoping and short-lived phone-number pairing
-- Webhook signature validation, XML escaping, and message idempotency
-- Duplicate-safe synchronization and historical identity repair
-
-The longer narrative is in the [product and engineering case study](docs/portfolio-case-study.md).
+| Capability | Repository evidence |
+| --- | --- |
+| Product judgment | [Product principles](docs/product-principles.md), elapsed-time controls, binary heatmap, empty-state behavior, and the [case study](docs/portfolio-case-study.md) |
+| Domain modeling | [`HabitModels`](Shared/HabitModels.swift), append-only event behavior in [`HabitEngine`](Shared/HabitEngine.swift), and Swift tests |
+| Native iOS breadth | SwiftUI app, App Group Messages extension, App Intents, Keychain, SwiftData migration, privacy manifest, and generated Xcode project |
+| Backend and security | User-scoped D1 migrations, cryptographic Apple JWT verification, rotating hashed sessions with replay-family revocation, one-time pairing, signed webhooks, retention, [trust-boundary documentation](docs/security-and-sync.md), and a candid [security self-review](docs/security-review.md) |
+| Distributed-data reasoning | Server revisions, mutation idempotency, UUID reconciliation, normalized-name duplicate repair, idempotent Twilio receipts, managed integration tests, and documented last-write-wins limits |
+| Quality discipline | CI, 65 domain and Worker tests, three deterministic UI journeys, a managed Worker/D1 integration, isolated demo data, and a one-command release check |
+| Operational judgment | Separate staging database/Worker, explicit production confirmation, backup and recovery runbook, rollback policy, privacy-safe observability, and load thresholds |
+| Product learning | A consent-first five-person [research protocol](docs/research-plan.md) and [field kit](docs/research-kit.md) with falsifiable comprehension, neutrality, trust, and export gates |
+| Learning from failure | SwiftData startup recovery, weekday-parser regression, duplicate reconciliation, A2P launch gating, and webhook delivery checks in the [case study](docs/portfolio-case-study.md) |
 
 ## Reliability and tests
 
-- **19 Swift tests** cover parsing, aliases, backdating, logging, undo, archive/restore, export, time-since visibility, schema migration, and duplicate consolidation.
-- **22 Worker tests** cover the SMS grammar, time zones, validation limits, compliance pages and copy, Twilio signatures, XML escaping, and pairing-code parsing.
-- A local Worker/D1 integration test exercises round-trip sync, two-user isolation, deliberate duplicate creation, event remapping, webhook idempotency, SMS logging, and legacy-account migration.
+- **20 Swift tests** cover parsing, aliases, backdating, logging, undo, archive/restore, export, time-since visibility, schema migration, and duplicate consolidation.
+- **45 Worker tests** cover the shared SMS grammar, bounded payload envelopes, Apple-token cryptography and claims, time zones, compliance pages and copy, Twilio signatures, XML escaping, pairing-code parsing, rotating-session replay, hashed rate limits, retention, and privacy-safe logging.
+- **Three UI smoke journeys** cover first launch and logging, backdated detail/history, and elapsed-time visibility using an isolated in-memory launch mode.
+- A managed local Worker/D1 integration test exercises revision conflicts and retry idempotency, rotating sessions, round-trip sync, two-user isolation, deliberate duplicate creation, event remapping, webhook idempotency, SMS logging, and legacy-account migration.
 - The Xcode scheme gathers coverage for the shared framework.
 
 ```bash
@@ -125,11 +147,71 @@ swift test --scratch-path .build-spm
 
 cd Server
 npm ci
-npm run check
-npm test
+npm run test:release
 ```
 
-Physical-device, App Group, Messages, Siri, and carrier behavior remain explicit release-checklist items because simulator and unit tests cannot prove those integrations.
+Physical-device, App Group, Messages, Siri, Apple’s real authorization sheet, contact confirmation,
+and carrier behavior remain explicit release-checklist items because simulator and unit tests
+cannot prove those integrations.
+
+The repository-level release check regenerates the Xcode project, runs every Swift and Worker test,
+boots an isolated local Worker/D1 integration environment, triggers retention, and builds the app
+plus Messages extension:
+
+```bash
+./scripts/release-check.sh
+```
+
+## Known limitations and next decisions
+
+These are weaknesses, not disguised roadmap features:
+
+1. **There is no distribution proof yet.** The next milestone is a signed physical-device pass,
+   TestFlight build, and approved carrier path—not another broad feature.
+2. **The product thesis is founder-led.** Tali has a defined five-person, consent-first research
+   protocol but no completed external cohort, diary study, or retention signal. Evidence must come
+   before claims; sensitive behavioral analytics remain out of scope.
+3. **Revisioned snapshot sync is intentionally modest.** Revisions expose stale work and mutation
+   IDs make retries safe, but histories still transfer in full, entity fields use client
+   timestamps, and revision reservation is not one transaction with reconciliation. Deltas and a
+   transactional mutation boundary should be evaluated against measured conflicts and payloads.
+4. **Operational controls exist; operational evidence does not yet.** Staging/production isolation,
+   explicit production deploy confirmation, backups, rollback guidance, and load budgets are
+   implemented. A recorded staging soak, load run, and production recovery drill remain required.
+5. **Automated tests stop at important platform boundaries.** Domain, Worker, integration, and UI
+   smoke coverage are strong; physical App Group behavior, VoiceOver, Siri, real Apple
+   authorization, contact saving, carrier delivery, and independent security review remain manual
+   gates.
+6. **The platform and identity strategy are narrow.** The app requires iOS 18+, and connected
+   accounts use Apple identity. That is appropriate to learn from the native alpha, not a claim of
+   universal reach.
+
+The next technical work should remove launch risk or gather product evidence. New surface area has
+lower priority until those two questions are answered.
+
+## Development approach and ownership
+
+Tali was built through an AI-assisted, human-directed workflow. Coding agents accelerated
+implementation, debugging, tests, and documentation. Kathryn remained accountable for the problem
+framing, emotional-neutrality rules, acceptance criteria, architecture tradeoffs, hands-on platform
+integration, review, and release decisions.
+
+That distinction is important: a polished diff is not proof of understanding. Agent output was not
+treated as evidence until behavior had an automated test, a reproducible check, or an explicit
+manual gate. The repository deliberately preserves failures, constraints, and unshipped work so the
+portfolio demonstrates judgment and verification rather than unaided typing speed.
+
+Useful follow-up questions include:
+
+- Which specific UI decisions came from the neutrality principle, and what was rejected?
+- Why is a deterministic parser a product choice rather than only a technical shortcut?
+- What is the source of truth, and how do duplicate identities and concurrent edits resolve?
+- How is one SMS sender prevented from reading or changing another user's data?
+- Which production failure changed the architecture most?
+- How would sync, operations, and cost change at 100,000 active users?
+- How would product-market evidence be gathered without casually collecting sensitive histories?
+- Which work came from coding agents, and how was it reviewed and verified?
+- What would be cut from the current scope before a public beta?
 
 ## Project structure
 
@@ -189,25 +271,21 @@ It requires the operator’s own:
 - Cloudflare account, Worker, and D1 database
 - Apple App ID configured for Sign in with Apple
 
-The checked-in Worker configuration contains Tali’s deployment identifiers and must be replaced for a fork. Secrets remain in Wrangler or local `.dev.vars`; they are not committed.
+The checked-in Worker configuration contains Tali’s separate staging and production deployment
+identifiers and must be replaced for a fork. Secrets remain environment-specific in Wrangler or
+local `.dev.vars`; they are not committed. The deploy script refuses an implicit production target
+and requires an explicit production confirmation.
 
-See [Server/README.md](Server/README.md) for setup and deployment.
+See [Server/README.md](Server/README.md) for setup and
+[the operations runbook](docs/operations-runbook.md) for staging, backup, load, rollback, and
+recovery.
 
-## Current status and launch gates
+## Launch gates
 
-Tali is a working personal alpha and portfolio project, not an App Store release or open public SMS service.
-
-Before inviting multi-user SMS traffic:
-
-- Obtain A2P approval for the real onboarding and traffic.
-- Add account deletion and verify a complete remote-data export path.
-- Add per-user and per-IP rate limits around authentication and pairing.
-- Add device/session management beyond single-session sign-out.
-- Add privacy-preserving operational monitoring without habit names or message bodies.
-- Define and enforce server data-retention behavior.
-- Complete physical-device, VoiceOver, large Dynamic Type, dark mode, and TestFlight testing.
-
-The complete checklist lives in [docs/release-checklist.md](docs/release-checklist.md).
+The complete, intentionally manual launch checklist lives in
+[docs/release-checklist.md](docs/release-checklist.md). Public claims should not change from
+“personal alpha” until the physical-device, TestFlight, carrier, security-review, and production
+recovery gates have evidence.
 
 ## License
 
