@@ -19,7 +19,9 @@ struct SyncSettingsView: View {
     @State private var showingDisconnectAlert = false
     @State private var showingSignOutEverywhereAlert = false
     @State private var showingDeleteAccountAlert = false
-    @State private var showingContactSheet = false
+    @State private var isSavingContact = false
+    @State private var contactMessage: String?
+    @State private var contactError: String?
     @State private var resultMessage: String?
     @State private var errorMessage: String?
 
@@ -86,15 +88,6 @@ struct SyncSettingsView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("Every device connected to this Tali account, including this one, will need to sign in again.")
-            }
-            .sheet(isPresented: $showingContactSheet) {
-                TaliContactSheet { saved in
-                    showingContactSheet = false
-                    if saved {
-                        resultMessage = "Tali was added to Contacts."
-                    }
-                }
-                .ignoresSafeArea()
             }
         }
     }
@@ -185,9 +178,26 @@ struct SyncSettingsView: View {
                 }
 
                 Button {
-                    showingContactSheet = true
+                    saveTaliContact()
                 } label: {
-                    Label("Add Tali to Contacts", systemImage: "person.crop.circle.badge.plus")
+                    HStack {
+                        Label("Save Tali to Contacts", systemImage: "person.crop.circle.badge.plus")
+                        Spacer()
+                        if isSavingContact { ProgressView() }
+                    }
+                }
+                .disabled(isSavingContact)
+                .accessibilityIdentifier("texting.saveContact")
+
+                if let contactMessage {
+                    Label(contactMessage, systemImage: "checkmark.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.accentColor)
+                }
+                if let contactError {
+                    Label(contactError, systemImage: "exclamationmark.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.red)
                 }
             }
         }
@@ -459,6 +469,23 @@ struct SyncSettingsView: View {
                 errorMessage = error.localizedDescription
             }
             isWorking = false
+        }
+    }
+
+    private func saveTaliContact() {
+        isSavingContact = true
+        contactMessage = nil
+        contactError = nil
+        Task {
+            do {
+                let updated = try await TaliContactService.save()
+                contactMessage = updated
+                    ? "Tali’s name and green photo were updated."
+                    : "Tali was saved with her green photo."
+            } catch {
+                contactError = error.localizedDescription
+            }
+            isSavingContact = false
         }
     }
 

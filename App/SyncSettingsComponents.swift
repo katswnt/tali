@@ -1,5 +1,4 @@
 import Contacts
-import ContactsUI
 import SwiftUI
 import UIKit
 
@@ -44,66 +43,93 @@ struct TextingStatusRows: View {
     }
 }
 
-struct TaliContactSheet: UIViewControllerRepresentable {
-    let completion: (Bool) -> Void
+enum TaliContactService {
+    private static let phoneNumber = "+1 445-545-2123"
+    private static let homepage = "https://tali-sms.katswint.workers.dev/sms"
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator(completion: completion)
-    }
+    static func save() async throws -> Bool {
+        let store = CNContactStore()
+        guard try await canWriteContacts(using: store) else {
+            throw TaliContactError.accessDenied
+        }
+        guard let imageData = UIImage(named: "TaliContact")?.jpegData(compressionQuality: 0.92) else {
+            throw TaliContactError.missingImage
+        }
 
-    func makeUIViewController(context: Context) -> UINavigationController {
-        let contact = CNMutableContact()
+        let keys: [CNKeyDescriptor] = [
+            CNContactIdentifierKey as CNKeyDescriptor,
+            CNContactTypeKey as CNKeyDescriptor,
+            CNContactGivenNameKey as CNKeyDescriptor,
+            CNContactOrganizationNameKey as CNKeyDescriptor,
+            CNContactPhoneNumbersKey as CNKeyDescriptor,
+            CNContactUrlAddressesKey as CNKeyDescriptor,
+            CNContactImageDataKey as CNKeyDescriptor,
+        ]
+        let matches = try store.unifiedContacts(
+            matching: CNContact.predicateForContacts(
+                matching: CNPhoneNumber(stringValue: phoneNumber)
+            ),
+            keysToFetch: keys
+        )
+        let existing = matches.first
+        let contact = (existing?.mutableCopy() as? CNMutableContact) ?? CNMutableContact()
+
+        contact.contactType = .organization
         contact.givenName = "Tali"
         contact.organizationName = "Tali"
-        contact.phoneNumbers = [
-            CNLabeledValue(label: CNLabelPhoneNumberMobile, value: CNPhoneNumber(stringValue: "+1 445-545-2123"))
-        ]
-        contact.urlAddresses = [
-            CNLabeledValue(label: CNLabelURLAddressHomePage, value: "https://tali-sms.katswint.workers.dev/sms" as NSString)
-        ]
-        contact.imageData = appIconData()
+        contact.imageData = imageData
+        if !contact.phoneNumbers.contains(where: { samePhone($0.value.stringValue, phoneNumber) }) {
+            contact.phoneNumbers.append(
+                CNLabeledValue(
+                    label: CNLabelPhoneNumberMobile,
+                    value: CNPhoneNumber(stringValue: phoneNumber)
+                )
+            )
+        }
+        if !contact.urlAddresses.contains(where: { $0.value as String == homepage }) {
+            contact.urlAddresses.append(
+                CNLabeledValue(label: CNLabelURLAddressHomePage, value: homepage as NSString)
+            )
+        }
 
-        let contactController = CNContactViewController(forNewContact: contact)
-        contactController.delegate = context.coordinator
-        contactController.allowsEditing = true
-        contactController.allowsActions = false
-        contactController.message = "Save Tali so her texts have a name and photo."
-        return UINavigationController(rootViewController: contactController)
+        let request = CNSaveRequest()
+        if existing == nil {
+            request.add(contact, toContainerWithIdentifier: nil)
+        } else {
+            request.update(contact)
+        }
+        try store.execute(request)
+        return existing != nil
     }
 
-    func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {}
-
-    final class Coordinator: NSObject, CNContactViewControllerDelegate {
-        private let completion: (Bool) -> Void
-
-        init(completion: @escaping (Bool) -> Void) {
-            self.completion = completion
-        }
-
-        func contactViewController(
-            _ viewController: CNContactViewController,
-            didCompleteWith contact: CNContact?
-        ) {
-            completion(contact != nil)
+    private static func canWriteContacts(using store: CNContactStore) async throws -> Bool {
+        switch CNContactStore.authorizationStatus(for: .contacts) {
+        case .authorized, .limited:
+            return true
+        case .notDetermined:
+            return try await store.requestAccess(for: .contacts)
+        case .denied, .restricted:
+            return false
+        @unknown default:
+            return false
         }
     }
 
-    private func appIconData() -> Data? {
-        guard
-            let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
-            let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
-            let filenames = primary["CFBundleIconFiles"] as? [String]
-        else { return nil }
+    private static func samePhone(_ lhs: String, _ rhs: String) -> Bool {
+        lhs.filter(\.isNumber) == rhs.filter(\.isNumber)
+    }
+}
 
-        for filename in filenames.reversed() {
-            if let image = UIImage(named: filename), let data = image.pngData() {
-                return data
-            }
-            if let url = Bundle.main.url(forResource: filename, withExtension: "png"),
-               let data = try? Data(contentsOf: url) {
-                return data
-            }
+private enum TaliContactError: LocalizedError {
+    case accessDenied
+    case missingImage
+
+    var errorDescription: String? {
+        switch self {
+        case .accessDenied:
+            return "Allow Tali to access Contacts in Settings, then try again."
+        case .missingImage:
+            return "Tali couldn’t load its contact photo. Reinstall this build and try again."
         }
-        return nil
     }
 }

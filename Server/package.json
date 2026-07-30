@@ -8,6 +8,7 @@
     "check": "tsc --noEmit",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "generate:contact-photo": "node scripts/generate-contact-photo.mjs",
     "db:migrate:local": "wrangler d1 migrations apply tali --local",
     "db:migrate:remote": "wrangler d1 migrations apply tali --remote",
     "test": "vitest run",

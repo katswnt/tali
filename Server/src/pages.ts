@@ -1,14 +1,19 @@
+import { contactPhotoBase64 } from "./contact-photo";
+
 const baseURL = "https://tali-sms.katswint.workers.dev";
 
 export function contactCard(): Response {
   const card = [
     "BEGIN:VCARD",
     "VERSION:3.0",
+    "PRODID:-//Tali//Tali Contact 1.0//EN",
     "FN:Tali",
-    "N:Tali;;;;",
+    "N:;Tali;;;",
     "ORG:Tali",
+    "X-ABShowAs:COMPANY",
     "TEL;TYPE=CELL:+14455452123",
     `URL:${baseURL}/sms`,
+    foldVCardLine(`PHOTO;ENCODING=b;TYPE=JPEG:${contactPhotoBase64}`),
     "END:VCARD",
     "",
   ].join("\r\n");
@@ -16,9 +21,19 @@ export function contactCard(): Response {
     headers: {
       "content-type": "text/vcard; charset=utf-8",
       "content-disposition": 'attachment; filename="Tali.vcf"',
-      "cache-control": "public, max-age=3600",
+      "cache-control": "no-store",
     },
   });
+}
+
+function foldVCardLine(line: string): string {
+  const firstLineLength = 75;
+  const continuationLength = 74;
+  const lines = [line.slice(0, firstLineLength)];
+  for (let offset = firstLineLength; offset < line.length; offset += continuationLength) {
+    lines.push(` ${line.slice(offset, offset + continuationLength)}`);
+  }
+  return lines.join("\r\n");
 }
 
 export function smsProgramPage(): Response {

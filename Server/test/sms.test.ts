@@ -78,6 +78,7 @@ describe("SMS command help", () => {
       "reshare contact",
       "UTC",
     );
-    expect(response).toContain("https://tali-sms.katswint.workers.dev/contact.vcf");
+    expect(response).toContain("https://tali-sms.katswint.workers.dev/tali-green-contact.vcf");
+    expect(response).toContain("open Tali → Texting → Save Tali to Contacts");
   });
 });

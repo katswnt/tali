@@ -7,8 +7,21 @@ describe("public SMS compliance pages", () => {
     const content = await response.text();
     expect(response.headers.get("content-type")).toContain("text/vcard");
     expect(response.headers.get("content-disposition")).toContain("Tali.vcf");
+    expect(response.headers.get("cache-control")).toBe("no-store");
     expect(content).toContain("FN:Tali");
+    expect(content).toContain("N:;Tali;;;");
+    expect(content).toContain("X-ABShowAs:COMPANY");
     expect(content).toContain("TEL;TYPE=CELL:+14455452123");
+    expect(content).toContain("PHOTO;ENCODING=b;TYPE=JPEG:");
+    expect(content).toContain("\r\n ");
+
+    const unfolded = content.replaceAll("\r\n ", "");
+    const photoPrefix = "PHOTO;ENCODING=b;TYPE=JPEG:";
+    const photoLine = unfolded.split("\r\n").find((line) => line.startsWith(photoPrefix));
+    const photo = Buffer.from(photoLine?.slice(photoPrefix.length) ?? "", "base64");
+    expect([...photo.subarray(0, 3)]).toEqual([0xff, 0xd8, 0xff]);
+    expect(photo.length).toBeGreaterThan(20_000);
+    expect(jpegDimensions(photo)).toEqual({ width: 512, height: 512 });
   });
 
   it("publishes the required program disclosures", async () => {
@@ -53,3 +66,19 @@ describe("public SMS compliance pages", () => {
     expect(response.headers.get("permissions-policy")).toContain("geolocation=()");
   });
 });
+
+function jpegDimensions(data: Buffer): { width: number; height: number } | undefined {
+  for (let offset = 2; offset + 8 < data.length;) {
+    if (data[offset] !== 0xff) return undefined;
+    const marker = data[offset + 1];
+    const length = data.readUInt16BE(offset + 2);
+    if ([0xc0, 0xc1, 0xc2, 0xc3].includes(marker)) {
+      return {
+        height: data.readUInt16BE(offset + 5),
+        width: data.readUInt16BE(offset + 7),
+      };
+    }
+    offset += 2 + length;
+  }
+  return undefined;
+}

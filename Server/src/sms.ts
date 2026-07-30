@@ -7,7 +7,7 @@ import {
 import { bumpSyncRevisionStatement } from "./database";
 import type { EventRow, HabitRow } from "./types";
 
-const contactCardURL = "https://tali-sms.katswint.workers.dev/contact.vcf";
+const contactCardURL = "https://tali-sms.katswint.workers.dev/tali-green-contact.vcf";
 
 interface SMSReceipt {
   sid: string;
@@ -75,7 +75,9 @@ export async function executeSMSCommand(
   }
 
   if (command.type === "contact") {
-    return commit(`Save Tali to your contacts again: ${contactCardURL}`);
+    return commit(
+      `Save Tali’s number again: ${contactCardURL}\nFor the green photo, open Tali → Texting → Save Tali to Contacts.`,
+    );
   }
 
   if (command.type === "add") {

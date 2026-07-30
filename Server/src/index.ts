@@ -39,7 +39,10 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
 
   if (request.method === "GET" && url.pathname === "/sms") return smsProgramPage();
-  if (request.method === "GET" && url.pathname === "/contact.vcf") return contactCard();
+  if (
+    request.method === "GET"
+    && ["/contact.vcf", "/tali-green-contact.vcf"].includes(url.pathname)
+  ) return contactCard();
   if (request.method === "GET" && url.pathname === "/privacy") return privacyPage();
   if (request.method === "GET" && url.pathname === "/terms") return termsPage();
   if (request.method === "GET" && url.pathname === "/support") return supportPage();
