@@ -49,7 +49,9 @@
 - [x] Confirm the archive contains `PrivacyInfo.xcprivacy`, the Messages extension, App Group, and Sign in with Apple entitlements
 - [ ] Reconcile App Privacy answers with `docs/app-store-submission.md`
 - [x] Verify the privacy and support URLs are public and accurate
-- [ ] Upload to TestFlight and complete internal testing on a physical iPhone
+- [x] Upload build `0.1.0 (1)` to TestFlight and attach it to the `Tali Internal` group
+- [x] Add Kathryn Swint as an internal tester and confirm App Store Connect reports `Invited`
+- [ ] Install the TestFlight build and complete internal testing on a physical iPhone
 
 ## SMS and carrier
 
