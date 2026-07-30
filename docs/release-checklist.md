@@ -44,11 +44,11 @@
 - [x] Confirm version `0.1.0` build `1` has not previously been uploaded
 - [x] Add the TestFlight beta description, marketing URL, and privacy policy URL
 - [x] Set `CURRENT_PROJECT_VERSION` to a value not previously uploaded
-- [ ] Archive with the `Tali` scheme using a generic iOS device destination
-- [ ] Validate the archive in Organizer with no privacy, entitlement, or extension-version warnings
-- [ ] Confirm the archive contains `PrivacyInfo.xcprivacy`, the Messages extension, App Group, and Sign in with Apple entitlements
+- [x] Archive with the `Tali` scheme using a generic iOS device destination
+- [x] Validate the archive with Apple's distribution service with no privacy, entitlement, icon, or extension-version errors
+- [x] Confirm the archive contains `PrivacyInfo.xcprivacy`, the Messages extension, App Group, and Sign in with Apple entitlements
 - [ ] Reconcile App Privacy answers with `docs/app-store-submission.md`
-- [ ] Verify the privacy and support URLs are public and accurate
+- [x] Verify the privacy and support URLs are public and accurate
 - [ ] Upload to TestFlight and complete internal testing on a physical iPhone
 
 ## SMS and carrier
