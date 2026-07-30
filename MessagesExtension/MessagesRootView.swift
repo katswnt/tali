@@ -137,7 +137,7 @@ struct MessagesRootView: View {
                     Button {
                         onInsertReceipt(receipt)
                     } label: {
-                        Label("Add receipt to conversation", systemImage: "message")
+                        Label("Add text receipt to conversation", systemImage: "message")
                     }
                     .buttonStyle(.bordered)
                 }

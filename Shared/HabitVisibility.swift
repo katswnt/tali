@@ -5,6 +5,12 @@ public enum HabitVisibility {
         events.filter { event in
             !event.isVoided && event.habit?.isArchived == false
         }
+        .sorted {
+            if $0.occurredAt != $1.occurredAt {
+                return $0.occurredAt > $1.occurredAt
+            }
+            return $0.createdAt > $1.createdAt
+        }
     }
 }
 

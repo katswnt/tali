@@ -13,6 +13,7 @@ struct HabitDetailView: View {
     @State private var showingLog = false
     @State private var showingEdit = false
     @State private var showingArchiveAlert = false
+    @State private var eventToEdit: HabitEvent?
     @State private var eventToUndo: HabitEvent?
     @State private var errorMessage: String?
 
@@ -66,27 +67,51 @@ struct HabitDetailView: View {
                 .listRowBackground(Color.clear)
             }
 
-            Section("History") {
+            Section {
                 if events.isEmpty {
                     Text("No entries yet.")
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(events) { event in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(HabitFormatting.timestamp(event.occurredAt))
-                            if let note = event.note, !note.isEmpty {
-                                Text(note)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .accessibilityIdentifier("habit.event.note")
+                        Button {
+                            eventToEdit = event
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(HabitFormatting.timestamp(event.occurredAt))
+                                        .foregroundStyle(.primary)
+                                    if let note = event.note, !note.isEmpty {
+                                        HStack(spacing: 5) {
+                                            Image(systemName: "note.text")
+                                                .accessibilityHidden(true)
+                                            Text(note)
+                                                .accessibilityIdentifier("habit.event.note")
+                                        }
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
                             }
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("habit.event.edit")
+                        .accessibilityHint("Edits this entry’s time or note")
                         .swipeActions {
                             Button("Undo", role: .destructive) {
                                 eventToUndo = event
                             }
                         }
                     }
+                }
+            } header: {
+                Text("History")
+            } footer: {
+                if !events.isEmpty {
+                    Text("Tap an entry to change its time or note.")
                 }
             }
         }
@@ -125,6 +150,9 @@ struct HabitDetailView: View {
         }
         .sheet(isPresented: $showingEdit) {
             EditHabitView(habit: habit)
+        }
+        .sheet(item: $eventToEdit) { event in
+            EditEntryView(event: event)
         }
         .alert("Archive \(habit.name)?", isPresented: $showingArchiveAlert) {
             Button("Archive", role: .destructive) { archive() }
@@ -202,6 +230,78 @@ struct HabitDetailView: View {
                 hiddenTimeSinceHabitIDs = TimeSinceVisibility.storedValue(for: hiddenIDs)
             }
         )
+    }
+}
+
+private struct EditEntryView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+
+    let event: HabitEvent
+    @State private var occurredAt: Date
+    @State private var note: String
+    @State private var errorMessage: String?
+
+    init(event: HabitEvent) {
+        self.event = event
+        _occurredAt = State(initialValue: event.occurredAt)
+        _note = State(initialValue: event.note ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Entry") {
+                    LabeledContent("Habit", value: event.habit?.name ?? "Unknown habit")
+                    DatePicker("When", selection: $occurredAt, in: ...Date.now)
+                        .accessibilityIdentifier("entry.edit.when")
+                }
+
+                Section("Note") {
+                    TextField("Optional", text: $note, axis: .vertical)
+                        .lineLimit(2...5)
+                        .accessibilityIdentifier("entry.edit.note")
+                    Text("\(note.count)/\(HabitInputRules.maximumNoteLength)")
+                        .font(.caption)
+                        .foregroundStyle(note.count > HabitInputRules.maximumNoteLength ? .red : .secondary)
+                }
+
+                if let errorMessage {
+                    Section {
+                        Text(errorMessage)
+                            .foregroundStyle(.red)
+                            .accessibilityLabel("Error: \(errorMessage)")
+                            .accessibilityAddTraits(.updatesFrequently)
+                    }
+                }
+            }
+            .navigationTitle("Edit Entry")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .disabled(note.count > HabitInputRules.maximumNoteLength)
+                        .accessibilityIdentifier("entry.edit.confirm")
+                }
+            }
+        }
+    }
+
+    private func save() {
+        do {
+            try HabitEngine(context: modelContext).updateEvent(
+                event,
+                at: occurredAt,
+                note: note.isEmpty ? nil : note
+            )
+            dismiss()
+            Task { await SyncCoordinator.syncIfConfigured(context: modelContext) }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }
 

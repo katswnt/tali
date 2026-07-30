@@ -203,6 +203,54 @@ struct HabitEngineTests {
         #expect(HabitVisibility.dashboardEvents(events).map(\.id) == [visible.id])
     }
 
+    @Test("Dashboard activity sorts by occurrence time, not entry creation time")
+    func sortsDashboardEventsByOccurrence() throws {
+        let container = try PersistenceController.makeContainer(inMemory: true)
+        let context = container.mainContext
+        let habit = Habit(name: "Typing")
+        let newestOccurrence = HabitEvent(
+            occurredAt: Date(timeIntervalSince1970: 300),
+            createdAt: Date(timeIntervalSince1970: 301),
+            source: .app,
+            habit: habit
+        )
+        let backdatedButRecentlyEntered = HabitEvent(
+            occurredAt: Date(timeIntervalSince1970: 100),
+            createdAt: Date(timeIntervalSince1970: 400),
+            source: .app,
+            habit: habit
+        )
+        context.insert(habit)
+        context.insert(newestOccurrence)
+        context.insert(backdatedButRecentlyEntered)
+        try context.save()
+
+        let sorted = HabitVisibility.dashboardEvents([
+            backdatedButRecentlyEntered,
+            newestOccurrence,
+        ])
+        #expect(sorted.map(\.id) == [newestOccurrence.id, backdatedButRecentlyEntered.id])
+    }
+
+    @Test("Editing an entry changes its time and note without creating another log")
+    func editsExistingEntry() throws {
+        let container = try PersistenceController.makeContainer(inMemory: true)
+        let engine = HabitEngine(context: container.mainContext)
+        let habit = try engine.addHabit(name: "Typing")
+        let original = try engine.log(
+            habit: habit,
+            at: Date(timeIntervalSince1970: 300),
+            source: .app
+        ).event
+        let backdated = Date(timeIntervalSince1970: 100)
+
+        try engine.updateEvent(original, at: backdated, note: "Felt focused")
+
+        #expect(engine.activeEvents(for: habit).count == 1)
+        #expect(original.occurredAt == backdated)
+        #expect(original.note == "Felt focused")
+    }
+
     @Test("Time-since visibility supports an overall switch and individual habits")
     func controlsTimeSinceVisibility() {
         let visibleHabitID = UUID(uuidString: "11111111-1111-4111-8111-111111111111")!
