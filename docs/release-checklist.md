@@ -4,7 +4,7 @@
 
 - [x] Run `./scripts/release-check.sh`
 - [x] Confirm it regenerates the Xcode project without a diff
-- [x] Confirm all 24 Swift tests and all 58 Worker tests pass
+- [x] Confirm all 26 Swift tests and all 58 Worker tests pass
 - [x] Confirm the npm audit reports no high or critical advisories
 - [x] Confirm the managed local Worker/D1 test passes revisioned sync, SMS, tenant isolation, rotating-session lifecycle, rate limits, and retention
 - [x] Confirm the `Tali` app and embedded Messages extension build without source warnings
@@ -50,8 +50,9 @@
 - [ ] Reconcile App Privacy answers with `docs/app-store-submission.md`
 - [x] Verify the privacy and support URLs are public and accurate
 - [x] Upload build `0.1.0 (1)` to TestFlight and attach it to the `Tali Internal` group
+- [x] Upload build `0.1.0 (2)` to TestFlight and attach it to the `Tali Internal` group
 - [x] Add Kathryn Swint as an internal tester and confirm App Store Connect reports `Invited`
-- [ ] Install the TestFlight build and complete internal testing on a physical iPhone
+- [ ] Install the current TestFlight build and complete internal testing on a physical iPhone
 
 ## SMS and carrier
 
