@@ -4,7 +4,7 @@
 
 - [x] Run `./scripts/release-check.sh`
 - [x] Confirm it regenerates the Xcode project without a diff
-- [x] Confirm all 20 Swift tests and all 45 Worker tests pass
+- [x] Confirm all 24 Swift tests and all 58 Worker tests pass
 - [x] Confirm the npm audit reports no high or critical advisories
 - [x] Confirm the managed local Worker/D1 test passes revisioned sync, SMS, tenant isolation, rotating-session lifecycle, rate limits, and retention
 - [x] Confirm the `Tali` app and embedded Messages extension build without source warnings
@@ -28,17 +28,22 @@
 
 ## Physical iPhone
 
-- [ ] Confirm development team `7JZ2WK3L6X` resolves for both Tali targets
-- [ ] Confirm the same App Group is enabled for the app and Messages extension
-- [ ] Install and launch Tali from Xcode
-- [ ] Open Tali from the Messages app drawer
+- [x] Confirm development team `7JZ2WK3L6X` resolves for both Tali targets
+- [x] Confirm the same App Group is enabled for the app and Messages extension
+- [x] Install and launch Tali from Xcode
+- [x] Open Tali from the Messages app drawer
 - [ ] Log a habit and insert an optional receipt
 - [ ] Verify the app and extension see the same entry
 - [ ] Verify Siri and Shortcuts discover Tali's App Intents
+- [x] Pair the production SMS number, exercise the command grammar, and sync the result into the app
+- [x] Save Tali's green contact card and photo through the native Contacts confirmation flow
 
 ## Archive and TestFlight
 
-- [ ] Increment `CURRENT_PROJECT_VERSION` before each upload
+- [x] Create the App Store Connect record for `com.kathrynswint.Tali`
+- [x] Confirm version `0.1.0` build `1` has not previously been uploaded
+- [x] Add the TestFlight beta description, marketing URL, and privacy policy URL
+- [x] Set `CURRENT_PROJECT_VERSION` to a value not previously uploaded
 - [ ] Archive with the `Tali` scheme using a generic iOS device destination
 - [ ] Validate the archive in Organizer with no privacy, entitlement, or extension-version warnings
 - [ ] Confirm the archive contains `PrivacyInfo.xcprivacy`, the Messages extension, App Group, and Sign in with Apple entitlements

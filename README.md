@@ -8,8 +8,8 @@ Tali records what happened and when. It does not decide whether an activity is g
 
 The working personal alpha includes a native iPhone app, Messages extension, Siri and Shortcuts
 actions, and an optional SMS service built with Twilio, Cloudflare Workers, and D1. It is a portfolio
-project and active product experiment, not an App Store release. Public SMS onboarding remains
-closed while the A2P campaign is corrected and approved.
+project and active product experiment preparing its first TestFlight build. Production SMS is
+working for the founder; broad public onboarding remains deliberately limited during beta.
 
 ## Status at a glance
 
@@ -18,10 +18,10 @@ This table separates repository evidence from work that still requires a real pl
 | Area | What is verified | What is not yet proven |
 | --- | --- | --- |
 | Product model | Neutrality rules appear in copy, settings, elapsed-time visibility, binary visualization, and tests | Whether the model helps a broader group beyond the founder problem |
-| Native core | Parser, domain engine, migration, export, reconciliation, and deterministic UI smoke tests; reproducible app and extension build | Full physical-iPhone, VoiceOver, Siri, Messages, and TestFlight matrix |
+| Native core | Parser, domain engine, migration, export, reconciliation, deterministic UI smoke tests, physical-iPhone launch, Messages extension, SMS pairing, sync, and contact sharing | VoiceOver, Siri/Shortcuts, and TestFlight matrix |
 | Multi-user backend | Managed Worker/D1 integration exercises two-user isolation, account lifecycle, rotating sessions, rate limits, retention, SMS, and revisioned sync | Independent security review, completed staging soak, backup/restore drill, and production load behavior |
-| SMS | Signed webhook, idempotency, compliance copy, and carrier status paths are implemented and tested locally | Approved A2P campaign and a clean production carrier round trip |
-| Distribution | App Store metadata, privacy manifest, demo store, and release checklist exist | Archive validation, TestFlight feedback, and App Store review |
+| SMS | Signed webhook, idempotency, compliance copy, carrier status paths, and a production founder round trip | Broader-user beta behavior and continued carrier monitoring |
+| Distribution | App Store Connect record, beta metadata, privacy manifest, demo store, release checklist, and green release checks | Archive validation, TestFlight feedback, and App Store review |
 
 The strongest claim in this repository is not “this has shipped at scale.” It is that one product
 thesis has been translated into consistent interaction rules, data semantics, security boundaries,

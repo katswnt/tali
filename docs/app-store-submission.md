@@ -5,7 +5,8 @@ current product and data behavior; update it whenever those behaviors change.
 
 ## Product metadata
 
-- **Name:** Tali
+- **App Store name:** Tali Habit Tracker
+- **On-device name:** Tali
 - **Subtitle:** Track moments without judgment
 - **Primary category:** Health & Fitness
 - **Secondary category:** Lifestyle
