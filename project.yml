@@ -60,6 +60,7 @@ targets:
         DEVELOPMENT_TEAM: 7JZ2WK3L6X
         PRODUCT_BUNDLE_IDENTIFIER: com.kathrynswint.Tali
         PRODUCT_NAME: Tali
+        TARGETED_DEVICE_FAMILY: 1
         GENERATE_INFOPLIST_FILE: false
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     dependencies:
@@ -92,6 +93,7 @@ targets:
         DEVELOPMENT_TEAM: 7JZ2WK3L6X
         PRODUCT_BUNDLE_IDENTIFIER: com.kathrynswint.Tali.MessagesExtension
         PRODUCT_NAME: TaliMessages
+        TARGETED_DEVICE_FAMILY: 1
         GENERATE_INFOPLIST_FILE: false
         APPLICATION_EXTENSION_API_ONLY: true
         SKIP_INSTALL: true
