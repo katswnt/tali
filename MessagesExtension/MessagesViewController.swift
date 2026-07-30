@@ -81,24 +81,9 @@ final class MessagesViewController: MSMessagesAppViewController {
     private func insert(receipt: HabitReceipt) {
         guard let conversation = activeConversation else { return }
 
-        let layout = MSMessageTemplateLayout()
-        layout.caption = "✓ \(receipt.habitName)"
-        layout.subcaption = "Logged \(HabitFormatting.timestamp(receipt.occurredAt))"
-
-        let message = MSMessage()
-        message.layout = layout
-        message.summaryText = "Logged \(receipt.habitName) in Tali"
-
-        var components = URLComponents()
-        components.scheme = "tali"
-        components.host = "event"
-        components.queryItems = [
-            URLQueryItem(name: "habit", value: receipt.habitName),
-            URLQueryItem(name: "date", value: receipt.occurredAt.ISO8601Format())
-        ]
-        message.url = components.url
-
-        conversation.insert(message) { [weak self] error in
+        let text = "✓ \(receipt.habitName) — Logged "
+            + "\(HabitFormatting.timestamp(receipt.occurredAt)) with Tali"
+        conversation.insertText(text) { [weak self] error in
             guard error == nil else { return }
             Task { @MainActor in
                 self?.requestPresentationStyle(.compact)

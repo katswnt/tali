@@ -146,6 +146,25 @@ public struct HabitEngine {
         activeEvents(for: habit).first
     }
 
+    public func updateEvent(
+        _ event: HabitEvent,
+        at date: Date,
+        note: String?
+    ) throws {
+        guard date.timeIntervalSinceNow <= 5 * 60 else {
+            throw HabitEngineError.futureEvent
+        }
+        let trimmedNote = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard (trimmedNote?.count ?? 0) <= HabitInputRules.maximumNoteLength else {
+            throw HabitEngineError.noteTooLong
+        }
+
+        event.occurredAt = date
+        event.note = trimmedNote?.isEmpty == false ? trimmedNote : nil
+        event.updatedAt = .now
+        try context.save()
+    }
+
     @discardableResult
     public func undoLatest() throws -> HabitEvent {
         let all = try habits(includeArchived: true)

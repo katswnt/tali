@@ -47,9 +47,6 @@ final class TaliUITests: XCTestCase {
         app.buttons["Log an entry"].tap()
 
         XCTAssertTrue(app.navigationBars["Add Entry"].waitForExistence(timeout: 3))
-        let note = app.textFields["entry.note"]
-        note.tap()
-        note.typeText("Hips felt better")
         app.buttons["entry.confirm"].tap()
 
         XCTAssertTrue(app.staticTexts["MOST RECENT"].waitForExistence(timeout: 3))
@@ -61,6 +58,16 @@ final class TaliUITests: XCTestCase {
             .matching(identifier: "activity.heatmap")
             .firstMatch
         XCTAssertTrue(heatmap.exists)
+
+        let entry = app.buttons.matching(identifier: "habit.event.edit").firstMatch
+        XCTAssertTrue(scrollToExistence(entry))
+        entry.tap()
+        XCTAssertTrue(app.navigationBars["Edit Entry"].waitForExistence(timeout: 3))
+        let note = app.textFields["entry.edit.note"]
+        note.tap()
+        note.typeText("Hips felt better")
+        app.buttons["entry.edit.confirm"].tap()
+
         let savedNote = app.descendants(matching: .any)
             .matching(identifier: "habit.event.note")
             .firstMatch
