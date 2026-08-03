@@ -1,9 +1,14 @@
+import AppIntents
 import HabitCore
 import SwiftData
 import SwiftUI
 
 @main
 struct TaliApp: App {
+    init() {
+        TaliShortcuts.updateAppShortcutParameters()
+    }
+
     var body: some Scene {
         WindowGroup {
             StoreBootstrapView()
