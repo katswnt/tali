@@ -5,6 +5,8 @@ import SwiftUI
 
 @main
 struct TaliApp: App {
+    @Environment(\.scenePhase) private var scenePhase
+
     init() {
         TaliShortcuts.updateAppShortcutParameters()
     }
@@ -12,6 +14,11 @@ struct TaliApp: App {
     var body: some Scene {
         WindowGroup {
             StoreBootstrapView()
+                .onChange(of: scenePhase) { _, newPhase in
+                    if newPhase == .active {
+                        TaliShortcuts.updateAppShortcutParameters()
+                    }
+                }
         }
     }
 }

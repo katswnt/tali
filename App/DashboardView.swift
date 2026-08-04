@@ -14,6 +14,7 @@ struct DashboardView: View {
     @State private var showingAddHabit = false
     @State private var showingLog = false
     @State private var showingSyncSettings = false
+    @State private var showingShortcuts = false
     @State private var showingArchivedHabits = false
     @State private var syncError: String?
     @State private var syncStatus = SyncCoordinator.status
@@ -79,6 +80,13 @@ struct DashboardView: View {
                             } label: {
                                 Label("Texting", systemImage: "message")
                             }
+
+                            Button {
+                                showingShortcuts = true
+                            } label: {
+                                Label("Shortcuts", systemImage: "bolt.circle")
+                            }
+                            .accessibilityIdentifier("dashboard.shortcuts")
                         }
 
                         Section("Display") {
@@ -142,6 +150,9 @@ struct DashboardView: View {
             }
             .sheet(isPresented: $showingSyncSettings) {
                 SyncSettingsView()
+            }
+            .sheet(isPresented: $showingShortcuts) {
+                TaliShortcutsView()
             }
             .sheet(isPresented: $showingArchivedHabits) {
                 ArchivedHabitsView()

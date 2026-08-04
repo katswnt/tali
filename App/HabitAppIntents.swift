@@ -2,18 +2,27 @@ import AppIntents
 import HabitCore
 import SwiftData
 
-struct LogHabitIntent: AppIntent {
-    static let title: LocalizedStringResource = "Log a Habit"
-    static let description = IntentDescription("Adds a dated habit entry in Tali.")
+public struct LogHabitIntent: AppIntent {
+    public static let title: LocalizedStringResource = "Log a Habit"
+    public static let description = IntentDescription("Adds a dated habit entry in Tali.")
+    public static let isDiscoverable = true
 
     @Parameter(title: "Habit")
-    var habitName: String
+    public var habitName: String
 
     @Parameter(title: "When", default: .now)
-    var occurredAt: Date
+    public var occurredAt: Date
+
+    public static var parameterSummary: some ParameterSummary {
+        Summary("Log \(\.$habitName) in Tali") {
+            \.$occurredAt
+        }
+    }
+
+    public init() {}
 
     @MainActor
-    func perform() async throws -> some IntentResult & ProvidesDialog {
+    public func perform() async throws -> some IntentResult & ProvidesDialog {
         let container = try PersistenceController.makeContainer()
         let engine = HabitEngine(context: container.mainContext)
         let habit = try engine.resolveHabit(habitName)
@@ -26,8 +35,8 @@ struct LogHabitIntent: AppIntent {
     }
 }
 
-struct TaliShortcuts: AppShortcutsProvider {
-    static var appShortcuts: [AppShortcut] {
+public enum TaliShortcuts: AppShortcutsProvider {
+    public static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: LogHabitIntent(),
             phrases: [
@@ -37,5 +46,9 @@ struct TaliShortcuts: AppShortcutsProvider {
             shortTitle: "Log Habit",
             systemImageName: "plus.circle"
         )
+    }
+
+    public static var shortcutTileColor: ShortcutTileColor {
+        .lime
     }
 }

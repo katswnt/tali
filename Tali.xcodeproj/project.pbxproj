@@ -29,6 +29,7 @@
 		ABCA425C54BE9F8DCD55855F /* TaliMessages.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6104DF09743E127AECBA3589 /* TaliMessages.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AC30AD85D95F169DB3A5D2D0 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5CF7D8D20E1C7DF3FE9EDD9F /* PrivacyInfo.xcprivacy */; };
 		B4B29557C0AD397399B0B013 /* SyncSettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC9E8DFE84E2D1C4463B0F3E /* SyncSettingsComponents.swift */; };
+		B5C9C00FE2CFCE32F017BEC2 /* TaliShortcutsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AFC372AEC28597313AE6CF9 /* TaliShortcutsView.swift */; };
 		B610ACAE8A3FC22E83E91924 /* AddHabitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 907BD4CC87A8FDE65C2FF263 /* AddHabitView.swift */; };
 		B733D05EDD5C96027A17F52A /* TaliAppleSignInButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531179A52020C16ED4512E07 /* TaliAppleSignInButton.swift */; };
 		BF4EA66B8A30C2E4D1172D67 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C6FD88316F381750D87348 /* RootView.swift */; };
@@ -113,6 +114,7 @@
 		4E3A3D6BE8A5C313DB5D3FA9 /* HabitCommandParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitCommandParser.swift; sourceTree = "<group>"; };
 		51B5FD73ACD5A4B4BB5D965A /* HabitVisibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitVisibility.swift; sourceTree = "<group>"; };
 		531179A52020C16ED4512E07 /* TaliAppleSignInButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliAppleSignInButton.swift; sourceTree = "<group>"; };
+		5AFC372AEC28597313AE6CF9 /* TaliShortcutsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaliShortcutsView.swift; sourceTree = "<group>"; };
 		5BC111F9CF2AB30D1023CA1B /* HabitInputRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitInputRules.swift; sourceTree = "<group>"; };
 		5CF7D8D20E1C7DF3FE9EDD9F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6104DF09743E127AECBA3589 /* TaliMessages.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TaliMessages.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -228,6 +230,7 @@
 				A578888AC7CCBD211F75E5DA /* TaliApp.swift */,
 				531179A52020C16ED4512E07 /* TaliAppleSignInButton.swift */,
 				C92F587925634AC335DB869E /* TaliExportDocument.swift */,
+				5AFC372AEC28597313AE6CF9 /* TaliShortcutsView.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -500,6 +503,7 @@
 				123760FA77DD4E5A4705BBD6 /* TaliApp.swift in Sources */,
 				B733D05EDD5C96027A17F52A /* TaliAppleSignInButton.swift in Sources */,
 				227DFB338DEAEF695697AEC2 /* TaliExportDocument.swift in Sources */,
+				B5C9C00FE2CFCE32F017BEC2 /* TaliShortcutsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -590,7 +594,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -839,7 +843,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;

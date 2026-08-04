@@ -94,6 +94,16 @@ final class TaliUITests: XCTestCase {
     }
 
     @MainActor
+    func testShortcutsEntryPointIsDiscoverable() {
+        app.buttons["dashboard.more"].tap()
+        app.buttons["dashboard.shortcuts"].tap()
+
+        XCTAssertTrue(app.navigationBars["Shortcuts"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Log a habit"].exists)
+        XCTAssertTrue(app.buttons["shortcuts.open"].exists)
+    }
+
+    @MainActor
     private func addHabit(named name: String, aliases: String) {
         app.buttons["dashboard.empty.addHabit"].tap()
         XCTAssertTrue(app.navigationBars["New Habit"].waitForExistence(timeout: 3))
