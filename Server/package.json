@@ -23,6 +23,9 @@
     "@cloudflare/workers-types": "latest",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
-    "wrangler": "^4.114.0"
+    "wrangler": "^4.118.0"
+  },
+  "overrides": {
+    "undici": "7.29.0"
   }
 }
