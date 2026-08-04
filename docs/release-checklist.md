@@ -51,6 +51,8 @@
 - [x] Verify the privacy and support URLs are public and accurate
 - [x] Upload build `0.1.0 (1)` to TestFlight and attach it to the `Tali Internal` group
 - [x] Upload build `0.1.0 (2)` to TestFlight and attach it to the `Tali Internal` group
+- [x] Upload build `0.1.0 (3)` to App Store Connect with App Shortcut registration enabled
+- [ ] Attach build `0.1.0 (3)` to the `Tali Internal` group after Apple finishes processing it
 - [x] Add Kathryn Swint as an internal tester and confirm App Store Connect reports `Invited`
 - [ ] Install the current TestFlight build and complete internal testing on a physical iPhone
 
