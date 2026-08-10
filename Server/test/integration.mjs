@@ -263,6 +263,18 @@ assert.equal(secondSnapshot.habits.some((habit) => habit.name.trim().toLowerCase
 const legacyAfterSecondSync = await sync({ habits: [], events: [] });
 assert.equal(legacyAfterSecondSync.habits.some((habit) => habit.name === secondHabitName), false);
 
+assert.equal((await fetch(`${baseURL}/v1/account/time-zone`, {
+  method: "POST",
+  headers: {
+    authorization: `Bearer ${secondToken}`,
+    "x-tali-time-zone": "America/Los_Angeles",
+  },
+})).status, 204);
+assert.equal((await fetch(`${baseURL}/v1/account/time-zone`, {
+  method: "POST",
+  headers: { "x-tali-time-zone": "America/New_York" },
+})).status, 401);
+
 const secondSMS = new URLSearchParams({
   From: secondPhone,
   To: "+15555550124",
@@ -271,7 +283,7 @@ const secondSMS = new URLSearchParams({
 });
 const secondSMSResponse = await sendSMS(secondSMS);
 assert.match(secondSMSResponse, new RegExp(`Logged ${secondHabitName}`));
-assert.match(secondSMSResponse, /CDT/);
+assert.match(secondSMSResponse, /PDT/);
 const secondFinal = await sync({ habits: [], events: [] }, secondToken);
 assert.equal(secondFinal.events.some((event) => event.habitId === secondHabitID && event.source === "sms"), true);
 const legacyFinal = await sync({ habits: [], events: [] });

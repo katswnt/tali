@@ -75,6 +75,15 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     return Response.json({ account: await accountSummary(env.DB, user.id) });
   }
 
+  if (request.method === "POST" && url.pathname === "/v1/account/time-zone") {
+    const user = await authenticateRequest(request, env);
+    if (!user) return jsonError("Unauthorized", 401);
+    const limit = await consumeRateLimit(env.DB, "time-zone-user", user.id, 120, 10 * 60);
+    if (!limit.allowed) return rateLimitedJSON(limit);
+    await refreshUserTimeZone(request, env.DB, user.id);
+    return new Response(null, { status: 204 });
+  }
+
   if (request.method === "GET" && url.pathname === "/v1/account/export") {
     const user = await authenticateRequest(request, env);
     if (!user) return jsonError("Unauthorized", 401);

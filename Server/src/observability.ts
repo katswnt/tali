@@ -77,6 +77,7 @@ export function routeCategory(pathname: string): string {
     "/v1/auth/refresh",
     "/v1/account",
     "/v1/account/export",
+    "/v1/account/time-zone",
     "/v1/pairing/code",
     "/v1/session",
     "/v1/sessions",

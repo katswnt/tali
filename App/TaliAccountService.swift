@@ -111,6 +111,18 @@ enum TaliAccountService {
         return response.account
     }
 
+    static func updateTimeZone(
+        endpoint: String,
+        token: String,
+        session: URLSession = .shared
+    ) async throws {
+        var request = URLRequest(url: try route("v1/account/time-zone", endpoint: endpoint))
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue(TimeZone.current.identifier, forHTTPHeaderField: "X-Tali-Time-Zone")
+        try await sendEmpty(request, session: session)
+    }
+
     static func createPairingCode(
         endpoint: String,
         token: String,

@@ -7,6 +7,7 @@ describe("privacy-safe operations", () => {
   it("normalizes dynamic routes before logging", () => {
     expect(routeCategory("/v1/sessions/123")).toBe("/v1/sessions/:id");
     expect(routeCategory("/v1/auth/refresh")).toBe("/v1/auth/refresh");
+    expect(routeCategory("/v1/account/time-zone")).toBe("/v1/account/time-zone");
     expect(routeCategory("/v2/sync")).toBe("/v2/sync");
     expect(routeCategory("/support")).toBe("/support");
     expect(routeCategory("/private/habit-name")).toBe("unmatched");
