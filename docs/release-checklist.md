@@ -55,6 +55,8 @@
 - [x] Attach build `0.1.0 (3)` to the `Tali Internal` group
 - [x] Upload build `0.1.0 (4)` with hardened iOS 26.5 Shortcuts discovery
 - [ ] Attach build `0.1.0 (4)` to the `Tali Internal` group after Apple finishes processing it
+- [x] Upload build `0.1.0 (5)` with automatic foreground time-zone refresh
+- [ ] Attach build `0.1.0 (5)` to the `Tali Internal` group after Apple finishes processing it
 - [x] Add Kathryn Swint as an internal tester and confirm App Store Connect reports `Invited`
 - [ ] Install the current TestFlight build and complete internal testing on a physical iPhone
 
