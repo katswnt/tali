@@ -16,6 +16,7 @@
 		227DFB338DEAEF695697AEC2 /* TaliExportDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = C92F587925634AC335DB869E /* TaliExportDocument.swift */; };
 		22FD6E537F1F71175348F9E8 /* HabitDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228E53D5CB70D07E90CF34E0 /* HabitDetailView.swift */; };
 		2328832E181B439680152D03 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DC19BECA96C9D24AC6A3678C /* Assets.xcassets */; };
+		2B746FDAEDFE2F91E2EDE33C /* AsyncSingleFlight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94EAA625F7A62BCD0FA65CF1 /* AsyncSingleFlight.swift */; };
 		4B5E123F57A7877A16C8CF19 /* SyncSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F462B6EC3EBBB96FBF7B056 /* SyncSettingsView.swift */; };
 		583EBECED961E3BEDAFC7BB9 /* TaliSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04DA0D51D1A8C94EBCA5052D /* TaliSyncService.swift */; };
 		5AB9B3D476741C6BF055DEFD /* TaliDataExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C358FF8DB21F2455567D8AC /* TaliDataExport.swift */; };
@@ -123,6 +124,7 @@
 		86568B0105A341BE12D6B964 /* TaliMessages.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TaliMessages.entitlements; sourceTree = "<group>"; };
 		907BD4CC87A8FDE65C2FF263 /* AddHabitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddHabitView.swift; sourceTree = "<group>"; };
 		91EDE5847BB091F916735760 /* TaliUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TaliUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		94EAA625F7A62BCD0FA65CF1 /* AsyncSingleFlight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncSingleFlight.swift; sourceTree = "<group>"; };
 		981DBF96779A0BA8FCD31928 /* HabitAppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitAppIntents.swift; sourceTree = "<group>"; };
 		9CD05AE51D2D8DB1F54533E2 /* MessagesRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesRootView.swift; sourceTree = "<group>"; };
 		A1CCBEE7FE2FA86E15502A67 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 		19B2186C26EA85D51DDFFE9D /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				94EAA625F7A62BCD0FA65CF1 /* AsyncSingleFlight.swift */,
 				4E3A3D6BE8A5C313DB5D3FA9 /* HabitCommandParser.swift */,
 				B9EBE6A0D868F67593CA0FD9 /* HabitEngine.swift */,
 				45064815F2459CB6ABF71D25 /* HabitFormatting.swift */,
@@ -472,6 +475,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2B746FDAEDFE2F91E2EDE33C /* AsyncSingleFlight.swift in Sources */,
 				D46F6756E6C0A127424B9CEA /* HabitCommandParser.swift in Sources */,
 				D8F603DE3050823C58F1B799 /* HabitEngine.swift in Sources */,
 				9D2E21A707E712C4F7BE1070 /* HabitFormatting.swift in Sources */,
@@ -594,7 +598,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -843,7 +847,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;

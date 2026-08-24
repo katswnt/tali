@@ -370,3 +370,39 @@ struct HabitEngineTests {
         #expect((root["entries"] as? [[String: Any]])?.count == 1)
     }
 }
+
+@MainActor
+private final class AsyncInvocationCounter {
+    private(set) var value = 0
+
+    func next() -> Int {
+        value += 1
+        return value
+    }
+}
+
+@MainActor
+struct AsyncSingleFlightTests {
+    @Test("Concurrent callers share one asynchronous operation")
+    func coalescesConcurrentCalls() async throws {
+        let singleFlight = AsyncSingleFlight<Int>()
+        let counter = AsyncInvocationCounter()
+
+        async let first = singleFlight.run {
+            let invocation = counter.next()
+            try await Task.sleep(for: .milliseconds(100))
+            return invocation
+        }
+        async let second = singleFlight.run {
+            counter.next()
+        }
+
+        let values = try await [first, second]
+        #expect(values == [1, 1])
+        #expect(counter.value == 1)
+
+        let later = try await singleFlight.run { counter.next() }
+        #expect(later == 2)
+        #expect(counter.value == 2)
+    }
+}

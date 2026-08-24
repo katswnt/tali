@@ -16,6 +16,7 @@ enum SyncCredentials {
     private static let authenticationMethodKey = "smsSyncAuthenticationMethod"
     private static let tokenAccount = "smsSyncToken"
     private static let service = "com.kathrynswint.Tali.sync"
+    private static let accessTokenRefresh = AsyncSingleFlight<String>()
 
     static var endpoint: String {
         get {
@@ -46,20 +47,24 @@ enum SyncCredentials {
             return accessToken
         }
 
-        let refreshed = try await TaliAccountService.refresh(
-            endpoint: endpoint,
-            refreshToken: envelope.refreshToken,
-            session: session
-        )
-        try save(
-            endpoint: endpoint,
-            token: refreshed.accessToken,
-            refreshToken: refreshed.refreshToken,
-            accessExpiresAt: refreshed.accessExpiresAt,
-            sessionExpiresAt: refreshed.sessionExpiresAt,
-            method: .apple
-        )
-        return refreshed.accessToken
+        let refreshToken = envelope.refreshToken
+        let refreshEndpoint = endpoint
+        return try await accessTokenRefresh.run {
+            let refreshed = try await TaliAccountService.refresh(
+                endpoint: refreshEndpoint,
+                refreshToken: refreshToken,
+                session: session
+            )
+            try save(
+                endpoint: refreshEndpoint,
+                token: refreshed.accessToken,
+                refreshToken: refreshed.refreshToken,
+                accessExpiresAt: refreshed.accessExpiresAt,
+                sessionExpiresAt: refreshed.sessionExpiresAt,
+                method: .apple
+            )
+            return refreshed.accessToken
+        }
     }
 
     static func refreshToken() -> String {
@@ -136,6 +141,24 @@ enum SyncCredentials {
 
     static var isConfigured: Bool {
         !TaliTestEnvironment.isUITesting && !endpoint.isEmpty && !token().isEmpty
+    }
+
+    @discardableResult
+    static func invalidateIfNeeded(for error: Error) -> Bool {
+        let isUnauthorized: Bool
+        if let accountError = error as? TaliAccountError,
+           case .unauthorized = accountError {
+            isUnauthorized = true
+        } else if let syncError = error as? TaliSyncError,
+                  case .unauthorized = syncError {
+            isUnauthorized = true
+        } else {
+            isUnauthorized = false
+        }
+
+        guard isUnauthorized, authenticationMethod == .apple else { return false }
+        try? clear()
+        return true
     }
 
     private static let defaults = UserDefaults(suiteName: PersistenceController.appGroupIdentifier) ?? .standard

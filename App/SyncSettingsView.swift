@@ -370,8 +370,7 @@ struct SyncSettingsView: View {
                 }
                 await refreshSessions()
             } catch {
-                SyncCoordinator.recordFailure(error)
-                errorMessage = error.localizedDescription
+                handle(error)
             }
             isWorking = false
         }
@@ -416,7 +415,7 @@ struct SyncSettingsView: View {
                 resultMessage = "Pairing text opened. Tap Send in Messages, then check the connection."
                 openURL(messageURL(body: "PAIR \(createdPairingCode.code)"))
             } catch {
-                errorMessage = error.localizedDescription
+                handle(error)
             }
             isWorking = false
         }
@@ -447,7 +446,7 @@ struct SyncSettingsView: View {
                 resultMessage = "No paired phone yet. Send the pairing text, then check again."
             }
         } catch {
-            errorMessage = error.localizedDescription
+            handle(error)
         }
         isWorking = false
     }
@@ -465,8 +464,7 @@ struct SyncSettingsView: View {
                 SyncCoordinator.recordSuccess()
                 resultMessage = "Synced \(report.habitCount) habits and \(report.eventCount) entries."
             } catch {
-                SyncCoordinator.recordFailure(error)
-                errorMessage = error.localizedDescription
+                handle(error, recordingSyncFailure: true)
             }
             isWorking = false
         }
@@ -507,7 +505,7 @@ struct SyncSettingsView: View {
                 Task { await TaliAccountService.signOut(endpoint: endpoint, token: token) }
             }
         } catch {
-            errorMessage = error.localizedDescription
+            handle(error)
         }
     }
 
@@ -519,7 +517,7 @@ struct SyncSettingsView: View {
                 token: try await SyncCredentials.validAccessToken()
             )
         } catch {
-            errorMessage = error.localizedDescription
+            handle(error)
         }
     }
 
@@ -536,7 +534,7 @@ struct SyncSettingsView: View {
                 await refreshSessions()
                 resultMessage = "Signed out \(session.deviceName)."
             } catch {
-                errorMessage = error.localizedDescription
+                handle(error)
             }
             isWorking = false
         }
@@ -559,7 +557,7 @@ struct SyncSettingsView: View {
                 sessions = []
                 resultMessage = "Account and server data deleted. Local data remains on this device."
             } catch {
-                errorMessage = error.localizedDescription
+                handle(error)
             }
             isWorking = false
         }
@@ -585,7 +583,7 @@ struct SyncSettingsView: View {
                 sessions = []
                 resultMessage = "Signed out on every device. Local data remains available."
             } catch {
-                errorMessage = error.localizedDescription
+                handle(error)
             }
             isWorking = false
         }
@@ -599,6 +597,24 @@ struct SyncSettingsView: View {
     private func clearStatus() {
         resultMessage = nil
         errorMessage = nil
+    }
+
+    private func handle(_ error: Error, recordingSyncFailure: Bool = false) {
+        let authenticationExpired = recordingSyncFailure
+            ? SyncCoordinator.recordFailure(error)
+            : SyncCredentials.invalidateIfNeeded(for: error)
+        guard authenticationExpired else {
+            errorMessage = error.localizedDescription
+            return
+        }
+
+        endpoint = SyncCredentials.defaultEndpoint
+        isConnected = false
+        authenticationMethod = .privateKey
+        account = nil
+        pairingCode = nil
+        sessions = []
+        errorMessage = "Your Tali session expired. Sign in with Apple again."
     }
 
     private func messageURL(body: String? = nil) -> URL {

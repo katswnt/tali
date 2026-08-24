@@ -69,10 +69,17 @@ enum SyncCoordinator {
         status.lastSyncedAt = .now
     }
 
-    static func recordFailure(_ error: Error) {
-        guard !error.isCancellation else { return }
-        status.errorMessage = error.localizedDescription
+    @discardableResult
+    static func recordFailure(_ error: Error) -> Bool {
+        guard !error.isCancellation else { return false }
+        let authenticationExpired = SyncCredentials.invalidateIfNeeded(for: error)
+        if authenticationExpired {
+            status.errorMessage = "Your Tali session expired. Open Texting to sign in again."
+        } else {
+            status.errorMessage = error.localizedDescription
+        }
         status.hasPendingChanges = true
+        return authenticationExpired
     }
 }
 

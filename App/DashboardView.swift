@@ -231,7 +231,7 @@ struct DashboardView: View {
                 Text(error)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Button("Retry sync") {
+                Button(SyncCredentials.isConfigured ? "Retry sync" : "Sign in to sync") {
                     Task { await sync() }
                 }
                 .buttonStyle(.bordered)
@@ -370,7 +370,9 @@ struct DashboardView: View {
                 )
                 showingExporter = true
             } catch {
-                exportError = error.localizedDescription
+                exportError = SyncCredentials.invalidateIfNeeded(for: error)
+                    ? "Your Tali session expired. Open Texting to sign in again."
+                    : error.localizedDescription
             }
             isPreparingExport = false
         }

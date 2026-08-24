@@ -3,6 +3,7 @@
 .build-spm/
 .swiftpm/
 DerivedData/
+.derived-data/
 *.xcresult
 *.xcuserstate
 xcuserdata/

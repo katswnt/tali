@@ -4,7 +4,7 @@
 
 - [x] Run `./scripts/release-check.sh`
 - [x] Confirm it regenerates the Xcode project without a diff
-- [x] Confirm all 26 Swift tests and all 58 Worker tests pass
+- [x] Confirm all 27 Swift tests and all 58 Worker tests pass
 - [x] Confirm the npm audit reports no high or critical advisories
 - [x] Confirm the managed local Worker/D1 test passes revisioned sync, SMS, tenant isolation, rotating-session lifecycle, rate limits, and retention
 - [x] Confirm the `Tali` app and embedded Messages extension build without source warnings

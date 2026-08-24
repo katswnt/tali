@@ -32,6 +32,7 @@ struct TaliApp: App {
                 token: try await SyncCredentials.validAccessToken()
             )
         } catch {
+            SyncCredentials.invalidateIfNeeded(for: error)
             // This is a best-effort foreground refresh. The next activation or
             // full sync will retry without interrupting the user.
         }
