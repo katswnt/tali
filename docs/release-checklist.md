@@ -4,11 +4,11 @@
 
 - [x] Run `./scripts/release-check.sh`
 - [x] Confirm it regenerates the Xcode project without a diff
-- [x] Confirm all 27 Swift tests and all 58 Worker tests pass
+- [x] Confirm all 29 Swift tests and all 58 Worker tests pass
 - [x] Confirm the npm audit reports no high or critical advisories
 - [x] Confirm the managed local Worker/D1 test passes revisioned sync, SMS, tenant isolation, rotating-session lifecycle, rate limits, and retention
 - [x] Confirm the `Tali` app and embedded Messages extension build without source warnings
-- [x] Confirm all three deterministic iOS UI smoke journeys pass locally
+- [x] Confirm all four deterministic iOS UI smoke journeys pass locally
 - [x] Confirm `App/PrivacyInfo.xcprivacy` matches the production behavior and `docs/app-store-submission.md`
 
 ## Simulator
@@ -59,6 +59,8 @@
 - [ ] Attach build `0.1.0 (5)` to the `Tali Internal` group after Apple finishes processing it
 - [x] Upload build `0.1.0 (6)` with concurrent session refresh protection and an automatic sign-in recovery path
 - [ ] Attach build `0.1.0 (6)` to the `Tali Internal` group after Apple finishes processing it
+- [x] Upload build `0.1.0 (7)` with sync ownership enforcement, conflict recovery, foreground refresh, and DST-safe parsing
+- [ ] Attach build `0.1.0 (7)` to the `Tali Internal` group after Apple finishes processing it
 - [x] Add Kathryn Swint as an internal tester and confirm App Store Connect reports `Invited`
 - [ ] Install the current TestFlight build and complete internal testing on a physical iPhone
 
