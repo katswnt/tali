@@ -21,7 +21,7 @@ enum SyncCoordinator {
 
     static func syncIfConfigured(context: ModelContext) async {
         guard !TaliDemoData.isEnabled else { return }
-        guard SyncCredentials.isConfigured else { return }
+        guard SyncCredentials.canSync else { return }
         status.hasPendingChanges = true
 
         if let activeSync {

@@ -5,6 +5,7 @@ import Foundation
 @MainActor
 public final class AsyncSingleFlight<Value: Sendable> {
     private var inFlight: Task<Value, Error>?
+    private var inFlightID: UUID?
 
     public init() {}
 
@@ -18,15 +19,29 @@ public final class AsyncSingleFlight<Value: Sendable> {
         let task = Task { @MainActor in
             try await operation()
         }
+        let taskID = UUID()
         inFlight = task
+        inFlightID = taskID
 
         do {
             let value = try await task.value
-            inFlight = nil
+            clearIfCurrent(taskID)
             return value
         } catch {
-            inFlight = nil
+            clearIfCurrent(taskID)
             throw error
         }
+    }
+
+    public func cancel() {
+        inFlight?.cancel()
+        inFlight = nil
+        inFlightID = nil
+    }
+
+    private func clearIfCurrent(_ taskID: UUID) {
+        guard inFlightID == taskID else { return }
+        inFlight = nil
+        inFlightID = nil
     }
 }

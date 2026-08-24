@@ -197,6 +197,57 @@ assert.equal(yogaHabits.length, 1);
 assert.equal(deduplicated.events.find((event) => event.id === duplicateEventID)?.habitId, yogaHabits[0].id);
 assert.equal(yogaHabits[0].aliases.includes("stretching"), true);
 
+const primaryNameOwnerID = crypto.randomUUID();
+const conflictingAliasOwnerID = crypto.randomUUID();
+const aliasWinnerID = crypto.randomUUID();
+const aliasLoserID = crypto.randomUUID();
+const primaryName = `Boulder ${integrationSuffix}`;
+const sharedAlias = `Move ${integrationSuffix}`;
+const reconciledTerms = await sync({
+  habits: [
+    {
+      id: primaryNameOwnerID,
+      name: primaryName,
+      aliases: [],
+      createdAt,
+      updatedAt: createdAt,
+      isArchived: false,
+    },
+    {
+      id: conflictingAliasOwnerID,
+      name: `Climb ${integrationSuffix}`,
+      aliases: [primaryName],
+      createdAt,
+      updatedAt: createdAt,
+      isArchived: false,
+    },
+    {
+      id: aliasLoserID,
+      name: `Walk ${integrationSuffix}`,
+      aliases: [sharedAlias],
+      createdAt,
+      updatedAt: createdAt,
+      isArchived: false,
+    },
+    {
+      id: aliasWinnerID,
+      name: `Run ${integrationSuffix}`,
+      aliases: [sharedAlias],
+      createdAt,
+      updatedAt: "2026-07-22T20:00:00.000Z",
+      isArchived: false,
+    },
+  ],
+  events: [],
+});
+assert.deepEqual(reconciledTerms.habits.find(
+  (habit) => habit.id === conflictingAliasOwnerID
+)?.aliases, []);
+assert.deepEqual(reconciledTerms.habits.find((habit) => habit.id === aliasLoserID)?.aliases, []);
+assert.deepEqual(reconciledTerms.habits.find((habit) => habit.id === aliasWinnerID)?.aliases, [
+  sharedAlias.toLowerCase(),
+]);
+
 const form = new URLSearchParams({
   From: "+15555550123",
   To: "+15555550124",
@@ -403,6 +454,16 @@ for (let attempt = 0; attempt < 11; attempt += 1) {
 assert.match(finalPairingAttempt, /Too many pairing attempts/);
 
 seedLegacyClaim();
+const blockedUnpairedSync = await fetch(`${baseURL}/v1/sync`, {
+  method: "POST",
+  headers: {
+    authorization: `Bearer ${claimToken}`,
+    "content-type": "application/json",
+  },
+  body: JSON.stringify({ habits: [], events: [] }),
+});
+assert.equal(blockedUnpairedSync.status, 403);
+assert.equal((await blockedUnpairedSync.json()).code, "phone_not_paired");
 const claimResponse = await sendSMS(new URLSearchParams({
   From: "+15555550123",
   To: "+15555550124",

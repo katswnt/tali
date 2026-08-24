@@ -125,7 +125,7 @@ struct HabitCommandParserTests {
             CommandContract.self,
             from: Data(contentsOf: contractURL)
         )
-        #expect(contract.version == 6)
+        #expect(contract.version == 7)
 
         for testCase in contract.cases {
             var calendar = Calendar(identifier: .gregorian)

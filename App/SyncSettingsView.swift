@@ -212,11 +212,13 @@ struct SyncSettingsView: View {
                     if isWorking { ProgressView() }
                 }
             }
-            .disabled(isWorking)
+            .disabled(isWorking || (authenticationMethod == .apple && account?.paired != true))
 
             statusRows
         } footer: {
-            Text("Tali also syncs when the app opens and when you pull down on the dashboard.")
+            Text(account?.paired == false
+                ? "Pair your phone to enable syncing."
+                : "Tali also syncs when the app opens and when you pull down on the dashboard.")
         }
 
         Section("Connection") {
@@ -352,7 +354,8 @@ struct SyncSettingsView: View {
                     refreshToken: result.refreshToken,
                     accessExpiresAt: result.accessExpiresAt,
                     sessionExpiresAt: result.sessionExpiresAt,
-                    method: .apple
+                    method: .apple,
+                    phonePaired: result.account.paired
                 )
                 authenticationMethod = .apple
                 account = result.account
@@ -430,6 +433,7 @@ struct SyncSettingsView: View {
                 endpoint: SyncCredentials.endpoint,
                 token: try await SyncCredentials.validAccessToken()
             )
+            SyncCredentials.setPhonePaired(account?.paired == true)
             await refreshSessions()
             if account?.paired == true {
                 pairingCode = nil
@@ -489,23 +493,35 @@ struct SyncSettingsView: View {
 
     private func disconnect() {
         let endpoint = SyncCredentials.endpoint
-        let token = SyncCredentials.token()
         let shouldRevoke = authenticationMethod == .apple
-        do {
-            try SyncCredentials.clear()
-            self.endpoint = SyncCredentials.defaultEndpoint
-            privateKey = ""
-            account = nil
-            pairingCode = nil
-            sessions = []
-            clearStatus()
-            isConnected = false
-            authenticationMethod = .privateKey
+        isWorking = true
+        Task {
+            var serverRevocationFailed = false
             if shouldRevoke {
-                Task { await TaliAccountService.signOut(endpoint: endpoint, token: token) }
+                do {
+                    let token = try await SyncCredentials.validAccessToken()
+                    try await TaliAccountService.signOut(endpoint: endpoint, token: token)
+                } catch {
+                    serverRevocationFailed = true
+                }
             }
-        } catch {
-            handle(error)
+            do {
+                try SyncCredentials.clear()
+                self.endpoint = SyncCredentials.defaultEndpoint
+                privateKey = ""
+                account = nil
+                pairingCode = nil
+                sessions = []
+                clearStatus()
+                isConnected = false
+                authenticationMethod = .privateKey
+                if serverRevocationFailed {
+                    resultMessage = "Disconnected here. Tali couldn't reach the server, so this device session will expire automatically."
+                }
+            } catch {
+                handle(error)
+            }
+            isWorking = false
         }
     }
 

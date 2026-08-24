@@ -17,24 +17,8 @@ struct TaliApp: App {
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .active {
                         TaliShortcuts.updateAppShortcutParameters()
-                        Task { await updateServerTimeZone() }
                     }
                 }
-        }
-    }
-
-    @MainActor
-    private func updateServerTimeZone() async {
-        guard SyncCredentials.isConfigured else { return }
-        do {
-            try await TaliAccountService.updateTimeZone(
-                endpoint: SyncCredentials.endpoint,
-                token: try await SyncCredentials.validAccessToken()
-            )
-        } catch {
-            SyncCredentials.invalidateIfNeeded(for: error)
-            // This is a best-effort foreground refresh. The next activation or
-            // full sync will retry without interrupting the user.
         }
     }
 }

@@ -173,7 +173,7 @@ describe("parseCommand", () => {
         expected: Record<string, unknown>;
       }>;
     };
-    expect(contract.version).toBe(6);
+    expect(contract.version).toBe(7);
 
     for (const testCase of contract.cases) {
       const command = parseCommand(testCase.input, {

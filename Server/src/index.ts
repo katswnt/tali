@@ -165,6 +165,9 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (request.method === "POST" && url.pathname === "/v1/sync") {
     const user = await authenticateRequest(request, env);
     if (!user) return jsonError("Unauthorized", 401);
+    if (user.authentication === "session" && !(await accountSummary(env.DB, user.id)).paired) {
+      return jsonError("Pair a phone before syncing this account.", 403, "phone_not_paired");
+    }
     const limit = await consumeRateLimit(env.DB, "sync-user", user.id, 120, 10 * 60);
     if (!limit.allowed) return rateLimitedJSON(limit);
     try {
@@ -188,6 +191,9 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (request.method === "POST" && url.pathname === "/v2/sync") {
     const user = await authenticateRequest(request, env);
     if (!user) return jsonError("Unauthorized", 401);
+    if (user.authentication === "session" && !(await accountSummary(env.DB, user.id)).paired) {
+      return jsonError("Pair a phone before syncing this account.", 403, "phone_not_paired");
+    }
     const limit = await consumeRateLimit(env.DB, "sync-user", user.id, 120, 10 * 60);
     if (!limit.allowed) return rateLimitedJSON(limit);
     try {
@@ -284,8 +290,8 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   return new Response("Not found", { status: 404 });
 }
 
-function jsonError(message: string, status: number): Response {
-  return Response.json({ error: message }, { status });
+function jsonError(message: string, status: number, code?: string): Response {
+  return Response.json(code ? { error: message, code } : { error: message }, { status });
 }
 
 async function refreshUserTimeZone(

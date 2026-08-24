@@ -340,6 +340,47 @@ struct HabitEngineTests {
         #expect(events[0].habit?.id == replacement.id)
     }
 
+    @Test("Same-name UUID adoption preserves newer local metadata and unions aliases")
+    func sameNameIdentityAdoptionUsesNewestMetadata() throws {
+        let container = try PersistenceController.makeContainer(inMemory: true)
+        let context = container.mainContext
+        let localCreatedAt = Date(timeIntervalSince1970: 100)
+        let localUpdatedAt = Date(timeIntervalSince1970: 300)
+        let local = Habit(
+            name: "YOGA",
+            aliases: ["flow"],
+            createdAt: localCreatedAt,
+            isArchived: true
+        )
+        local.updatedAt = localUpdatedAt
+        let event = HabitEvent(source: .app, habit: local)
+        context.insert(local)
+        context.insert(event)
+        try context.save()
+
+        let serverID = UUID()
+        let remote = SyncHabit(
+            id: serverID,
+            name: "Yoga",
+            aliases: ["stretch"],
+            createdAt: Date(timeIntervalSince1970: 200),
+            updatedAt: Date(timeIntervalSince1970: 250),
+            isArchived: false
+        )
+        try TaliSyncService.merge(SyncSnapshot(habits: [remote], events: []), into: context)
+
+        let habits = try context.fetch(FetchDescriptor<Habit>())
+        let events = try context.fetch(FetchDescriptor<HabitEvent>())
+        #expect(habits.count == 1)
+        #expect(habits[0].id == serverID)
+        #expect(habits[0].name == "YOGA")
+        #expect(habits[0].aliases == ["flow", "stretch"])
+        #expect(habits[0].createdAt == localCreatedAt)
+        #expect(habits[0].updatedAt == localUpdatedAt)
+        #expect(habits[0].isArchived)
+        #expect(events[0].habit?.id == serverID)
+    }
+
     @Test("Exports include archived habits, voided entries, and escaped notes")
     func exportsAllUserData() throws {
         let container = try PersistenceController.makeContainer(inMemory: true)
@@ -404,5 +445,31 @@ struct AsyncSingleFlightTests {
         let later = try await singleFlight.run { counter.next() }
         #expect(later == 2)
         #expect(counter.value == 2)
+    }
+
+    @Test("Cancelling an old operation cannot clear a replacement operation")
+    func cancellationDoesNotClearReplacement() async throws {
+        let singleFlight = AsyncSingleFlight<Int>()
+        let first = Task { @MainActor in
+            try await singleFlight.run {
+                try await Task.sleep(for: .seconds(5))
+                return 1
+            }
+        }
+        await Task.yield()
+        singleFlight.cancel()
+
+        async let replacement = singleFlight.run {
+            try await Task.sleep(for: .milliseconds(100))
+            return 2
+        }
+        try await Task.sleep(for: .milliseconds(10))
+        async let joined = singleFlight.run { 3 }
+
+        await #expect(throws: CancellationError.self) {
+            _ = try await first.value
+        }
+        let values = try await [replacement, joined]
+        #expect(values == [2, 2])
     }
 }

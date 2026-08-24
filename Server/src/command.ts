@@ -250,7 +250,22 @@ function extractDate(value: string, now: Date, timeZone: string): DateExtraction
     if (!habit || amount < 1 || amount > maximum) {
       return { habit, error: unsupportedDateMessage };
     }
-    const milliseconds = unit === "day" ? 86_400_000 : unit === "hour" ? 3_600_000 : 60_000;
+    if (unit === "day") {
+      const parts = zonedDateTimeParts(now, timeZone);
+      const occurredAt = dateInTimeZone(
+        now,
+        timeZone,
+        -amount,
+        parts.hour,
+        parts.minute,
+        parts.second,
+        now.getUTCMilliseconds(),
+      );
+      return occurredAt
+        ? { habit, occurredAt: occurredAt.toISOString() }
+        : { habit, error: unsupportedDateMessage };
+    }
+    const milliseconds = unit === "hour" ? 3_600_000 : 60_000;
     return { habit, occurredAt: new Date(now.getTime() - amount * milliseconds).toISOString() };
   }
 
@@ -333,9 +348,19 @@ function dateInTimeZone(
   dayOffset: number,
   hour: number,
   minute: number,
+  second = 0,
+  millisecond = 0,
 ): Date | null {
   const parts = zonedParts(now, timeZone);
-  const targetWallClock = Date.UTC(parts.year, parts.month - 1, parts.day + dayOffset, hour, minute);
+  const targetWallClock = Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day + dayOffset,
+    hour,
+    minute,
+    second,
+    millisecond,
+  );
   const target = new Date(targetWallClock);
   let candidate = new Date(targetWallClock);
   for (let index = 0; index < 2; index += 1) {
@@ -348,6 +373,7 @@ function dateInTimeZone(
     || resolved.day !== target.getUTCDate()
     || resolved.hour !== hour
     || resolved.minute !== minute
+    || resolved.second !== second
   ) {
     return null;
   }
@@ -362,7 +388,7 @@ function zonedParts(date: Date, timeZone: string): { year: number; month: number
 function zonedDateTimeParts(
   date: Date,
   timeZone: string,
-): { year: number; month: number; day: number; hour: number; minute: number } {
+): { year: number; month: number; day: number; hour: number; minute: number; second: number } {
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone,
     year: "numeric",
@@ -370,6 +396,7 @@ function zonedDateTimeParts(
     day: "numeric",
     hour: "numeric",
     minute: "numeric",
+    second: "numeric",
     hourCycle: "h23",
   });
   const values = Object.fromEntries(formatter.formatToParts(date).map((part) => [part.type, part.value]));
@@ -379,6 +406,7 @@ function zonedDateTimeParts(
     day: Number(values.day),
     hour: Number(values.hour),
     minute: Number(values.minute),
+    second: Number(values.second),
   };
 }
 

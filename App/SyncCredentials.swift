@@ -14,9 +14,11 @@ enum SyncCredentials {
 
     static let endpointKey = "smsSyncEndpoint"
     private static let authenticationMethodKey = "smsSyncAuthenticationMethod"
+    private static let phonePairedKey = "smsSyncPhonePaired"
     private static let tokenAccount = "smsSyncToken"
     private static let service = "com.kathrynswint.Tali.sync"
     private static let accessTokenRefresh = AsyncSingleFlight<String>()
+    private static var credentialGeneration = 0
 
     static var endpoint: String {
         get {
@@ -49,12 +51,19 @@ enum SyncCredentials {
 
         let refreshToken = envelope.refreshToken
         let refreshEndpoint = endpoint
+        let refreshGeneration = credentialGeneration
         return try await accessTokenRefresh.run {
             let refreshed = try await TaliAccountService.refresh(
                 endpoint: refreshEndpoint,
                 refreshToken: refreshToken,
                 session: session
             )
+            guard credentialGeneration == refreshGeneration,
+                  endpoint == refreshEndpoint,
+                  authenticationMethod == .apple,
+                  credentialEnvelope()?.refreshToken == refreshToken else {
+                throw CancellationError()
+            }
             try save(
                 endpoint: refreshEndpoint,
                 token: refreshed.accessToken,
@@ -92,7 +101,8 @@ enum SyncCredentials {
         refreshToken: String? = nil,
         accessExpiresAt: String? = nil,
         sessionExpiresAt: String? = nil,
-        method: AuthenticationMethod = .privateKey
+        method: AuthenticationMethod = .privateKey,
+        phonePaired: Bool? = nil
     ) throws {
         let cleanedToken = token.trimmingCharacters(in: .whitespacesAndNewlines)
         let data: Data
@@ -122,10 +132,18 @@ enum SyncCredentials {
         }
         self.endpoint = endpoint.trimmingCharacters(in: .whitespacesAndNewlines)
         defaults.set(method.rawValue, forKey: authenticationMethodKey)
+        credentialGeneration += 1
+        if let phonePaired {
+            defaults.set(phonePaired, forKey: phonePairedKey)
+        } else if method == .privateKey {
+            defaults.removeObject(forKey: phonePairedKey)
+        }
     }
 
     static func clear() throws {
         let previousEndpoint = endpoint
+        credentialGeneration += 1
+        accessTokenRefresh.cancel()
         let status = SecItemDelete(baseQuery as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw NSError(
@@ -136,11 +154,24 @@ enum SyncCredentials {
         }
         defaults.removeObject(forKey: endpointKey)
         defaults.removeObject(forKey: authenticationMethodKey)
+        defaults.removeObject(forKey: phonePairedKey)
         TaliSyncService.resetCursor(endpoint: previousEndpoint)
     }
 
     static var isConfigured: Bool {
         !TaliTestEnvironment.isUITesting && !endpoint.isEmpty && !token().isEmpty
+    }
+
+    static var canSync: Bool {
+        guard isConfigured else { return false }
+        guard authenticationMethod == .apple else { return true }
+        // Existing paired installations predate this flag. New sign-ins always
+        // persist the account's explicit pairing state.
+        return defaults.object(forKey: phonePairedKey) as? Bool ?? true
+    }
+
+    static func setPhonePaired(_ paired: Bool) {
+        defaults.set(paired, forKey: phonePairedKey)
     }
 
     @discardableResult

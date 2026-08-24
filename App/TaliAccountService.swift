@@ -201,12 +201,11 @@ enum TaliAccountService {
         endpoint: String,
         token: String,
         session: URLSession = .shared
-    ) async {
-        guard let url = try? route("v1/session", endpoint: endpoint) else { return }
-        var request = URLRequest(url: url)
+    ) async throws {
+        var request = URLRequest(url: try route("v1/session", endpoint: endpoint))
         request.httpMethod = "DELETE"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        _ = try? await session.data(for: request)
+        try await sendEmpty(request, session: session)
     }
 
     private static func route(_ path: String, endpoint: String) throws -> URL {

@@ -131,7 +131,9 @@ export async function mergeSnapshot(
     );
   }
 
-  assertUniqueHabitTerms(habitsByID.values());
+  for (const reconciled of reconcileHabitTerms(habitsByID.values())) {
+    statements.push(updateHabitStatement(db, userID, reconciled));
+  }
   if (statements.length) {
     if (options.bumpRevision !== false) statements.push(bumpSyncRevisionStatement(db, userID));
     await db.batch(statements);
@@ -317,18 +319,45 @@ function isNewer(candidate: string, current: string): boolean {
   return Date.parse(candidate) > Date.parse(current);
 }
 
-function assertUniqueHabitTerms(rows: Iterable<HabitRow>): void {
-  const ownerByTerm = new Map<string, string>();
-  for (const row of rows) {
-    const terms = [row.normalized_name, ...(JSON.parse(row.aliases_json) as string[])];
-    for (const rawTerm of terms) {
-      const term = normalize(rawTerm);
-      if (!term) continue;
-      const owner = ownerByTerm.get(term);
-      if (owner && owner !== row.id) {
-        throw new Error(`Habit name or alias '${term}' is already in use.`);
-      }
-      ownerByTerm.set(term, row.id);
+function reconcileHabitTerms(rows: Iterable<HabitRow>): HabitRow[] {
+  const values = [...rows];
+  const nameOwnerByTerm = new Map<string, HabitRow>();
+  for (const row of values) {
+    const term = normalize(row.normalized_name);
+    const owner = nameOwnerByTerm.get(term);
+    if (owner && owner.id !== row.id) {
+      throw new Error(`Duplicate canonical habit name '${term}'.`);
+    }
+    nameOwnerByTerm.set(term, row);
+  }
+
+  // Primary names always own their term. For alias-to-alias conflicts, the
+  // most recently updated habit wins; UUID provides a deterministic tie-break.
+  const aliasOwnerByTerm = new Map<string, string>();
+  const byAliasPriority = [...values].sort((left, right) => {
+    const timestampDifference = Date.parse(right.updated_at) - Date.parse(left.updated_at);
+    return timestampDifference || left.id.localeCompare(right.id);
+  });
+  const changed: HabitRow[] = [];
+  const changedIDs = new Set<string>();
+
+  for (const row of byAliasPriority) {
+    const aliases = JSON.parse(row.aliases_json) as string[];
+    const kept: string[] = [];
+    for (const rawAlias of aliases) {
+      const alias = normalize(rawAlias);
+      if (!alias || nameOwnerByTerm.has(alias) || aliasOwnerByTerm.has(alias)) continue;
+      aliasOwnerByTerm.set(alias, row.id);
+      kept.push(alias);
+    }
+    if (JSON.stringify(kept) === JSON.stringify(aliases)) continue;
+    row.aliases_json = JSON.stringify(kept);
+    const current = Date.parse(row.updated_at);
+    row.updated_at = new Date(Math.max(Date.now(), current + 1)).toISOString();
+    if (!changedIDs.has(row.id)) {
+      changedIDs.add(row.id);
+      changed.push(row);
     }
   }
+  return changed;
 }

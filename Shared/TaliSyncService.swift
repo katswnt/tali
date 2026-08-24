@@ -170,7 +170,7 @@ public enum TaliSyncService {
         return "tali.sync.revision.\(encoded)"
     }
 
-    private static func merge(_ snapshot: SyncSnapshot, into context: ModelContext) throws {
+    static func merge(_ snapshot: SyncSnapshot, into context: ModelContext) throws {
         try consolidateLocalHabits(in: context)
         let localHabits = try context.fetch(FetchDescriptor<Habit>())
         var habitsByID = Dictionary(uniqueKeysWithValues: localHabits.map { ($0.id, $0) })
@@ -191,7 +191,19 @@ public enum TaliSyncService {
                 let habit = replacingIdentity(of: sameName, with: remote.id, in: context)
                 habitsByID[remote.id] = habit
                 habitsByName[normalizedName] = habit
-                apply(remote, normalizedName: normalizedName, to: habit)
+                let localAliases = habit.aliases
+                let localCreatedAt = habit.createdAt
+                let localUpdatedAt = habit.updatedAt
+                // The server UUID is canonical, but the server's fields are not
+                // necessarily newer. Match the server's duplicate reconciliation:
+                // newest fields win, remote wins ties, aliases are unioned, and
+                // the earliest creation date is retained.
+                if remote.updatedAt >= localUpdatedAt {
+                    apply(remote, normalizedName: normalizedName, to: habit)
+                }
+                habit.aliases = Array(Set(localAliases + remote.aliases)).sorted()
+                habit.createdAt = min(localCreatedAt, remote.createdAt)
+                habit.updatedAt = max(localUpdatedAt, remote.updatedAt)
             } else {
                 let habit = Habit(
                     id: remote.id,
@@ -334,7 +346,7 @@ public enum TaliSyncService {
     }()
 }
 
-private struct SyncSnapshot: Codable {
+struct SyncSnapshot: Codable {
     let habits: [SyncHabit]
     let events: [SyncEvent]
 }
@@ -355,13 +367,29 @@ private struct VersionedSyncConflict: Decodable {
     let snapshot: SyncSnapshot
 }
 
-private struct SyncHabit: Codable {
+struct SyncHabit: Codable {
     let id: UUID
     let name: String
     let aliases: [String]
     let createdAt: Date
     let updatedAt: Date
     let isArchived: Bool
+
+    init(
+        id: UUID,
+        name: String,
+        aliases: [String],
+        createdAt: Date,
+        updatedAt: Date,
+        isArchived: Bool
+    ) {
+        self.id = id
+        self.name = name
+        self.aliases = aliases
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.isArchived = isArchived
+    }
 
     init(_ habit: Habit) {
         id = habit.id
@@ -373,7 +401,7 @@ private struct SyncHabit: Codable {
     }
 }
 
-private struct SyncEvent: Codable {
+struct SyncEvent: Codable {
     let id: UUID
     let habitId: UUID
     let occurredAt: Date
