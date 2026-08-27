@@ -7,9 +7,9 @@
 Tali records what happened and when. It does not decide whether an activity is good or bad, turn repetition into a streak, or recommend what the user should do next.
 
 The working personal alpha includes a native iPhone app, Messages extension, Siri and Shortcuts
-actions, and an optional SMS service built with Twilio, Cloudflare Workers, and D1. It is a portfolio
-project and active product experiment preparing its first TestFlight build. Production SMS is
-working for the founder; broad public onboarding remains deliberately limited during beta.
+actions, and an optional SMS service built with Twilio, Cloudflare Workers, and D1. Signed builds
+through `0.1.0 (7)` have been validated and uploaded to TestFlight. Production SMS is working for
+the founder; broad public onboarding remains deliberately limited during beta.
 
 ## Status at a glance
 
@@ -18,14 +18,23 @@ This table separates repository evidence from work that still requires a real pl
 | Area | What is verified | What is not yet proven |
 | --- | --- | --- |
 | Product model | Neutrality rules appear in copy, settings, elapsed-time visibility, binary visualization, and tests | Whether the model helps a broader group beyond the founder problem |
-| Native core | Parser, domain engine, migration, export, reconciliation, deterministic UI smoke tests, physical-iPhone launch, Messages extension, SMS pairing, sync, and contact sharing | VoiceOver, Siri/Shortcuts, and TestFlight matrix |
+| Native core | Parser, domain engine, migration, export, reconciliation, deterministic UI smoke tests, physical-iPhone launch, Apple sign-in, Messages App Group behavior, SMS pairing, sync, and contact sharing | VoiceOver, reliable Siri/Shortcuts discovery, and a broader TestFlight device matrix |
 | Multi-user backend | Managed Worker/D1 integration exercises two-user isolation, account lifecycle, rotating sessions, rate limits, retention, SMS, and revisioned sync | Independent security review, completed staging soak, backup/restore drill, and production load behavior |
 | SMS | Signed webhook, idempotency, compliance copy, carrier status paths, and a production founder round trip | Broader-user beta behavior and continued carrier monitoring |
-| Distribution | App Store Connect record, beta metadata, privacy manifest, demo store, release checklist, and green release checks | Archive validation, TestFlight feedback, and App Store review |
+| Distribution | App Store Connect record, beta metadata, privacy manifest, signed archive validation, TestFlight uploads through `0.1.0 (7)`, demo store, release checklist, and green release checks | Broader TestFlight feedback, device/OS coverage, and App Store review |
 
 The strongest claim in this repository is not “this has shipped at scale.” It is that one product
 thesis has been translated into consistent interaction rules, data semantics, security boundaries,
 and reproducible tests. The remaining launch work is listed rather than implied away.
+
+## Technical highlights
+
+- **Conflict-safe client sync.** [`TaliSyncService`](Shared/TaliSyncService.swift) retries one stale-revision conflict with the same mutation UUID, merges the returned server snapshot, and advances the stored revision. Equal normalized names adopt the server UUID while preserving newer local fields, unioning aliases, and keeping the earliest creation date.
+- **Explicit server concurrency.** [`sync-v2.ts`](Server/src/sync-v2.ts) combines mutation-id replay, stale-base rejection, and compare-and-swap revision reservation so retries are idempotent and conflicting writers receive a current snapshot.
+- **Complete identity checks.** [`auth.ts`](Server/src/auth.ts) verifies the Apple token signature, algorithm, issuer, audience, expiration, issued-at time, subject, and nonce. Access and rotating refresh tokens are stored as hashes in D1.
+- **Verified webhook boundaries.** [`twilio.ts`](Server/src/twilio.ts) reconstructs Twilio's canonical signature input and compares signatures in constant time; message IDs make webhook processing idempotent.
+- **Bounded, canonical payloads.** [`validation.ts`](Server/src/validation.ts) limits body and collection sizes, canonicalizes UUIDs and timestamps, rejects implausible future events, and enforces entity uniqueness before reconciliation.
+- **Documented residual risk.** Revision reservation, entity reconciliation, and mutation recording are not yet one D1 transaction. The control is implemented and tested, and the remaining atomicity boundary is stated explicitly rather than hidden.
 
 ## Product tour
 
@@ -129,17 +138,17 @@ revisit triggers for product, platform, data, backend, and development-process c
 | Native iOS breadth | SwiftUI app, App Group Messages extension, App Intents, Keychain, SwiftData migration, privacy manifest, and generated Xcode project |
 | Backend and security | User-scoped D1 migrations, cryptographic Apple JWT verification, rotating hashed sessions with replay-family revocation, one-time pairing, signed webhooks, retention, [trust-boundary documentation](docs/security-and-sync.md), and a candid [security self-review](docs/security-review.md) |
 | Distributed-data reasoning | Server revisions, mutation idempotency, UUID reconciliation, normalized-name duplicate repair, idempotent Twilio receipts, managed integration tests, and documented last-write-wins limits |
-| Quality discipline | CI, 85 domain and Worker tests, three deterministic UI journeys, a managed Worker/D1 integration, isolated demo data, and a one-command release check |
+| Quality discipline | CI, 87 domain and Worker tests, four deterministic UI journeys, a managed Worker/D1 integration, isolated demo data, and a one-command release check |
 | Operational judgment | Separate staging database/Worker, explicit production confirmation, backup and recovery runbook, rollback policy, privacy-safe observability, and load thresholds |
 | Product learning | A consent-first five-person [research protocol](docs/research-plan.md) and [field kit](docs/research-kit.md) with falsifiable comprehension, neutrality, trust, and export gates |
 | Learning from failure | SwiftData startup recovery, weekday-parser regression, duplicate reconciliation, A2P launch gating, and webhook delivery checks in the [case study](docs/portfolio-case-study.md) |
 
 ## Reliability and tests
 
-- **27 Swift tests** cover parsing, aliases, backdating, logging, undo, archive/restore, export, time-since visibility, schema migration, duplicate consolidation, and concurrent authentication refreshes.
+- **29 Swift tests** cover parsing, aliases, backdating, logging, undo, archive/restore, export, time-since visibility, schema migration, duplicate consolidation, UUID adoption, and concurrent authentication refreshes and cancellation.
 - **58 Worker tests** cover the shared SMS grammar, bounded payload envelopes, Apple-token cryptography and claims, time zones, compliance pages and copy, Twilio signatures, XML escaping, pairing-code parsing, rotating-session replay, hashed rate limits, retention, and privacy-safe logging.
-- **Three UI smoke journeys** cover first launch and logging, backdated detail/history, and elapsed-time visibility using an isolated in-memory launch mode.
-- A managed local Worker/D1 integration test exercises revision conflicts and retry idempotency, rotating sessions, round-trip sync, two-user isolation, deliberate duplicate creation, event remapping, webhook idempotency, SMS logging, and legacy-account migration.
+- **Four UI smoke journeys** cover the empty state, local logging and editing, elapsed-time visibility, export discoverability, and the Shortcuts entry point using an isolated in-memory launch mode.
+- A managed local Worker/D1 integration applies migrations and exercises revision conflicts, retry idempotency, rotating sessions, round-trip sync, two-user isolation, duplicate reconciliation and event remapping, webhook idempotency, SMS logging, legacy-account migration, rate limits, and retention.
 - The Xcode scheme gathers coverage for the shared framework.
 
 ```bash
@@ -150,9 +159,10 @@ npm ci
 npm run test:release
 ```
 
-Physical-device, App Group, Messages, Siri, Apple’s real authorization sheet, contact confirmation,
-and carrier behavior remain explicit release-checklist items because simulator and unit tests
-cannot prove those integrations.
+Founder testing has exercised a physical iPhone, the Messages App Group, Apple’s authorization
+sheet, contact confirmation, SMS pairing, carrier delivery, and app sync. VoiceOver, reliable
+Siri/Shortcuts discovery, broader TestFlight coverage, and multi-user carrier behavior remain
+explicit release gates because simulator and unit tests cannot prove them.
 
 The repository-level release check regenerates the Xcode project, runs every Swift and Worker test,
 boots an isolated local Worker/D1 integration environment, triggers retention, and builds the app
@@ -166,8 +176,9 @@ plus Messages extension:
 
 These are weaknesses, not disguised roadmap features:
 
-1. **There is no distribution proof yet.** The next milestone is a signed physical-device pass,
-   TestFlight build, and approved carrier path—not another broad feature.
+1. **Distribution proof is narrow.** Signed builds through `0.1.0 (7)` have reached TestFlight and
+   the founder path has passed on a physical iPhone, but there is not yet a broader tester cohort,
+   device/OS matrix, sustained feedback cycle, or App Store review.
 2. **The product thesis is founder-led.** Tali has a defined five-person, consent-first research
    protocol but no completed external cohort, diary study, or retention signal. Evidence must come
    before claims; sensitive behavioral analytics remain out of scope.
